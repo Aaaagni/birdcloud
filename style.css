@@ -1,0 +1,108 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft Yahei", sans-serif;
+}
+
+body {
+    background-color: #f0f8ff;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* 导航栏 */
+header {
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(173, 216, 230, 0.3);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 99;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #4682b4;
+    padding-left: 40px;
+    float: left;
+}
+
+nav {
+    float: right;
+    padding-right: 40px;
+}
+
+nav a {
+    color: #555;
+    text-decoration: none;
+    margin: 0 18px;
+    font-size: 16px;
+}
+
+nav a.active, nav a:hover {
+    color: #4682b4;
+    font-weight: bold;
+}
+
+/* 横幅 */
+.banner {
+    background: linear-gradient(135deg, #87ceeb, #b0e0e6);
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+    margin-bottom: 40px;
+}
+
+.banner h1 {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+/* 容器 */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 60px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(173, 216, 230, 0.2);
+    text-align: center;
+}
+
+.card h2 {
+    color: #4682b4;
+    margin-bottom: 16px;
+    font-size: 22px;
+}
+
+.btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 24px;
+    background-color: #87ceeb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.btn:hover {
+    background-color: #4682b4;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+    background: white;
+}
