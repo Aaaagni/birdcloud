@@ -8,6 +8,7 @@
 <title>登录 | BirdCloud</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -15,6 +16,7 @@
 body {
     margin: 0;
     min-height: 100vh;
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,13 +32,17 @@ body {
         #dff5ff,
         #f8fcff
     );
+
+    padding: 20px;
 }
 
 .login-box {
-    width: min(90%, 420px);
+    width: min(100%, 420px);
+
     padding: 35px 28px;
 
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.92);
+
     border-radius: 24px;
 
     box-shadow:
@@ -57,58 +63,99 @@ h1 {
 
 .subtitle {
     color: #789;
+    margin-top: 8px;
     margin-bottom: 28px;
 }
 
 input {
     width: 100%;
+
     padding: 14px 16px;
+
     margin-bottom: 14px;
 
     border: 1px solid #d7e3ea;
+
     border-radius: 12px;
 
     font-size: 16px;
+
     outline: none;
+
+    background: white;
 }
 
 input:focus {
     border-color: #72bcd4;
 }
 
-button {
+.login-btn {
     width: 100%;
+
     padding: 14px;
 
     border: none;
+
     border-radius: 12px;
 
     font-size: 16px;
+
     cursor: pointer;
 
     background: #72bcd4;
+
     color: white;
 
     margin-top: 5px;
 }
 
-button:hover {
+.login-btn:hover {
     opacity: 0.9;
 }
 
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .register-btn {
-    background: transparent;
+    display: block;
+
+    width: 100%;
+
+    padding: 14px;
+
+    margin-top: 10px;
+
+    border-radius: 12px;
+
     color: #4c9ab5;
+
+    background: transparent;
+
+    text-decoration: none;
+
+    font-size: 16px;
+}
+
+.register-btn:hover {
+    background: rgba(114,188,212,0.1);
 }
 
 #message {
     min-height: 24px;
+
     margin-top: 18px;
+
     font-size: 14px;
+
+    color: #4c7080;
 }
+
 </style>
 
 </head>
+
 
 <body>
 
@@ -122,28 +169,40 @@ button:hover {
         登录你的鸟窝
     </div>
 
+
     <input
         type="email"
         id="email"
         placeholder="邮箱"
+        autocomplete="email"
     >
+
 
     <input
         type="password"
         id="password"
         placeholder="密码"
+        autocomplete="current-password"
     >
 
-    <button onclick="login()">
+
+    <button
+        type="button"
+        class="login-btn"
+        id="loginButton"
+        onclick="login()"
+    >
         登录
     </button>
 
-    <button
+
+    <a
+        href=" "
         class="register-btn"
-        onclick="register()"
     >
-    <a href="signup.html">注册账号</a >
-    </button>
+        注册账号
+    </a >
+
 
     <div id="message"></div>
 
@@ -162,6 +221,7 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
     "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
 
+
 const supabase =
     window.supabase.createClient(
         SUPABASE_URL,
@@ -169,86 +229,159 @@ const supabase =
     );
 
 
-// 登录
+/* =========================
+   登录
+========================= */
+
 async function login() {
 
     const email =
-        document.getElementById("email").value.trim();
+        document
+        .getElementById("email")
+        .value
+        .trim();
 
     const password =
-        document.getElementById("password").value;
+        document
+        .getElementById("password")
+        .value;
 
-    if (!email || !password) {
-        showMessage("请输入邮箱和密码");
+    const button =
+        document.getElementById("loginButton");
+
+
+    if (!email) {
+
+        showMessage("请输入邮箱");
+
         return;
     }
+
+
+    if (!password) {
+
+        showMessage("请输入密码");
+
+        return;
+    }
+
+
+    button.disabled = true;
+
+    button.textContent = "登录中……";
 
     showMessage("正在登录……");
 
-    const { data, error } =
-        await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
 
-    if (error) {
-        showMessage("登录失败：" + error.message);
-        return;
+    try {
+
+        const { data, error } =
+            await supabase.auth.signInWithPassword({
+
+                email: email,
+
+                password: password
+
+            });
+
+
+        if (error) {
+
+            console.error(
+                "登录错误：",
+                error
+            );
+
+            showMessage(
+                "登录失败：" +
+                error.message
+            );
+
+            button.disabled = false;
+
+            button.textContent = "登录";
+
+            return;
+        }
+
+
+        console.log(
+            "登录成功：",
+            data
+        );
+
+
+        showMessage(
+            "登录成功！正在进入个人主页……"
+        );
+
+
+        /*
+         * 登录成功后进入 profile.html
+         */
+
+        setTimeout(function() {
+
+            window.location.href =
+                "profile.html";
+
+        }, 500);
+
+
+    } catch (error) {
+
+        console.error(
+            "连接错误：",
+            error
+        );
+
+        showMessage(
+            "连接 Supabase 失败：" +
+            error.message
+        );
+
+        button.disabled = false;
+
+        button.textContent = "登录";
     }
 
-    showMessage("登录成功！");
-
-    setTimeout(() => {
-        window.location.href = "index.html";
-    }, 800);
 }
 
 
-// 注册
-async function register() {
-
-    const email =
-        document.getElementById("email").value.trim();
-
-    const password =
-        document.getElementById("password").value;
-
-    if (!email || !password) {
-        showMessage("请输入邮箱和密码");
-        return;
-    }
-
-    if (password.length < 6) {
-        showMessage("密码至少需要 6 位");
-        return;
-    }
-
-    showMessage("正在注册……");
-
-    const { data, error } =
-        await supabase.auth.signUp({
-            email,
-            password
-        });
-
-    if (error) {
-        showMessage("注册失败：" + error.message);
-        return;
-    }
-
-    showMessage(
-        "注册成功！请检查邮箱并完成验证。"
-    );
-}
-
+/* =========================
+   提示文字
+========================= */
 
 function showMessage(text) {
 
-    document.getElementById("message")
+    document
+        .getElementById("message")
         .textContent = text;
+
 }
+
+
+/* =========================
+   回车登录
+========================= */
+
+document
+    .getElementById("password")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                login();
+
+            }
+
+        }
+    );
 
 </script>
 
 </body>
+
 </html>
