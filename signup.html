@@ -177,32 +177,15 @@
             message.textContent =
                 "正在注册……";
 
-try {
+const { data, error } =
+    await supabaseClient.auth.signUp({
+        email: email,
+        password: password
+    });
 
-    const { data, error } =
-        await supabaseClient.auth.signUp({
-            email: email,
-            password: password
-        });
-
-    console.log("Supabase data:", data);
-    console.log("Supabase error:", error);
-
-    if (error) {
-        message.textContent =
-            "注册失败：" + error.message;
-        return;
-    }
-
-    message.textContent =
-        "注册成功！请检查邮箱完成验证。";
-
-} catch (err) {
-
-    console.error("网络错误:", err);
-
-    message.textContent =
-        "连接服务器失败：" + err.message;
+if (error) {
+    message.textContent = "注册失败：" + error.message;
+    return;
 }
             
 
