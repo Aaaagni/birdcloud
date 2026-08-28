@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>我的鸟窝 | BirdCloud</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    min-height: 100vh;
+
+    background:
+        linear-gradient(
+            180deg,
+            #dff5ff 0%,
+            #f7fcff 55%,
+            #ffffff 100%
+        );
+
+    color: #29404b;
+}
+
+/* 顶部 */
+
+.header {
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 6%;
+
+    background: rgba(255,255,255,0.78);
+
+    backdrop-filter: blur(12px);
+
+    border-bottom: 1px solid rgba(100,150,170,0.12);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+
+    color: #357d96;
+
+    text-decoration: none;
+}
+
+.back {
+    color: #5f8796;
+
+    text-decoration: none;
+
+    font-size: 14px;
+}
+
+
+/* 页面 */
+
+.container {
+    width: min(92%, 760px);
+
+    margin: 45px auto;
+}
+
+
+/* 个人卡片 */
+
+.profile-card {
+
+    background: rgba(255,255,255,0.9);
+
+    border-radius: 28px;
+
+    padding: 35px;
+
+    box-shadow:
+        0 15px 45px rgba(50,100,120,0.12);
+
+    text-align: center;
+}
+
+
+/* 头像 */
+
+.avatar {
+
+    width: 100px;
+    height: 100px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: #d9f2fa;
+
+    font-size: 48px;
+}
+
+
+/* 用户 */
+
+#username {
+
+    font-size: 25px;
+
+    margin-bottom: 8px;
+
+    color: #29404b;
+}
+
+#email {
+
+    font-size: 14px;
+
+    color: #8199a3;
+}
+
+
+/* 简介 */
+
+.bio {
+
+    margin: 18px auto 0;
+
+    color: #708891;
+
+    font-size: 14px;
+
+    max-width: 500px;
+}
+
+
+/* 数据 */
+
+.stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 12px;
+
+    margin-top: 30px;
+}
+
+.stat {
+
+    padding: 18px 8px;
+
+    background: #f2f9fb;
+
+    border-radius: 18px;
+}
+
+.stat-number {
+
+    display: block;
+
+    font-size: 23px;
+
+    font-weight: 700;
+
+    color: #438aa1;
+}
+
+.stat-label {
+
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 13px;
+
+    color: #8199a3;
+}
+
+
+/* 按钮 */
+
+.actions {
+
+    margin-top: 30px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+}
+
+button {
+
+    border: none;
+
+    padding: 12px 24px;
+
+    border-radius: 14px;
+
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+.edit-btn {
+
+    background: #75bfd4;
+
+    color: white;
+}
+
+.logout-btn {
+
+    background: #edf3f5;
+
+    color: #607982;
+}
+
+
+/* 手机 */
+
+@media (max-width: 600px) {
+
+    .container {
+
+        width: 92%;
+
+        margin: 25px auto;
+    }
+
+    .profile-card {
+
+        padding: 28px 18px;
+
+        border-radius: 24px;
+    }
+
+    .stats {
+
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+
+        flex-direction: column;
+    }
+
+    button {
+
+        width: 100%;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+    <a
+        class="logo"
+        href=" ">
+        🐦 BirdCloud
+    </a >
+
+    <a
+        class="back"
+        href="index.html">
+        返回首页
+    </a >
+
+</header>
+
+
+<main class="container">
+
+
+<section class="profile-card">
+
+
+    <div class="avatar">
+        🐦
+    </div>
+
+
+    <h1 id="username">
+        我的鸟窝
+    </h1>
+
+
+    <p id="email">
+        正在加载……
+    </p >
+
+
+    <p
+        class="bio"
+        id="bio">
+        欢迎来到我的鸟窝
+    </p >
+
+
+    <div class="stats">
+
+        <div class="stat">
+
+            <span
+                class="stat-number">
+                0
+            </span>
+
+            <span class="stat-label">
+                观鸟记录
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span
+                class="stat-number">
+                0
+            </span>
+
+            <span class="stat-label">
+                我的照片
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <span
+                class="stat-number">
+                0
+            </span>
+
+            <span class="stat-label">
+                我的帖子
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button
+            class="edit-btn"
+            onclick="editProfile()">
+            编辑资料
+        </button>
+
+        <button
+            class="logout-btn"
+            onclick="logout()">
+            退出登录
+        </button>
+
+    </div>
+
+
+</section>
+
+
+</main>
+
+
+<!-- Supabase -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+    "https://jgnwfswcqrzbetshocz.supabase.co";
+
+const SUPABASE_KEY =
+    "你的 sb_publishable_ 密钥";
+
+
+const supabase =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+
+/* 检查登录 */
+
+async function loadProfile() {
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser();
+
+
+    if (!user) {
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    document.getElementById("email")
+        .textContent = user.email;
+
+
+    const username =
+        user.email.split("@")[0];
+
+
+    document.getElementById("username")
+        .textContent =
+            "🐦 " + username;
+
+}
+
+
+/* 退出 */
+
+async function logout() {
+
+    const { error } =
+        await supabase.auth.signOut();
+
+
+    if (error) {
+
+        alert(
+            "退出失败：" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    window.location.href =
+        "index.html";
+}
+
+
+/* 编辑资料 */
+
+function editProfile() {
+
+    alert(
+        "编辑资料功能下一步再做 🐦"
+    );
+
+}
+
+
+loadProfile();
+
+</script>
+
+
+</body>
+
+</html>
