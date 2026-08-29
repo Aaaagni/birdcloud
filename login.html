@@ -380,6 +380,50 @@ document
         }
     );
 
+// 注册
+async function register() {
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    if (!email || !password) {
+        showMessage("请输入邮箱和密码");
+        return;
+    }
+
+    if (password.length < 6) {
+        showMessage("密码至少需要 6 位");
+        return;
+    }
+
+    showMessage("正在注册……");
+
+    const { data, error } =
+        await supabase.auth.signUp({
+            email,
+            password
+        });
+
+    if (error) {
+        showMessage("注册失败：" + error.message);
+        return;
+    }
+
+    showMessage(
+        "注册成功！请检查邮箱并完成验证。"
+    );
+}
+
+
+function showMessage(text) {
+
+    document.getElementById("message")
+        .textContent = text;
+}
+
 </script>
 
 </body>
