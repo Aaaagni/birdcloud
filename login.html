@@ -142,13 +142,12 @@ button:hover {
         class="register-btn"
         onclick="register()"
     >
-        注册账号
+    <a href="signup.html">注册账号</a >
     </button>
 
     <div id="message"></div>
 
 </div>
-
 
 <!-- Supabase -->
 
@@ -167,8 +166,6 @@ const supabase =
         SUPABASE_URL,
         SUPABASE_KEY
     );
-
-
 
 // 登录
 async function login() {
@@ -240,7 +237,6 @@ async function register() {
         "注册成功！请检查邮箱并完成验证。"
     );
 }
-
 
 function showMessage(text) {
 
