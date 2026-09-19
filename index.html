@@ -15,7 +15,7 @@
             <a href="forum.html">鸟言鸟语</a >
             <a href="gallery.html">观鸟相册</a >
             <a href="friends.html">拜访鸟友</a >
-            <a href="login.html">鸟窝入住</a >
+            <a href="login.html" id="nest-link">鸟窝入住</a >
         </nav>
     </header>
 
@@ -50,14 +50,42 @@
     <script src="vendor/supabase.min.js"></script>
 
 <script>
-const SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+(function () {
 
-const SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+    var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+    var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+    var supabase = null;
 
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+    try {
+        if (window.supabase && typeof window.supabase.createClient === "function") {
+            supabase = window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+        }
+    } catch (e) {
+        console.log("Supabase 初始化失败：" + e.message);
+    }
+
+    // 检查登录状态：已登录则把"鸟窝入住"改为"我的鸟窝"并指向个人主页
+    if (supabase) {
+        supabase.auth.getSession().then(function (res) {
+
+            var link = document.getElementById("nest-link");
+            if (!link) return;
+
+            if (res.data && res.data.session) {
+                link.href = "profile.html";
+                link.textContent = "我的鸟窝";
+            } else {
+                link.href = "login.html";
+                link.textContent = "鸟窝入住";
+            }
+
+        });
+    }
+
+})();
 </script>
 </body>
 </html>
