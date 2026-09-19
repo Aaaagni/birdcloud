@@ -80,6 +80,7 @@
             margin-top: 15px;
             color: #666;
             font-size: 14px;
+            min-height: 20px;
         }
 
         .back {
@@ -115,7 +116,7 @@
             placeholder="密码"
         >
 
-        <button onclick="register()">
+        <button id="registerBtn">
             注册账号
         </button>
 
@@ -123,78 +124,104 @@
 
         <a class="back" href="login.html">
             已有账号？返回登录
-        </a >
+        </a>
 
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="vendor/supabase.min.js"></script>
 
     <script>
+(function () {
 
-        const SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+    function showMessage(text) {
+        var el = document.getElementById("message");
+        if (el) el.textContent = text;
+    }
 
-        const SUPABASE_ANON_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
-
-
-        const supabaseClient =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_ANON_KEY
-            );
-
-
-        async function register() {
-
-            const email =
-                document.getElementById("email").value.trim();
-
-            const password =
-                document.getElementById("password").value;
-
-            const message =
-                document.getElementById("message");
-
-
-            if (!email || !password) {
-
-                message.textContent =
-                    "请输入邮箱和密码";
-
-                return;
-            }
-
-
-            if (password.length < 6) {
-
-                message.textContent =
-                    "密码至少需要 6 位";
-
-                return;
-            }
-
-
-            message.textContent =
-                "正在注册……";
-
-const { data, error } =
-    await supabaseClient.auth.signUp({
-        email: email,
-        password: password
+    // 最先注册全局错误捕获
+    window.addEventListener("error", function (e) {
+        showMessage("页面脚本错误：" + e.message);
     });
 
-if (error) {
-    message.textContent = "注册失败：" + error.message;
-    return;
-}
-            
+    // 初始化（try-catch 包裹）
+    var supabaseClient = null;
+    try {
+        if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            showMessage("错误：Supabase 库未加载");
+        } else {
+            supabaseClient = window.supabase.createClient(
+                "https://ljgnwfswcqrzbetshocz.supabase.co",
+                "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA"
+            );
+        }
+    } catch (err) {
+        showMessage("初始化失败：" + err.message);
+    }
 
-
-            message.textContent =
-                "注册成功！请检查邮箱完成验证。";
-
+    // 注册
+    var register = async function () {
+        if (!supabaseClient) {
+            showMessage("Supabase 客户端未就绪，请刷新重试");
+            return;
         }
 
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+
+        if (!email || !password) {
+            showMessage("请输入邮箱和密码");
+            return;
+        }
+
+        if (password.length < 6) {
+            showMessage("密码至少需要 6 位");
+            return;
+        }
+
+        showMessage("正在注册……");
+
+        try {
+            var result = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+
+            if (result.error) {
+                showMessage("注册失败：" + result.error.message);
+                return;
+            }
+
+            if (result.data.session) {
+
+                // 已自动登录，直接进入个人主页
+                showMessage("注册成功！正在进入你的鸟窝……");
+
+                setTimeout(function () {
+                    window.location.href = "profile.html";
+                }, 800);
+
+            } else {
+
+                // 项目开启邮箱确认时的兜底提示
+                showMessage("注册成功！请检查邮箱完成验证。");
+
+            }
+
+        } catch (err) {
+            showMessage("注册异常：" + err.message);
+        }
+    };
+
+    // 按钮事件绑定
+    try {
+        document.getElementById("registerBtn")
+            .addEventListener("click", register);
+    } catch (err) {
+        showMessage("按钮绑定失败：" + err.message);
+    }
+
+})();
     </script>
 
 </body>

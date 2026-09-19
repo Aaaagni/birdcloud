@@ -57,7 +57,14 @@ h1 {
 
 .subtitle {
     color: #789;
-    margin-bottom: 28px;
+    margin-bottom: 14px;
+}
+
+#ready {
+    font-size: 13px;
+    color: #4c9ab5;
+    margin-bottom: 14px;
+    min-height: 18px;
 }
 
 input {
@@ -97,8 +104,19 @@ button:hover {
 }
 
 .register-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 5px;
     background: transparent;
     color: #4c9ab5;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+.register-btn:hover {
+    opacity: 0.9;
 }
 
 #message {
@@ -122,6 +140,8 @@ button:hover {
         登录你的鸟窝
     </div>
 
+    <div id="ready">页面加载中 (HTML v6)……</div>
+
     <input
         type="email"
         id="email"
@@ -134,116 +154,106 @@ button:hover {
         placeholder="密码"
     >
 
-    <button onclick="login()">
+    <button id="loginBtn">
         登录
     </button>
 
-    <button
+    <a
         class="register-btn"
-        onclick="register()"
+        href="signup.html"
     >
-    <a href="signup.html">注册账号</a >
-    </button>
+        注册账号
+    </a>
 
     <div id="message"></div>
 
 </div>
 
-<!-- Supabase -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase 本地库 -->
+<script src="vendor/supabase.min.js"></script>
 
 <script>
+(function () {
 
-const SUPABASE_URL =
-    "https://ljgnwfswcqrzbetshocz.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
-
-const supabase =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
-
-// 登录
-async function login() {
-
-    const email =
-        document.getElementById("email").value.trim();
-
-    const password =
-        document.getElementById("password").value;
-
-    if (!email || !password) {
-        showMessage("请输入邮箱和密码");
-        return;
+    function setReady(text) {
+        var el = document.getElementById("ready");
+        if (el) el.textContent = text;
     }
 
-    showMessage("正在登录……");
-
-    const { data, error } =
-        await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-
-    if (error) {
-        showMessage("登录失败：" + error.message);
-        return;
+    function showMessage(text) {
+        var el = document.getElementById("message");
+        if (el) el.textContent = text;
     }
 
-    showMessage("登录成功！");
+    // 最先注册全局错误捕获：任何脚本错误都会显示出来
+    window.addEventListener("error", function (e) {
+        setReady("脚本错误：" + e.message);
+    });
 
-    setTimeout(() => {
-        window.location.href = "profile.html";
-    }, 800);
-}
-
-// 注册
-async function register() {
-
-    const email =
-        document.getElementById("email").value.trim();
-
-    const password =
-        document.getElementById("password").value;
-
-    if (!email || !password) {
-        showMessage("请输入邮箱和密码");
-        return;
+    // 初始化（try-catch 包裹，任何一步失败都有明确提示）
+    var supabase = null;
+    try {
+        if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            setReady("错误：Supabase 库未加载");
+        } else {
+            supabase = window.supabase.createClient(
+                "https://ljgnwfswcqrzbetshocz.supabase.co",
+                "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA"
+            );
+            setReady("页面就绪 (v6)，脚本执行成功");
+        }
+    } catch (err) {
+        setReady("初始化失败：" + err.message);
     }
 
-    if (password.length < 6) {
-        showMessage("密码至少需要 6 位");
-        return;
+    // 登录
+    var login = async function () {
+        if (!supabase) {
+            showMessage("Supabase 客户端未就绪，请刷新重试");
+            return;
+        }
+
+        var email = document.getElementById("email").value.trim();
+        var password = document.getElementById("password").value;
+
+        if (!email || !password) {
+            showMessage("请输入邮箱和密码");
+            return;
+        }
+
+        showMessage("正在登录……");
+
+        try {
+            var result = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (result.error) {
+                showMessage("登录失败：" + result.error.message);
+                return;
+            }
+
+            showMessage("登录成功！正在进入个人主页……");
+
+            setTimeout(function () {
+                window.location.href = "profile.html";
+            }, 500);
+
+        } catch (err) {
+            showMessage("登录异常：" + err.message);
+        }
+    };
+
+    // 按钮事件绑定
+    try {
+        document.getElementById("loginBtn")
+            .addEventListener("click", login);
+    } catch (err) {
+        setReady("按钮绑定失败：" + err.message);
     }
 
-    showMessage("正在注册……");
-
-    const { data, error } =
-        await supabase.auth.signUp({
-            email,
-            password
-        });
-
-    if (error) {
-        showMessage("注册失败：" + error.message);
-        return;
-    }
-
-    showMessage(
-        "注册成功！请检查邮箱并完成验证。"
-    );
-}
-
-function showMessage(text) {
-
-    document.getElementById("message")
-        .textContent = text;
-}
-
+})();
 </script>
 
 </body>
