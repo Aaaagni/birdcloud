@@ -202,6 +202,7 @@
     var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
     var supabase = null;
     var isLoggedIn = false;
+    var currentUserId = "";
 
     var grid = document.getElementById("grid");
     var addBtn = document.getElementById("addBtn");
@@ -240,6 +241,9 @@
     if (supabase) {
         supabase.auth.getSession().then(function (res) {
             isLoggedIn = !!(res.data && res.data.session);
+            if (isLoggedIn && res.data.session.user) {
+                currentUserId = res.data.session.user.id;
+            }
 
             var nest = document.getElementById("nest-link");
             if (nest) {
@@ -253,24 +257,36 @@
             }
 
             if (isLoggedIn) {
-                hintEl.textContent = "已登录 · 点击「添加图片」从系统相册选择照片上传";
+                hintEl.textContent = "已登录 · 相册仅自己可见 · 点击「添加图片」上传照片";
             } else {
-                hintEl.textContent = "未登录 · 点击「添加图片」将先去登录";
+                hintEl.textContent = "未登录 · 相册为私密内容，请先登录查看";
             }
+
+            // 登录状态确定后，再加载相册
+            loadGallery();
         });
     }
 
-    // 加载相册
+    // 加载相册（仅自己的私有文件夹）
     function loadGallery() {
         if (!supabase) return;
+
+        // 未登录：相册是私密的，不加载任何内容
+        if (!isLoggedIn) {
+            grid.innerHTML = '<div class="empty">🔒 相册是私密的<br>请先登录，才能查看你的专属观鸟相册</div>';
+            setStatus("", false);
+            return;
+        }
+
+        var prefix = currentUserId + "/";
         setStatus("正在加载相册……");
 
-        supabase.storage.from(BUCKET).list().then(function (res) {
+        supabase.storage.from(BUCKET).list(prefix).then(function (res) {
             if (res.error) {
                 var msg = (res.error.message || "");
                 if (msg.indexOf("not found") > -1) {
                     grid.innerHTML = '<div class="empty">📦 云端相册尚未配置<br>' +
-                        '需要在 Supabase 控制台创建存储桶 <b>bird-gallery</b>（公共读）<br>' +
+                        '需要在 Supabase 控制台创建私有存储桶 <b>bird-gallery</b><br>' +
                         '创建后可在此上传和查看图片</div>';
                 } else {
                     grid.innerHTML = '<div class="empty">相册加载失败：' + esc(msg) + '</div>';
@@ -287,27 +303,50 @@
             });
 
             if (files.length === 0) {
-                grid.innerHTML = '<div class="empty">🐦 相册还是空的<br>点击右上角「添加图片」上传第一张观鸟照片吧</div>';
+                grid.innerHTML = '<div class="empty">🐦 相册还是空的<br>点击上方「添加图片」上传第一张观鸟照片吧</div>';
                 setStatus("", false);
                 return;
             }
 
-            var html = "";
+            // 私有桶没有公开链接：逐张生成临时签名 URL（1 小时有效）
+            var items = [];
+            var pending = files.length;
             for (var i = 0; i < files.length; i++) {
-                var name = files[i].name;
-                var url = supabase.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
-                var delBtn = isLoggedIn
-                    ? '<button class="del-btn" data-name="' + esc(name) + '" title="删除这张照片">✕</button>'
-                    : "";
-                html += '<div class="gallery-item">' +
-                        delBtn +
-                        '<img src="' + esc(url) + '" alt="' + esc(name) + '" loading="lazy" ' +
-                        'onclick="window.open(\'' + esc(url) + '\',\'_blank\')">' +
-                        '<div class="caption">' + esc(name) + '</div></div>';
+                (function (f) {
+                    supabase.storage.from(BUCKET).createSignedUrl(prefix + f.name, 60 * 60).then(function (r) {
+                        pending--;
+                        if (!r.error && r.data && r.data.signedUrl) {
+                            items.push({ name: f.name, url: r.data.signedUrl });
+                        }
+                        if (pending === 0) {
+                            renderGrid(items, files.length);
+                        }
+                    });
+                })(files[i]);
             }
-            grid.innerHTML = html;
-            setStatus("共 " + files.length + " 张照片", false);
         });
+    }
+
+    // 渲染照片网格
+    function renderGrid(items, total) {
+        if (items.length === 0) {
+            grid.innerHTML = '<div class="empty">图片加载失败，请刷新重试</div>';
+            setStatus("", true);
+            return;
+        }
+        var html = "";
+        for (var i = 0; i < items.length; i++) {
+            var name = items[i].name;
+            var url = items[i].url;
+            var delBtn = '<button class="del-btn" data-name="' + esc(name) + '" title="删除这张照片">✕</button>';
+            html += '<div class="gallery-item">' +
+                    delBtn +
+                    '<img src="' + esc(url) + '" alt="' + esc(name) + '" loading="lazy" ' +
+                    'onclick="window.open(\'' + esc(url) + '\',\'_blank\')">' +
+                    '<div class="caption">' + esc(name) + '</div></div>';
+        }
+        grid.innerHTML = html;
+        setStatus("共 " + total + " 张照片", false);
     }
 
     // 删除图片（事件委托 + 两段式确认，不依赖系统弹窗）
@@ -338,7 +377,7 @@
         btn.removeAttribute("data-pending");
         setStatus("正在删除……");
 
-        supabase.storage.from(BUCKET).remove([name]).then(function (res) {
+        supabase.storage.from(BUCKET).remove([currentUserId + "/" + name]).then(function (res) {
             if (res.error) {
                 setStatus("删除失败：" + res.error.message, true);
                 return;
@@ -372,11 +411,12 @@
 
         for (var i = 0; i < files.length; i++) {
             (function (file) {
-                // 文件名：时间戳 + 随机串 + 原扩展名
+                // 文件名：时间戳 + 随机串 + 原扩展名；路径：自己的用户文件夹下（私有隔离）
                 var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
                 var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                var path = currentUserId + "/" + name;
 
-                supabase.storage.from(BUCKET).upload(name, file, {
+                supabase.storage.from(BUCKET).upload(path, file, {
                     contentType: file.type || "image/jpeg"
                 }).then(function (up) {
                     done++;
@@ -391,8 +431,7 @@
         }
     });
 
-    // 启动
-    loadGallery();
+    // 启动（登录状态确定后由 getSession 回调触发 loadGallery）
 
 })();
     </script>
