@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实用工具 - BirdCloud</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 覆盖 style.css 的 .container 网格布局，改为整行流式布局 */
+        main.container {
+            width: 92%;
+            max-width: 1100px;
+            display: block;
+            margin-bottom: 60px;
+        }
+
+        .page-title {
+            color: #4682b4;
+            font-size: 26px;
+            margin: 24px 0 6px;
+        }
+
+        .page-sub {
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .tool-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(173, 216, 230, 0.25);
+        }
+
+        .tool-card h2 {
+            color: #4682b4;
+            margin-bottom: 6px;
+            font-size: 20px;
+        }
+
+        .tool-card .tool-desc {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .tool-card input[type="text"],
+        .tool-card input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: 1px solid #cfe3ee;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .tool-card input:focus {
+            border-color: #4682b4;
+        }
+
+        /* ---- 鸟类图鉴 ---- */
+        .bird-list {
+            max-height: 420px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .bird-item {
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+
+        .bird-item:hover {
+            box-shadow: 0 2px 8px rgba(70, 130, 180, .25);
+        }
+
+        .bird-item h3 {
+            margin: 0 0 2px;
+            font-size: 16px;
+            color: #2c5f8a;
+        }
+
+        .bird-item .sci {
+            font-style: italic;
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .bird-item .feat {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .bird-item .extra {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #cfe3ee;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .bird-item.open .extra {
+            display: block;
+        }
+
+        .empty-hint {
+            color: #999;
+            font-size: 14px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ---- 今日推荐 ---- */
+        .pick-result {
+            margin-top: 12px;
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 16px;
+            display: none;
+        }
+
+        .pick-result.show {
+            display: block;
+        }
+
+        .pick-result h3 {
+            margin: 0 0 2px;
+            font-size: 18px;
+            color: #2c5f8a;
+        }
+
+        .pick-result .sci {
+            font-style: italic;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .pick-result p {
+            margin: 8px 0 0;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        /* ---- 观鸟记录本 ---- */
+        .record-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .record-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .record-item {
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .record-item .r-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .record-item .r-name {
+            font-weight: bold;
+            color: #2c5f8a;
+        }
+
+        .record-item .r-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .record-item .r-note {
+            font-size: 13px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        .record-del {
+            background: none;
+            border: none;
+            color: #d1493f;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .record-del:hover {
+            background: #fdecea;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🐦 BirdCloud 观鸟社区</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="forum.html">鸟言鸟语</a>
+            <a href="gallery.html">观鸟相册</a>
+            <a href="tools.html" class="active">实用工具</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1 class="page-title">🛠️ 观鸟实用工具</h1>
+        <p class="page-sub">野外识别、每日推荐、观测记录，一页搞定</p>
+
+        <div class="tools-grid">
+            <!-- 工具一：鸟类图鉴 -->
+            <section class="tool-card">
+                <h2>🔍 鸟类图鉴查询</h2>
+                <p class="tool-desc">输入名称快速检索常见鸟类，点击卡片查看习性详情</p>
+                <input type="text" id="birdSearch" placeholder="输入鸟名，如：麻雀 / 翠鸟 / 白鹭……">
+                <div class="bird-list" id="birdList"></div>
+            </section>
+
+            <!-- 工具二：今日观鸟推荐 -->
+            <section class="tool-card">
+                <h2>🎲 今日观鸟推荐</h2>
+                <p class="tool-desc">不知道看什么？随机推荐一种鸟，带上它的识别要点</p>
+                <button class="btn" id="pickBtn">给我推荐一只鸟</button>
+                <div class="pick-result" id="pickResult"></div>
+            </section>
+
+            <!-- 工具三：观鸟记录本 -->
+            <section class="tool-card">
+                <h2>📒 观鸟记录本</h2>
+                <p class="tool-desc">随手记录每次观测，保存在本机浏览器，随时回看</p>
+                <div class="record-form">
+                    <input type="text" id="recName" placeholder="鸟种名称（如：白鹭）">
+                    <input type="text" id="recPlace" placeholder="观测地点（如：西湖湿地）">
+                    <input type="date" id="recDate">
+                    <input type="text" id="recNote" placeholder="备注（可选，如：3 只，清晨）">
+                    <button class="btn" id="addRec">添加记录</button>
+                </div>
+                <div class="record-list" id="recordList"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>BirdCloud 观鸟社区 © 2026</p>
+    </footer>
+
+    <script src="vendor/supabase.min.js"></script>
+    <script>
+    (function () {
+
+        var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        var supabase = null;
+
+        try {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.log("Supabase 初始化失败：" + e.message);
+        }
+
+        // 登录态导航：已登录显示"我的鸟窝"
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                var link = document.getElementById("nest-link");
+                if (!link) return;
+                if (res.data && res.data.session) {
+                    link.href = "profile.html";
+                    link.textContent = "我的鸟窝";
+                } else {
+                    link.href = "login.html";
+                    link.textContent = "鸟窝入住";
+                }
+            });
+        }
+
+        // ============ 鸟类图鉴数据（中国常见鸟类） ============
+        var BIRDS = [
+            { name: "树麻雀", sci: "Passer montanus", feat: "头顶栗褐色，脸颊一块白底黑斑，成群叽叽喳喳", habitat: "城乡各处、屋檐树丛", food: "谷粒、草籽、昆虫", tip: "不怕人，公园长椅旁最常见" },
+            { name: "喜鹊", sci: "Pica pica", feat: "黑白配色，长尾拖曳，叫声响亮的“嘎嘎”", habitat: "城区、农田、村落", food: "杂食：昆虫、果实、垃圾", tip: "常成对活动，民间视为报喜鸟" },
+            { name: "家燕", sci: "Hirundo rustica", feat: "剪刀状长尾，背蓝黑、腹白，贴地低飞捕虫", habitat: "乡村屋檐下筑泥巢", food: "空中飞虫", tip: "春天归来筑巢，预示天气变化" },
+            { name: "白头鹎", sci: "Pycnonotus sinensis", feat: "头顶后方一块白色枕斑，叫声婉转多变", habitat: "公园、庭院、次生林", food: "果实、昆虫", tip: "清晨鸣叫最活跃，爱停在树梢" },
+            { name: "乌鸫", sci: "Turdus merula", feat: "全身乌黑，黄色嘴与黄色眼圈，鸣唱悦耳", habitat: "庭院、林地、草坪", food: "蚯蚓、昆虫、浆果", tip: "晨昏时分鸣唱，模仿力强" },
+            { name: "珠颈斑鸠", sci: "Spilopelia chinensis", feat: "颈侧黑底白点的珠状斑，叫声低沉“咕咕咕”", habitat: "城区、公园、农田", food: "谷物、种子", tip: "爱在地面慢步觅食，不怕人" },
+            { name: "白鹭", sci: "Egretta garzetta", feat: "通体雪白，黑嘴黑脚，站立时脖颈常缩成 S 形", habitat: "水田、河湖、湿地", food: "小鱼、虾、蛙", tip: "喜欢涉水静立，俗称“雪客”" },
+            { name: "苍鹭", sci: "Ardea cinerea", feat: "灰背白颈，头顶两道黑纹，体型大，爱静立等鱼", habitat: "湖泊、湿地、水库", food: "鱼、蛙、水生昆虫", tip: "能长时间纹丝不动，人称“老等”" },
+            { name: "普通翠鸟", sci: "Alcedo atthis", feat: "背羽蓝绿闪亮，腹部橙红，长嘴如刀，贴水疾飞", habitat: "河溪、池塘、水渠", food: "小鱼、小虾", tip: "停在枝头盯着水面，入水如箭" },
+            { name: "大斑啄木鸟", sci: "Dendrocopos major", feat: "黑白相间，雄鸟枕后有红斑，敲树“笃笃”有声", habitat: "阔叶林、混交林、公园", food: "树干内害虫", tip: "沿树干螺旋向上攀爬觅食" },
+            { name: "红嘴蓝鹊", sci: "Urocissa erythrorhyncha", feat: "红嘴红脚，蓝紫色长尾，飞行姿态飘逸", habitat: "山地林缘、公园", food: "昆虫、果实、小型动物", tip: "常成小群，叫声高亢响亮" },
+            { name: "戴胜", sci: "Upupa epops", feat: "头顶扇状羽冠，黄褐羽配黑白翼纹，气味特殊", habitat: "开阔林地、草坪、田野", food: "蝼蛄、金龟子等地下害虫", tip: "俗称“花蒲扇”，冠羽开合很醒目" },
+            { name: "八哥", sci: "Acridotheres cristatellus", feat: "黑色羽毛，额前竖羽簇，翅上有白斑", habitat: "城区、村落、农田", food: "杂食：昆虫、果实、谷物", tip: "聪明，善于模仿人语鸟鸣" },
+            { name: "白鹡鸰", sci: "Motacilla alba", feat: "黑白灰配色，长尾不停上下摆动，边走边点头", habitat: "水边、道路、屋顶", food: "空中飞虫", tip: "飞行呈波浪状，叫声细而清脆" },
+            { name: "领角鸮", sci: "Otus lettia", feat: "小型猫头鹰，耳羽簇明显，夜间发出“呜呜”声", habitat: "林地、城市公园（夜观）", food: "鼠类、大型昆虫", tip: "白天隐身树洞，夜间活动" },
+            { name: "夜鹭", sci: "Nycticorax nycticorax", feat: "灰蓝背黑，红色虹膜，黄昏出巢，缩颈站立", habitat: "城市公园水边、湿地", food: "鱼、虾、蛙", tip: "白天缩成“一团”站树梢，像块石头" },
+            { name: "画眉", sci: "Garrulax canorus", feat: "眼周白色眉纹醒目，鸣声婉转多变", habitat: "灌丛、竹林、林地", food: "昆虫、浆果", tip: "善鸣善斗，是著名的笼养鸣禽" },
+            { name: "黑枕黄鹂", sci: "Oriolus chinensis", feat: "通体金黄，黑色过眼纹绕到枕部，鸣声清脆", habitat: "高大乔木、果园", food: "昆虫、果实", tip: "歌声如“高音笛”，藏在叶间难发现" },
+            { name: "棕背伯劳", sci: "Lanius schach", feat: "棕背黑翅黑尾，眼周黑色“眼罩”，性情凶猛", habitat: "开阔林缘、农田树丛", food: "昆虫、小鸟、蛙", tip: "会把猎物挂在树刺上，人称“屠夫鸟”" },
+            { name: "普通鸬鹚", sci: "Phalacrocorax carbo", feat: "通体黑褐泛绿辉，嘴尖带钩，常张翅晾晒", habitat: "湖泊、水库、江河", food: "鱼类", tip: "潜水捕鱼，渔民曾驯养它捕鱼" },
+            { name: "白骨顶", sci: "Fulica atra", feat: "通体黑色，额头白色骨板，游泳时点头", habitat: "湖泊、湿地、池塘", food: "水草、小鱼、软体动物", tip: "会潜水，受惊后踏水起飞" },
+            { name: "灰喜鹊", sci: "Cyanopica cyanus", feat: "灰色身体，蓝色翅膀与长尾，黑色头巾", habitat: "城区林地、公园", food: "杂食：昆虫、果实", tip: "成群活动，机警且喧闹" },
+            { name: "北红尾鸲", sci: "Phoenicurus auroreus", feat: "雄鸟橙红腹部与尾羽，灰黑头背，白翅斑", habitat: "林缘、灌丛、庭院", food: "昆虫", tip: "尾羽不停颤动，常落在枝头张望" },
+            { name: "斑嘴鸭", sci: "Anas zonorhyncha", feat: "棕褐羽，嘴端黄斑明显，翼镜蓝绿", habitat: "湖泊、湿地、水田", food: "水草、谷物、小鱼", tip: "常在城郊水库成群游弋" }
+        ];
+
+        // ============ 工具一：图鉴查询 ============
+        var searchInput = document.getElementById("birdSearch");
+        var birdList = document.getElementById("birdList");
+
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function renderBirds(keyword) {
+            var kw = (keyword || "").trim().toLowerCase();
+            var list = BIRDS.filter(function (b) {
+                if (!kw) return true;
+                return b.name.indexOf(kw) > -1 ||
+                    b.sci.toLowerCase().indexOf(kw) > -1 ||
+                    b.habitat.indexOf(kw) > -1 ||
+                    b.food.indexOf(kw) > -1;
+            });
+
+            if (list.length === 0) {
+                birdList.innerHTML = '<div class="empty-hint">没有找到相关鸟类，换个关键词试试</div>';
+                return;
+            }
+
+            var html = "";
+            for (var i = 0; i < list.length; i++) {
+                var b = list[i];
+                html += '<div class="bird-item" data-i="' + i + '">' +
+                    '<h3>' + esc(b.name) + '</h3>' +
+                    '<div class="sci">' + esc(b.sci) + '</div>' +
+                    '<div class="feat">' + esc(b.feat) + '</div>' +
+                    '<div class="extra">' +
+                    '🏠 栖息：' + esc(b.habitat) + '<br>' +
+                    '🍽 食性：' + esc(b.food) + '<br>' +
+                    '💡 ' + esc(b.tip) + '</div>' +
+                    '</div>';
+            }
+            birdList.innerHTML = html;
+        }
+
+        searchInput.addEventListener("input", function () {
+            renderBirds(searchInput.value);
+        });
+
+        birdList.addEventListener("click", function (e) {
+            var item = e.target.closest ? e.target.closest(".bird-item") : null;
+            if (!item) return;
+            var wasOpen = item.classList.contains("open");
+            var openItems = birdList.querySelectorAll(".bird-item.open");
+            for (var i = 0; i < openItems.length; i++) openItems[i].classList.remove("open");
+            if (!wasOpen) item.classList.add("open");
+        });
+
+        renderBirds("");
+
+        // ============ 工具二：今日观鸟推荐 ============
+        var pickBtn = document.getElementById("pickBtn");
+        var pickResult = document.getElementById("pickResult");
+
+        pickBtn.addEventListener("click", function () {
+            var b = BIRDS[Math.floor(Math.random() * BIRDS.length)];
+            pickResult.innerHTML =
+                '<h3>🐦 ' + esc(b.name) + '</h3>' +
+                '<div class="sci">' + esc(b.sci) + '</div>' +
+                '<p>🔍 ' + esc(b.feat) + '<br>' +
+                '🏠 ' + esc(b.habitat) + '<br>' +
+                '🍽 ' + esc(b.food) + '<br>' +
+                '💡 ' + esc(b.tip) + '</p>';
+            pickResult.classList.add("show");
+        });
+
+        // ============ 工具三：观鸟记录本（localStorage） ============
+        var STORE_KEY = "birdcloud-records";
+        var recName = document.getElementById("recName");
+        var recPlace = document.getElementById("recPlace");
+        var recDate = document.getElementById("recDate");
+        var recNote = document.getElementById("recNote");
+        var addRec = document.getElementById("addRec");
+        var recordList = document.getElementById("recordList");
+
+        function getRecords() {
+            try {
+                var raw = localStorage.getItem(STORE_KEY);
+                var arr = raw ? JSON.parse(raw) : [];
+                return Array.isArray(arr) ? arr : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveRecords(arr) {
+            try {
+                localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+            } catch (e) { }
+        }
+
+        function renderRecords() {
+            var arr = getRecords();
+            if (arr.length === 0) {
+                recordList.innerHTML = '<div class="empty-hint">还没有记录，添加第一条观鸟记录吧</div>';
+                return;
+            }
+            var html = "";
+            for (var i = 0; i < arr.length; i++) {
+                var r = arr[i];
+                html += '<div class="record-item">' +
+                    '<div class="r-info">' +
+                    '<div class="r-name">🐦 ' + esc(r.name) + '</div>' +
+                    '<div class="r-meta">' + esc(r.date) + ' · ' + esc(r.place) + '</div>' +
+                    (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '') +
+                    '</div>' +
+                    '<button class="record-del" data-i="' + i + '" title="删除这条记录">✕</button>' +
+                    '</div>';
+            }
+            recordList.innerHTML = html;
+        }
+
+        addRec.addEventListener("click", function () {
+            var name = recName.value.trim();
+            var place = recPlace.value.trim() || "未填写";
+            var date = recDate.value || new Date().toISOString().slice(0, 10);
+            var note = recNote.value.trim();
+            if (!name) {
+                alert("请先填写鸟种名称");
+                return;
+            }
+            var arr = getRecords();
+            arr.unshift({ name: name, place: place, date: date, note: note });
+            saveRecords(arr);
+            recName.value = "";
+            recPlace.value = "";
+            recNote.value = "";
+            renderRecords();
+        });
+
+        recordList.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".record-del") : null;
+            if (!btn) return;
+            var arr = getRecords();
+            arr.splice(parseInt(btn.getAttribute("data-i"), 10), 1);
+            saveRecords(arr);
+            renderRecords();
+        });
+
+        renderRecords();
+
+        // 日期默认今天
+        if (!recDate.value) {
+            recDate.value = new Date().toISOString().slice(0, 10);
+        }
+
+    })();
+    </script>
+</body>
+</html>
