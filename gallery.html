@@ -6,6 +6,14 @@
     <title>观鸟相册 | BirdCloud</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* 覆盖 style.css 的 .container 三列网格布局，改为整行流式布局并加宽 */
+        main.container {
+            width: 92%;
+            max-width: 1400px;
+            display: block;
+            margin-bottom: 60px;
+        }
+
         .panel {
             background: #fff;
             border-radius: 16px;
@@ -62,8 +70,20 @@
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .gallery-item {
