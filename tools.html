@@ -68,7 +68,7 @@
 
         /* ---- 鸟类图鉴 ---- */
         .bird-list {
-            max-height: 420px;
+            max-height: 480px;
             overflow-y: auto;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -86,6 +86,16 @@
 
         .bird-item:hover {
             box-shadow: 0 2px 8px rgba(70, 130, 180, .25);
+        }
+
+        .bird-item .bird-photo {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #eaf3f8;
+            display: block;
         }
 
         .bird-item h3 {
@@ -140,6 +150,16 @@
 
         .pick-result.show {
             display: block;
+        }
+
+        .pick-result .pick-photo {
+            width: 100%;
+            height: auto;
+            max-height: 360px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #eaf3f8;
         }
 
         .pick-result h3 {
@@ -334,12 +354,56 @@
             { name: "白骨顶", sci: "Fulica atra", feat: "通体黑色，额头白色骨板，游泳时点头", habitat: "湖泊、湿地、池塘", food: "水草、小鱼、软体动物", tip: "会潜水，受惊后踏水起飞" },
             { name: "灰喜鹊", sci: "Cyanopica cyanus", feat: "灰色身体，蓝色翅膀与长尾，黑色头巾", habitat: "城区林地、公园", food: "杂食：昆虫、果实", tip: "成群活动，机警且喧闹" },
             { name: "北红尾鸲", sci: "Phoenicurus auroreus", feat: "雄鸟橙红腹部与尾羽，灰黑头背，白翅斑", habitat: "林缘、灌丛、庭院", food: "昆虫", tip: "尾羽不停颤动，常落在枝头张望" },
-            { name: "斑嘴鸭", sci: "Anas zonorhyncha", feat: "棕褐羽，嘴端黄斑明显，翼镜蓝绿", habitat: "湖泊、湿地、水田", food: "水草、谷物、小鱼", tip: "常在城郊水库成群游弋" }
+            { name: "斑嘴鸭", sci: "Anas zonorhyncha", feat: "棕褐羽，嘴端黄斑明显，翼镜蓝绿", habitat: "湖泊、湿地、水田", food: "水草、谷物、小鱼", tip: "常在城郊水库成群游弋" },
+            { name: "红耳鹎", sci: "Pycnonotus jocosus", feat: "头顶高耸黑羽冠，眼下后方一块红斑，叫声“欢快”", habitat: "城区公园、庭院、林缘", food: "果实、昆虫", tip: "常小群活动，落在枝头上下摆尾" },
+            { name: "大山雀", sci: "Parus cinereus", feat: "头黑颊白，胸腹鲜黄、中央一条黑色纵带", habitat: "林地、公园、庭院", food: "昆虫、种子", tip: "敏捷好动，倒挂枝头找虫" },
+            { name: "暗绿绣眼鸟", sci: "Zosterops japonicus", feat: "娇小翠绿，眼周一圈醒目白环", habitat: "树林、公园、果园", food: "昆虫、花蜜、浆果", tip: "成群在树冠跳动，鸣声细碎清脆" },
+            { name: "鹊鸲", sci: "Copsychus saularis", feat: "黑白配色，白翼斑，长尾常翘起如扇", habitat: "城区庭院、公园、村落", food: "昆虫", tip: "晨昏爱站屋顶高歌，鸣声多变" },
+            { name: "灰椋鸟", sci: "Spodiopsar cineraceus", feat: "灰褐羽、脸颊白斑，嘴脚橙黄醒目", habitat: "城区、农田、旷野", food: "杂食：昆虫、果实、谷物", tip: "秋冬成大群，铺天盖地迁徙" },
+            { name: "山斑鸠", sci: "Streptopelia orientalis", feat: "灰粉褐羽，颈侧黑白条纹斑，无珠点", habitat: "林缘、农田、公园", food: "谷物、种子、浆果", tip: "与珠颈斑鸠相似，颈斑呈条纹状" },
+            { name: "小鸊鷉", sci: "Tachybaptus ruficollis", feat: "小水鸟，颈侧红棕、嘴基黄斑，善潜泳", habitat: "公园湖泊、水塘、湿地", food: "小鱼、虾、水生昆虫", tip: "遇险先潜水，只露脑袋观察" },
+            { name: "棕头鸦雀", sci: "Sinosuthora webbiana", feat: "棕褐色小圆球，尾长，喙短厚似鹦鹉嘴", habitat: "芦苇丛、灌丛、竹丛", food: "昆虫、草籽", tip: "常成群在草丛里“啾啾”窜动" }
         ];
 
         // ============ 工具一：图鉴查询 ============
         var searchInput = document.getElementById("birdSearch");
         var birdList = document.getElementById("birdList");
+
+        // 每只鸟对应的图片（顺序与 BIRDS 数组一致）
+        var BIRD_IMGS = [
+            "images/birds/01-treesparrow.png",
+            "images/birds/02-magpie.png",
+            "images/birds/03-barnswallow.png",
+            "images/birds/04-bulbul.png",
+            "images/birds/05-blackbird.png",
+            "images/birds/06-spotteddove.png",
+            "images/birds/07-littleegret.png",
+            "images/birds/08-greyheron.png",
+            "images/birds/09-kingfisher.png",
+            "images/birds/10-woodpecker.png",
+            "images/birds/11-redbilledbluemagpie.png",
+            "images/birds/12-hoopoe.png",
+            "images/birds/13-crestedmyna.png",
+            "images/birds/14-whitewagtail.png",
+            "images/birds/15-scopsowl.png",
+            "images/birds/16-nightheron.png",
+            "images/birds/17-hwamei.png",
+            "images/birds/18-oriole.png",
+            "images/birds/19-longtailshrike.png",
+            "images/birds/20-cormorant.png",
+            "images/birds/21-coot.png",
+            "images/birds/22-azurewingedmagpie.png",
+            "images/birds/23-redstart.png",
+            "images/birds/24-spotbilledduck.png",
+            "images/birds/25-redwhiskeredbulbul.png",
+            "images/birds/26-greattit.png",
+            "images/birds/27-japwhiteeye.png",
+            "images/birds/28-magpierobin.png",
+            "images/birds/29-whitecheekedstarling.png",
+            "images/birds/30-orientalturtledove.png",
+            "images/birds/31-littlegrebe.png",
+            "images/birds/32-parrotbill.png"
+        ];
 
         function esc(s) {
             return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -347,13 +411,19 @@
 
         function renderBirds(keyword) {
             var kw = (keyword || "").trim().toLowerCase();
-            var list = BIRDS.filter(function (b) {
-                if (!kw) return true;
-                return b.name.indexOf(kw) > -1 ||
+
+            // 保留每只鸟在 BIRDS 中的全局索引，用于取对应图片
+            var list = [];
+            for (var gi = 0; gi < BIRDS.length; gi++) {
+                var b = BIRDS[gi];
+                if (!kw ||
+                    b.name.indexOf(kw) > -1 ||
                     b.sci.toLowerCase().indexOf(kw) > -1 ||
                     b.habitat.indexOf(kw) > -1 ||
-                    b.food.indexOf(kw) > -1;
-            });
+                    b.food.indexOf(kw) > -1) {
+                    list.push({ bird: b, idx: gi });
+                }
+            }
 
             if (list.length === 0) {
                 birdList.innerHTML = '<div class="empty-hint">没有找到相关鸟类，换个关键词试试</div>';
@@ -362,12 +432,14 @@
 
             var html = "";
             for (var i = 0; i < list.length; i++) {
-                var b = list[i];
-                html += '<div class="bird-item" data-i="' + i + '">' +
+                var b = list[i].bird;
+                var img = BIRD_IMGS[list[i].idx] || "";
+                html += '<div class="bird-item" data-i="' + list[i].idx + '">' +
                     '<h3>' + esc(b.name) + '</h3>' +
                     '<div class="sci">' + esc(b.sci) + '</div>' +
                     '<div class="feat">' + esc(b.feat) + '</div>' +
                     '<div class="extra">' +
+                    '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">' +
                     '🏠 栖息：' + esc(b.habitat) + '<br>' +
                     '🍽 食性：' + esc(b.food) + '<br>' +
                     '💡 ' + esc(b.tip) + '</div>' +
@@ -396,8 +468,10 @@
         var pickResult = document.getElementById("pickResult");
 
         pickBtn.addEventListener("click", function () {
-            var b = BIRDS[Math.floor(Math.random() * BIRDS.length)];
+            var bi = Math.floor(Math.random() * BIRDS.length);
+            var b = BIRDS[bi];
             pickResult.innerHTML =
+                '<img class="pick-photo" src="' + esc(BIRD_IMGS[bi]) + '" alt="' + esc(b.name) + '">' +
                 '<h3>🐦 ' + esc(b.name) + '</h3>' +
                 '<div class="sci">' + esc(b.sci) + '</div>' +
                 '<p>🔍 ' + esc(b.feat) + '<br>' +
