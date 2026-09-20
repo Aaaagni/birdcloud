@@ -3,38 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>观鸟相册</title>
+    <title>观鸟相册 | BirdCloud</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .panel {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            padding: 30px 24px;
+        }
+
+        .upload-panel {
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .upload-panel h2 {
+            margin: 0 0 10px;
+            font-size: 32px;
+        }
+
+        #hint {
+            margin: 0 0 20px;
+            font-size: 16px;
+            color: #789;
+        }
+
+        .btn-add {
+            display: inline-block;
+            padding: 14px 42px;
+            border: none;
+            border-radius: 14px;
+            background: #72bcd4;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-add:hover {
+            opacity: 0.88;
+        }
+
+        #status {
+            min-height: 20px;
+            margin: 14px 0 0;
+            font-size: 17px;
+            color: #4c9ab5;
+            text-align: center;
+        }
+
+        .gallery-panel h3 {
+            margin: 0 0 18px;
+            font-size: 20px;
+            color: #345;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            cursor: zoom-in;
+            background: #eef4f8;
+        }
+
+        .del-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(220, 53, 69, 0.88);
+            color: #fff;
+            font-size: 14px;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .gallery-item:hover .del-btn {
+            opacity: 1;
+        }
+
+        .del-btn:hover {
+            background: #c82333;
+        }
+
+        .del-btn[data-pending="1"] {
+            width: auto;
+            padding: 0 10px;
+            font-size: 13px;
+            background: #c82333;
+            opacity: 1;
+        }
+
+        .gallery-item .caption {
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #789;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty {
+            color: #99a;
+            padding: 60px 20px;
+            text-align: center;
+            font-size: 18px;
+            line-height: 2;
+        }
+    </style>
 </head>
 <body>
+
     <header>
         <div class="logo">🐦 BirdCloud 观鸟社区</div>
         <nav>
-            <a href=" ">首页</a >
-            <a href="forum.html">鸟言鸟语</a >
-            <a href="gallery.html" class="active">观鸟相册</a >
-            <a href="friends.html">拜访鸟友</a >
-            <a href="login.html">鸟窝入住</a >
+            <a href="index.html">首页</a>
+            <a href="forum.html">鸟言鸟语</a>
+            <a href="gallery.html" class="active">观鸟相册</a>
+            <a href="friends.html">拜访鸟友</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
         </nav>
     </header>
 
     <main class="container">
-        <div class="card">
-            <h2>萌禽专区</h2>
-            <p>后续对接后端相册接口展示图片</p >
-        </div>
-        <div class="card">
-            <h2>猛禽专区</h2>
-            <p>后续对接后端相册接口展示图片</p >
-        </div>
-        <div class="card">
-            <h2>其他专区</h2>
-            <p>后续对接后端相册接口展示图片</p >
-        </div>
+
+        <!-- 上区：添加图片 -->
+        <section class="panel upload-panel">
+            <h2>观鸟相册</h2>
+            <p id="hint">图片存入云端相册</p>
+            <button id="addBtn" class="btn-add">添加图片</button>
+            <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+            <div id="status"></div>
+        </section>
+
+        <!-- 下区：图片展示 -->
+        <section class="panel gallery-panel">
+            <h3>已上传照片</h3>
+            <div id="grid" class="gallery-grid">
+                <div class="empty">加载中……</div>
+            </div>
+        </section>
+
     </main>
 
     <footer>
-        <p>BirdCloud 观鸟社区 © 2026</p >
+        <p>BirdCloud 观鸟社区 © 2026</p>
     </footer>
+
+    <script src="vendor/supabase.min.js"></script>
+
+    <script>
+(function () {
+
+    var BUCKET = "bird-gallery";
+    var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+    var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+    var supabase = null;
+    var isLoggedIn = false;
+
+    var grid = document.getElementById("grid");
+    var addBtn = document.getElementById("addBtn");
+    var fileInput = document.getElementById("fileInput");
+    var statusEl = document.getElementById("status");
+    var hintEl = document.getElementById("hint");
+
+    function setStatus(text, isError) {
+        if (statusEl) {
+            statusEl.textContent = text;
+            statusEl.style.color = isError ? "#d1493f" : "#4c9ab5";
+        }
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    // 最先注册全局错误捕获
+    window.addEventListener("error", function (e) {
+        setStatus("页面脚本错误：" + e.message, true);
+    });
+
+    // 初始化（try-catch 包裹）
+    try {
+        if (!window.supabase || typeof window.supabase.createClient !== "function") {
+            setStatus("错误：Supabase 库未加载", true);
+        } else {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+    } catch (err) {
+        setStatus("初始化失败：" + err.message, true);
+    }
+
+    // 登录状态 + 导航"我的鸟窝"逻辑
+    if (supabase) {
+        supabase.auth.getSession().then(function (res) {
+            isLoggedIn = !!(res.data && res.data.session);
+
+            var nest = document.getElementById("nest-link");
+            if (nest) {
+                if (isLoggedIn) {
+                    nest.href = "profile.html";
+                    nest.textContent = "我的鸟窝";
+                } else {
+                    nest.href = "login.html";
+                    nest.textContent = "鸟窝入住";
+                }
+            }
+
+            if (isLoggedIn) {
+                hintEl.textContent = "已登录 · 点击「添加图片」从系统相册选择照片上传";
+            } else {
+                hintEl.textContent = "未登录 · 点击「添加图片」将先去登录";
+            }
+        });
+    }
+
+    // 加载相册
+    function loadGallery() {
+        if (!supabase) return;
+        setStatus("正在加载相册……");
+
+        supabase.storage.from(BUCKET).list().then(function (res) {
+            if (res.error) {
+                var msg = (res.error.message || "");
+                if (msg.indexOf("not found") > -1) {
+                    grid.innerHTML = '<div class="empty">📦 云端相册尚未配置<br>' +
+                        '需要在 Supabase 控制台创建存储桶 <b>bird-gallery</b>（公共读）<br>' +
+                        '创建后可在此上传和查看图片</div>';
+                } else {
+                    grid.innerHTML = '<div class="empty">相册加载失败：' + esc(msg) + '</div>';
+                }
+                setStatus("", false);
+                return;
+            }
+
+            var files = (res.data || []).filter(function (f) {
+                // 只保留图片文件（排除目录项：目录没有 metadata）
+                return f && f.metadata &&
+                    typeof f.metadata.mimetype === "string" &&
+                    f.metadata.mimetype.indexOf("image/") === 0;
+            });
+
+            if (files.length === 0) {
+                grid.innerHTML = '<div class="empty">🐦 相册还是空的<br>点击右上角「添加图片」上传第一张观鸟照片吧</div>';
+                setStatus("", false);
+                return;
+            }
+
+            var html = "";
+            for (var i = 0; i < files.length; i++) {
+                var name = files[i].name;
+                var url = supabase.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
+                var delBtn = isLoggedIn
+                    ? '<button class="del-btn" data-name="' + esc(name) + '" title="删除这张照片">✕</button>'
+                    : "";
+                html += '<div class="gallery-item">' +
+                        delBtn +
+                        '<img src="' + esc(url) + '" alt="' + esc(name) + '" loading="lazy" ' +
+                        'onclick="window.open(\'' + esc(url) + '\',\'_blank\')">' +
+                        '<div class="caption">' + esc(name) + '</div></div>';
+            }
+            grid.innerHTML = html;
+            setStatus("共 " + files.length + " 张照片", false);
+        });
+    }
+
+    // 删除图片（事件委托 + 两段式确认，不依赖系统弹窗）
+    var pendingDelete = null;
+
+    grid.addEventListener("click", function (e) {
+        var btn = e.target.closest ? e.target.closest(".del-btn") : null;
+        if (!btn) return;
+
+        var name = btn.getAttribute("data-name");
+
+        // 第一次点击：进入"确认删除？"待确认状态
+        if (pendingDelete !== name) {
+            var prev = grid.querySelector('.del-btn[data-pending="1"]');
+            if (prev) {
+                prev.textContent = "✕";
+                prev.removeAttribute("data-pending");
+            }
+            pendingDelete = name;
+            btn.textContent = "确认?";
+            btn.setAttribute("data-pending", "1");
+            return;
+        }
+
+        // 第二次点击：执行删除
+        pendingDelete = null;
+        btn.textContent = "✕";
+        btn.removeAttribute("data-pending");
+        setStatus("正在删除……");
+
+        supabase.storage.from(BUCKET).remove([name]).then(function (res) {
+            if (res.error) {
+                setStatus("删除失败：" + res.error.message, true);
+                return;
+            }
+            setStatus("已删除");
+            loadGallery();
+        });
+    });
+
+    // 添加图片
+    addBtn.addEventListener("click", function () {
+        if (!isLoggedIn) {
+            setStatus("请先登录后再上传图片", true);
+            setTimeout(function () { window.location.href = "login.html?next=gallery.html"; }, 900);
+            return;
+        }
+        fileInput.value = "";
+        fileInput.click(); // 调起系统相册/文件选择器
+    });
+
+    // 选择文件后上传
+    fileInput.addEventListener("change", function () {
+        var files = fileInput.files;
+        if (!files || files.length === 0) return;
+
+        var total = files.length;
+        var done = 0;
+        var failed = 0;
+
+        setStatus("正在上传 0/" + total + " ……");
+
+        for (var i = 0; i < files.length; i++) {
+            (function (file) {
+                // 文件名：时间戳 + 随机串 + 原扩展名
+                var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+                var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+
+                supabase.storage.from(BUCKET).upload(name, file, {
+                    contentType: file.type || "image/jpeg"
+                }).then(function (up) {
+                    done++;
+                    if (up.error) failed++;
+                    setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
+                    if (done === total) {
+                        setStatus(failed === 0 ? "上传完成！" : "上传完成（失败 " + failed + " 张，请检查存储配置）", failed > 0);
+                        loadGallery();
+                    }
+                });
+            })(files[i]);
+        }
+    });
+
+    // 启动
+    loadGallery();
+
+})();
+    </script>
+
 </body>
 </html>
