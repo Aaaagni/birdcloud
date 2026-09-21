@@ -3,31 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>观鸟论坛</title>
+    <title>观鸟地点推荐</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        main.container {
+            width: 92%;
+            max-width: 1400px;
+            display: block;
+        }
+
+        .spot-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .spot-toolbar input[type="search"] {
+            flex: 1;
+            min-width: 220px;
+            padding: 10px 14px;
+            border: 1px solid #d0e4ee;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        .spot-toolbar select {
+            padding: 10px 14px;
+            border: 1px solid #d0e4ee;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .prov-stats {
+            font-size: 14px;
+            color: #668;
+            margin-bottom: 4px;
+        }
+
+        .prov-block {
+            margin-bottom: 26px;
+            border: 1px solid #dceef6;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .prov-title {
+            background: linear-gradient(135deg, #2c7a4b, #3fa06a);
+            color: #fff;
+            padding: 12px 18px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prov-title small {
+            font-weight: normal;
+            font-size: 13px;
+            opacity: .85;
+        }
+
+        .prov-spots {
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .spot-item {
+            border: 1px solid #e3eef5;
+            border-radius: 10px;
+            padding: 12px 14px;
+            background: #fbfdfe;
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+
+        .spot-item:hover {
+            box-shadow: 0 2px 8px rgba(44, 122, 75, .18);
+        }
+
+        .spot-item h4 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            color: #1f5b38;
+        }
+
+        .spot-item .city {
+            font-size: 13px;
+            color: #668;
+            margin-bottom: 6px;
+        }
+
+        .spot-item .feat {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 4px;
+        }
+
+        .spot-item .detail {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #d8e8f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .spot-item.open .detail {
+            display: block;
+        }
+
+        .spot-item .hint {
+            font-size: 12px;
+            color: #2c7a4b;
+            margin-top: 6px;
+        }
+
+        .empty-hint {
+            text-align: center;
+            color: #668;
+            padding: 40px 0;
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="logo">🐦 BirdCloud 观鸟社区</div>
         <nav>
-            <a href="index.html ">首页</a >
-            <a href="forum.html" class="active">鸟言鸟语</a >
-            <a href="gallery.html">观鸟相册</a >
-            <a href="tools.html">实用工具</a >
-            <a href="login.html">鸟窝入住</a >
+            <a href="index.html">首页</a>
+            <a href="forum.html" class="active">观鸟地点</a>
+            <a href="gallery.html">观鸟相册</a>
+            <a href="tools.html">实用工具</a>
+            <a href="login.html">鸟窝入住</a>
         </nav>
     </header>
 
-    <main class="container" style="grid-template-columns:1fr;">
+    <main class="container">
         <div class="card">
-            <h2>鸟友交流论坛</h2>
-            <!-- 后端Flarum地址后续替换这里的IP -->
-            <iframe src="http://你的服务器IP" style="width:100%;height:900px;border:none;border-radius:8px;"></iframe>
+            <h2>📍 中国观鸟地点推荐</h2>
+            <p>按省份整理了全国 34 个省级行政区的知名观鸟地，点击地点可查看详细信息和最佳观鸟季节。</p>
+
+            <div class="spot-toolbar">
+                <input type="search" id="spotSearch" placeholder="🔍 搜索地点 / 城市 / 特色鸟种……">
+                <select id="provFilter">
+                    <option value="">全部省份</option>
+                </select>
+            </div>
+
+            <div class="prov-stats" id="provStats"></div>
+            <div id="spotList"></div>
         </div>
     </main>
 
     <footer>
-        <p>BirdCloud 观鸟社区 © 2026</p >
+        <p>BirdCloud 观鸟社区 © 2026 · 观鸟请保持距离，不打扰鸟类栖息</p>
     </footer>
+
+    <script>
+        var SPOTS = [
+            { prov: "北京", spots: [
+                { name: "野鸭湖湿地", city: "北京·延庆", feat: "华北重要迁徙驿站，雁鸭类集中", best: "10月-次年3月", tip: "冬候鸟数量大，灰鹤、天鹅成群" },
+                { name: "奥林匹克森林公园", city: "北京·朝阳", feat: "市区观鸟首选，林鸟水鸟兼备", best: "全年", tip: "晨昏活动多，可看鸳鸯、黑枕黄鹂" },
+                { name: "十渡", city: "北京·房山", feat: "拒马河峡谷，猛禽与岩栖鸟", best: "4-6月", tip: "重点找黑鹳、秃鹫，注意安全" }
+            ]},
+            { prov: "天津", spots: [
+                { name: "北大港湿地", city: "天津·滨海新区", feat: "东亚-澳大利西亚迁飞通道关键停歇地", best: "3-4月、10-11月", tip: "东方白鹳、白头鹤成群过境" },
+                { name: "七里海湿地", city: "天津·宁河", feat: "古海岸湿地，珍稀水鸟众多", best: "春秋迁徙季", tip: "丹顶鹤、白枕鹤偶有记录" }
+            ]},
+            { prov: "上海", spots: [
+                { name: "崇明东滩", city: "上海·崇明", feat: "国际重要湿地，鸻鹬类迁徙枢纽", best: "4-5月、9-10月", tip: "小天鹅越冬地，滩涂壮观" },
+                { name: "南汇东滩", city: "上海·浦东", feat: "迁徙候鸟补给站，曾创单日万只记录", best: "春秋迁徙季", tip: "黄胸鹀、鹞类集中过境" },
+                { name: "世纪公园", city: "上海·浦东", feat: "市区公园，常见林鸟与鹭类", best: "全年", tip: "适合新手入门，戴胜常出没" }
+            ]},
+            { prov: "重庆", spots: [
+                { name: "缙云山", city: "重庆·北碚", feat: "亚热带常绿林，山鸟丰富", best: "4-6月、9-10月", tip: "灰胸竹鸡、红嘴相思鸟" },
+                { name: "汉丰湖", city: "重庆·开州", feat: "城市湿地，冬候鸟聚集", best: "11月-次年2月", tip: "斑嘴鸭、绿翅鸭成片游弋" },
+                { name: "彩云湖公园", city: "重庆·九龙坡", feat: "主城最大湿地公园", best: "全年", tip: "白鹭、夜鹭常见，夜观可遇鸮" }
+            ]},
+            { prov: "河北", spots: [
+                { name: "北戴河", city: "河北·秦皇岛", feat: "世界著名候鸟迁徙通道", best: "5月、9月", tip: "东方白鹳、猛禽集群过境，观鸟圣地" },
+                { name: "衡水湖", city: "河北·衡水", feat: "华北平原最大淡水湖", best: "10月-次年3月", tip: "青头潜鸭重要繁殖地" },
+                { name: "白洋淀", city: "河北·保定", feat: "华北湿地明珠，水鸟乐园", best: "春秋迁徙季", tip: "水雉、须浮鸥等夏候鸟" }
+            ]},
+            { prov: "山西", spots: [
+                { name: "运城盐湖", city: "山西·运城", feat: "内陆盐湖，近年火烈鸟造访", best: "11月-次年3月", tip: "火烈鸟、反嘴鹬、赤麻鸭" },
+                { name: "芦芽山", city: "山西·忻州", feat: "晋北山地森林，国家一级鸟种", best: "5-7月", tip: "褐马鸡为本区招牌鸟种" }
+            ]},
+            { prov: "内蒙古", spots: [
+                { name: "乌梁素海", city: "内蒙古·巴彦淖尔", feat: "黄河段最大湖泊湿地", best: "5-6月、9-10月", tip: "疣鼻天鹅、遗鸥繁殖地" },
+                { name: "达里诺尔湖", city: "内蒙古·赤峰", feat: "高原内陆湖，候鸟天堂", best: "4-5月、9-10月", tip: "大天鹅集群，数量可达万只" },
+                { name: "呼伦湖", city: "内蒙古·呼伦贝尔", feat: "北方草原大湖", best: "5-8月", tip: "草原雕、大鸨等草原鸟种" }
+            ]},
+            { prov: "辽宁", spots: [
+                { name: "老铁山", city: "辽宁·大连", feat: "东北亚猛禽迁徙通道，秋季壮观", best: "9-10月", tip: "金雕、苍鹰、鹰隼类成百上千过境" },
+                { name: "盘锦红海滩", city: "辽宁·盘锦", feat: "碱蓬湿地与芦苇荡", best: "9-11月", tip: "丹顶鹤、黑嘴鸥、白鹤迁徙停歇" },
+                { name: "卧龙湖", city: "辽宁·沈阳", feat: "辽北最大淡水湖", best: "10月-次年2月", tip: "白鹤重要停歇地" }
+            ]},
+            { prov: "吉林", spots: [
+                { name: "向海湿地", city: "吉林·白城", feat: "国际重要湿地，鹤类之乡", best: "5-6月、9-10月", tip: "丹顶鹤、白鹤、白枕鹤同框" },
+                { name: "莫莫格", city: "吉林·镇赉", feat: "白鹤迁徙关键停歇地", best: "4-5月、9-10月", tip: "全球九成以上白鹤春秋在此停歇" },
+                { name: "查干湖", city: "吉林·松原", feat: "北方大湖，冬季冰上渔猎闻名", best: "10月-次年2月", tip: "大雁、赤麻鸭、海雕越冬" }
+            ]},
+            { prov: "黑龙江", spots: [
+                { name: "扎龙自然保护区", city: "黑龙江·齐齐哈尔", feat: "丹顶鹤核心繁殖地", best: "5-7月", tip: "丹顶鹤、白枕鹤繁殖期可看求偶" },
+                { name: "兴凯湖", city: "黑龙江·密山", feat: "中俄界湖，水域辽阔", best: "4-5月、9-10月", tip: "白尾海雕、虎头海雕越冬，雁鸭众多" },
+                { name: "珍宝岛湿地", city: "黑龙江·虎林", feat: "三江平原典型湿地", best: "5-6月", tip: "东方白鹳、丹顶鹤繁殖" }
+            ]},
+            { prov: "江苏", spots: [
+                { name: "条子泥", city: "江苏·盐城", feat: "黄海湿地，勺嘴鹬越冬关键地", best: "9-11月、3-4月", tip: "全球极危物种勺嘴鹬，世界遗产地" },
+                { name: "紫金山", city: "江苏·南京", feat: "南京市区山林，鸟种多样", best: "全年", tip: "北红尾鸲、山鹪莺、鹰鸮" },
+                { name: "玄武湖", city: "江苏·南京", feat: "市区湖泊，冬季水鸟集中", best: "11月-次年2月", tip: "绿头鸭、白骨顶、红嘴鸥" }
+            ]},
+            { prov: "浙江", spots: [
+                { name: "西溪湿地", city: "浙江·杭州", feat: "城市湿地，水鸟与林鸟兼有", best: "全年", tip: "夜鹭、白鹭、画眉，可乘船观鸟" },
+                { name: "温州湾", city: "浙江·温州", feat: "浙南海岸滩涂，迁徙水鸟", best: "4-5月、9-10月", tip: "黑嘴鸥、大杓鹬等水鸟" },
+                { name: "莫干山", city: "浙江·湖州", feat: "浙北山林，夏季繁殖鸟多", best: "5-7月", tip: "红嘴蓝鹊、白眉姬鹟" }
+            ]},
+            { prov: "安徽", spots: [
+                { name: "升金湖", city: "安徽·池州", feat: "白头鹤重要越冬地", best: "11月-次年3月", tip: "白头鹤、小天鹅、鸿雁聚集" },
+                { name: "黄山", city: "安徽·黄山", feat: "高山林鸟与特有鸟种", best: "4-6月", tip: "黄山鹪鹛、白腹蓝鹟" }
+            ]},
+            { prov: "福建", spots: [
+                { name: "闽江口", city: "福建·福州", feat: "河口湿地，珍稀水鸟", best: "10月-次年3月", tip: "中华凤头燕鸥、黑脸琵鹭越冬" },
+                { name: "武夷山", city: "福建·南平", feat: "世界自然遗产，鸟种极为丰富", best: "4-7月", tip: "黄腹角雉、白颈长尾雉、灰胸竹鸡" },
+                { name: "筼筜湖", city: "福建·厦门", feat: "市区湖泊，亲民观鸟点", best: "全年", tip: "鸬鹚冬季大群停栖" }
+            ]},
+            { prov: "江西", spots: [
+                { name: "鄱阳湖", city: "江西·九江/南昌", feat: "中国最大淡水湖，世界候鸟越冬地", best: "11月-次年3月", tip: "白鹤占全球九成以上，东方白鹳、天鹅" },
+                { name: "婺源", city: "江西·上饶", feat: "丘陵水田与古树林", best: "11月-次年3月", tip: "中华秋沙鸭越冬，蓝冠噪鹛春夏可见" }
+            ]},
+            { prov: "山东", spots: [
+                { name: "黄河三角洲", city: "山东·东营", feat: "黄河入海口湿地，珍稀水鸟", best: "10月-次年3月", tip: "东方白鹳、黑嘴鸥繁殖越冬" },
+                { name: "荣成天鹅湖", city: "山东·威海", feat: "大天鹅传统越冬地", best: "11月-次年2月", tip: "数百只大天鹅越冬，可近距离观察" }
+            ]},
+            { prov: "河南", spots: [
+                { name: "三门峡天鹅湖", city: "河南·三门峡", feat: "黄河库区，天鹅越冬胜地", best: "11月-次年2月", tip: "大天鹅数千只越冬，城市观鸟典范" },
+                { name: "董寨", city: "河南·罗山", feat: "国家级自然保护区", best: "4-6月", tip: "朱鹮野化种群、白冠长尾雉" }
+            ]},
+            { prov: "湖北", spots: [
+                { name: "沉湖湿地", city: "湖北·武汉", feat: "江汉平原湖泊湿地群", best: "11月-次年3月", tip: "青头潜鸭、东方白鹳越冬" },
+                { name: "神农架", city: "湖北·神农架", feat: "华中屋脊，高山林鸟", best: "5-7月", tip: "金丝猴伴游，红腹角雉、白冠燕尾" }
+            ]},
+            { prov: "湖南", spots: [
+                { name: "东洞庭湖", city: "湖南·岳阳", feat: "国际重要湿地，雁鸭越冬地", best: "11月-次年3月", tip: "小白额雁、白鹤、小天鹅" },
+                { name: "西洞庭湖", city: "湖南·常德", feat: "湖区湿地，水鸟聚集", best: "11月-次年2月", tip: "罗纹鸭、花脸鸭集群" }
+            ]},
+            { prov: "广东", spots: [
+                { name: "深圳湾", city: "广东·深圳", feat: "城市滨海湿地，鸻鹬与黑脸琵鹭", best: "10月-次年3月", tip: "黑脸琵鹭越冬，弹涂鱼与鸻鹬相映成趣" },
+                { name: "南沙湿地", city: "广东·广州", feat: "珠江口湿地公园", best: "11月-次年3月", tip: "黑脸琵鹭、白琵鹭越冬" },
+                { name: "海丰湿地", city: "广东·汕尾", feat: "浅海滩涂与鱼塘", best: "全年", tip: "紫水鸡、黑嘴鸥" },
+                { name: "湛江红树林", city: "广东·湛江", feat: "中国最大红树林保护区", best: "10月-次年3月", tip: "黑脸琵鹭、白鹭群，湿地生态丰富" }
+            ]},
+            { prov: "广西", spots: [
+                { name: "北海冠头岭", city: "广西·北海", feat: "秋季猛禽迁徙通道", best: "9-11月", tip: "鹰、隼、鹞类成群过境，海边壮丽" },
+                { name: "北部湾滩涂", city: "广西·防城港", feat: "勺嘴鹬越冬地之一", best: "10月-次年3月", tip: "勺嘴鹬、黑脸琵鹭、白腰杓鹬" },
+                { name: "弄岗", city: "广西·崇左", feat: "喀斯特森林，特有鸟种", best: "1-4月", tip: "弄岗穗鹛为中国新记录鸟种" }
+            ]},
+            { prov: "海南", spots: [
+                { name: "东寨港红树林", city: "海南·海口", feat: "中国最大红树林", best: "10月-次年3月", tip: "黑脸琵鹭、白鹭、池鹭" },
+                { name: "尖峰岭", city: "海南·乐东", feat: "热带雨林，特有雉类", best: "2-5月", tip: "海南山鹧鸪、孔雀雉、白鹇" }
+            ]},
+            { prov: "四川", spots: [
+                { name: "青龙湖", city: "四川·成都", feat: "成都市区湿地，水鸟集中", best: "10月-次年3月", tip: "棉凫、白眉鸭、斑嘴鸭" },
+                { name: "唐家河", city: "四川·广元", feat: "岷山山地森林，雉类丰富", best: "4-6月、9-10月", tip: "绿尾虹雉、红腹角雉、灰冠鸦雀" },
+                { name: "若尔盖湿地", city: "四川·阿坝", feat: "高原湿地，黑颈鹤繁殖地", best: "5-8月", tip: "黑颈鹤、斑头雁、赤麻鸭" }
+            ]},
+            { prov: "贵州", spots: [
+                { name: "草海", city: "贵州·威宁", feat: "贵州高原明珠，黑颈鹤越冬地", best: "11月-次年3月", tip: "黑颈鹤、灰鹤、赤麻鸭" },
+                { name: "梵净山", city: "贵州·铜仁", feat: "世界自然遗产，亚热带森林", best: "4-7月", tip: "黔金丝猴伴游，多种噪鹛、鸦雀" }
+            ]},
+            { prov: "云南", spots: [
+                { name: "滇池海埂", city: "云南·昆明", feat: "市区湖泊，红嘴鸥越冬胜地", best: "11月-次年3月", tip: "红嘴鸥数万只，观鸥喂鸥文化" },
+                { name: "大山包", city: "云南·昭通", feat: "高原草甸，黑颈鹤越冬地", best: "11月-次年3月", tip: "黑颈鹤集群，云海日出同框" },
+                { name: "盈江", city: "云南·德宏", feat: "中国观鸟圣地，热带鸟种天堂", best: "1-4月", tip: "花冠皱盔犀鸟、孔雀雉、红腿小隼" },
+                { name: "西双版纳", city: "云南·景洪", feat: "热带雨林，鸟种极为丰富", best: "1-4月", tip: "蓝耳拟啄木鸟、黑头黄鹂、各种太阳鸟" }
+            ]},
+            { prov: "西藏", spots: [
+                { name: "拉萨河谷", city: "西藏·拉萨", feat: "高原河谷湿地", best: "10月-次年3月", tip: "黑颈鹤、斑头雁、赤麻鸭越冬" },
+                { name: "林芝", city: "西藏·林芝", feat: "藏东南森林，垂直带谱丰富", best: "4-7月", tip: "藏马鸡、血雉、黄喉雉鹑" }
+            ]},
+            { prov: "陕西", spots: [
+                { name: "洋县", city: "陕西·汉中", feat: "朱鹮拯救保护地", best: "全年", tip: "朱鹮在稻田与河滩觅食，县城周边可见" },
+                { name: "秦岭", city: "陕西·周至/佛坪", feat: "中国南北分界线，雉类宝库", best: "4-6月、9-10月", tip: "红腹锦鸡、血雉、大熊猫伴游" },
+                { name: "浐灞湿地", city: "陕西·西安", feat: "市区河滩湿地", best: "11月-次年2月", tip: "白琵鹭、大天鹅、鸬鹚" }
+            ]},
+            { prov: "甘肃", spots: [
+                { name: "尕海则岔", city: "甘肃·甘南", feat: "高原湿地，黑颈鹤繁殖地", best: "5-8月", tip: "黑颈鹤、灰鹤、斑头雁" },
+                { name: "张掖黑河湿地", city: "甘肃·张掖", feat: "河西走廊绿洲湿地", best: "3-5月、9-11月", tip: "候鸟迁徙停歇，灰鹤、大鸨" }
+            ]},
+            { prov: "青海", spots: [
+                { name: "青海湖", city: "青海·海南州", feat: "中国最大咸水湖，候鸟天堂", best: "5-7月", tip: "斑头雁、渔鸥、鸬鹚繁殖，普氏原羚伴游" },
+                { name: "三江源", city: "青海·玉树", feat: "江河源头湿地", best: "6-9月", tip: "黑颈鹤、藏雪雀、高山兀鹫" }
+            ]},
+            { prov: "宁夏", spots: [
+                { name: "沙湖", city: "宁夏·石嘴山", feat: "沙漠与湖泊共生奇景", best: "4-6月、9-10月", tip: "大鸨、灰鹤、各种鸭类" },
+                { name: "银川黄河湿地", city: "宁夏·银川", feat: "黄河岸边湿地群", best: "11月-次年2月", tip: "灰鹤、白尾海雕越冬" }
+            ]},
+            { prov: "新疆", spots: [
+                { name: "巴音布鲁克", city: "新疆·和静", feat: "天鹅湖，中国天鹅故乡", best: "5-9月", tip: "大天鹅、疣鼻天鹅繁殖，九曲十八弯" },
+                { name: "伊犁河谷", city: "新疆·伊宁", feat: "欧亚交汇鸟种带", best: "4-6月", tip: "黑额伯劳、蓝胸佛法僧等中亚特色鸟" },
+                { name: "赛里木湖", city: "新疆·博乐", feat: "高山冷水湖", best: "5-8月", tip: "大天鹅、猛禽、雪鸡" }
+            ]},
+            { prov: "香港", spots: [
+                { name: "米埔自然保护区", city: "香港·新界", feat: "国际重要湿地，观鸟圣地", best: "10月-次年3月", tip: "黑脸琵鹭全球重要越冬地，需预约导赏" },
+                { name: "香港湿地公园", city: "香港·天水围", feat: "市区湿地教育园区", best: "全年", tip: "鸻鹬、鹭类与红树林生态" }
+            ]},
+            { prov: "澳门", spots: [
+                { name: "路氹城生态保护区", city: "澳门·路氹", feat: "填海湿地与红树林", best: "11月-次年2月", tip: "黑脸琵鹭、白鹭、鸬鹚" }
+            ]},
+            { prov: "台湾", spots: [
+                { name: "七股潟湖", city: "台湾·台南", feat: "黑面琵鹭越冬地", best: "10月-次年3月", tip: "黑面琵鹭全球主要越冬地之一" },
+                { name: "关渡自然公园", city: "台湾·台北", feat: "淡水河湿地，城市绿肺", best: "全年", tip: "水鸟、鹭类与候鸟中转站" },
+                { name: "大雪山", city: "台湾·台中", feat: "高山林鸟宝库", best: "4-7月", tip: "蓝腹鹇、帝雉、台湾噪鹛" }
+            ]}
+        ];
+
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        var spotList = document.getElementById("spotList");
+        var provFilter = document.getElementById("provFilter");
+        var provStats = document.getElementById("provStats");
+        var searchInput = document.getElementById("spotSearch");
+
+        // 省份下拉
+        SPOTS.forEach(function (p) {
+            var opt = document.createElement("option");
+            opt.value = p.prov;
+            opt.textContent = p.prov;
+            provFilter.appendChild(opt);
+        });
+
+        function render() {
+            var kw = searchInput.value.trim().toLowerCase();
+            var prov = provFilter.value;
+            var total = 0;
+            var html = "";
+
+            SPOTS.forEach(function (p) {
+                if (prov && p.prov !== prov) return;
+                var shown = p.spots.filter(function (s) {
+                    if (!kw) return true;
+                    return (s.name + s.city + s.feat + s.best + s.tip).toLowerCase().indexOf(kw) > -1;
+                });
+                if (shown.length === 0) return;
+                total += shown.length;
+                html += '<div class="prov-block">' +
+                    '<div class="prov-title">' + esc(p.prov) + '<small>' + shown.length + ' 个地点</small></div>' +
+                    '<div class="prov-spots">';
+                shown.forEach(function (s) {
+                    html += '<div class="spot-item">' +
+                        '<h4>' + esc(s.name) + '</h4>' +
+                        '<div class="city">📍 ' + esc(s.city) + '</div>' +
+                        '<div class="feat">' + esc(s.feat) + '</div>' +
+                        '<div class="detail">' +
+                        '🗓 最佳季节：' + esc(s.best) + '<br>' +
+                        '💡 ' + esc(s.tip) +
+                        '</div>' +
+                        '<div class="hint">👆 点击查看最佳季节与提示</div>' +
+                        '</div>';
+                });
+                html += '</div></div>';
+            });
+
+            if (total === 0) {
+                spotList.innerHTML = '<div class="empty-hint">没有找到匹配的观鸟地点，换个关键词试试</div>';
+            } else {
+                spotList.innerHTML = html;
+            }
+            provStats.textContent = "共找到 " + total + " 个观鸟地点 · 点击地点卡片展开详情";
+        }
+
+        // 点击地点展开详情
+        spotList.addEventListener("click", function (e) {
+            var item = e.target.closest ? e.target.closest(".spot-item") : null;
+            if (item) item.classList.toggle("open");
+        });
+
+        searchInput.addEventListener("input", render);
+        provFilter.addEventListener("change", render);
+
+        render();
+    </script>
 </body>
 </html>

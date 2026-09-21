@@ -398,6 +398,38 @@
         fileInput.click(); // 调起系统相册/文件选择器
     });
 
+    // 把图片统一转成 JPEG（压缩最长边 2048px），解决手机 HEIC/大图/预览兼容问题；
+    // 浏览器无法解码时（个别旧机型 HEIC）回退原文件，不丢数据
+    function readAsJPEG(file, cb) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            try {
+                var maxDim = 2048;
+                var w = img.naturalWidth || 0;
+                var h = img.naturalHeight || 0;
+                if (!w || !h) { URL.revokeObjectURL(url); cb(file); return; }
+                var scale = Math.min(1, maxDim / Math.max(w, h));
+                var canvas = document.createElement("canvas");
+                canvas.width = Math.round(w * scale);
+                canvas.height = Math.round(h * scale);
+                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(function (blob) {
+                    cb(blob || file);
+                }, "image/jpeg", 0.85);
+            } catch (e) {
+                URL.revokeObjectURL(url);
+                cb(file);
+            }
+        };
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            cb(file);
+        };
+        img.src = url;
+    }
+
     // 选择文件后上传
     fileInput.addEventListener("change", function () {
         var files = fileInput.files;
@@ -406,26 +438,35 @@
         var total = files.length;
         var done = 0;
         var failed = 0;
+        var firstErr = null;
 
-        setStatus("正在上传 0/" + total + " ……");
+        setStatus("正在处理 0/" + total + " ……");
 
         for (var i = 0; i < files.length; i++) {
             (function (file) {
-                // 文件名：时间戳 + 随机串 + 原扩展名；路径：自己的用户文件夹下（私有隔离）
-                var ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-                var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-                var path = currentUserId + "/" + name;
+                readAsJPEG(file, function (out) {
+                    // 转码成功的统一为 .jpg；回退的原文件保留原扩展名（如 .heic）
+                    var ext = out.type === "image/jpeg" ? "jpg"
+                        : (file.name.split(".").pop() || "jpg").toLowerCase();
+                    var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                    var path = currentUserId + "/" + name;
 
-                supabase.storage.from(BUCKET).upload(path, file, {
-                    contentType: file.type || "image/jpeg"
-                }).then(function (up) {
-                    done++;
-                    if (up.error) failed++;
-                    setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
-                    if (done === total) {
-                        setStatus(failed === 0 ? "上传完成！" : "上传完成（失败 " + failed + " 张，请检查存储配置）", failed > 0);
-                        loadGallery();
-                    }
+                    supabase.storage.from(BUCKET).upload(path, out, {
+                        contentType: out.type || undefined,
+                        upsert: false
+                    }).then(function (up) {
+                        done++;
+                        if (up.error) {
+                            failed++;
+                            if (!firstErr) firstErr = up.error.message;
+                        }
+                        setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
+                        if (done === total) {
+                            setStatus(failed === 0 ? "上传完成！"
+                                : "上传失败：" + firstErr, failed > 0);
+                            loadGallery();
+                        }
+                    });
                 });
             })(files[i]);
         }
