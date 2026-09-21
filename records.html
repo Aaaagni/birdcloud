@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>观鸟记录本 - BirdCloud</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 覆盖 style.css 的 .container 网格布局，改为整行流式布局 */
+        main.container {
+            width: 92%;
+            max-width: 1100px;
+            display: block;
+            margin-bottom: 60px;
+        }
+
+        .page-title {
+            color: #4682b4;
+            font-size: 26px;
+            margin: 24px 0 6px;
+        }
+
+        .page-sub {
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        .empty-hint {
+            color: #999;
+            font-size: 14px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ---- 观鸟记录本 ---- */
+        .record-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .record-form input[type="text"],
+        .record-form input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: 1px solid #cfe3ee;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .record-form input:focus {
+            border-color: #4682b4;
+        }
+
+        .record-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .record-item {
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .record-item .r-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .record-item .r-name {
+            font-weight: bold;
+            color: #2c5f8a;
+        }
+
+        .record-item .r-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .record-item .r-note {
+            font-size: 13px;
+            color: #555;
+            margin-top: 2px;
+        }
+
+        .record-del {
+            background: none;
+            border: none;
+            color: #d1493f;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .record-del:hover {
+            background: #fdecea;
+        }
+
+        .rec-photo-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .rec-photo-name {
+            font-size: 12px;
+            color: #888;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rec-photo-preview {
+            max-width: 96px;
+            max-height: 96px;
+            border-radius: 8px;
+            border: 1px solid #dceef6;
+        }
+
+        .rec-photo-clear {
+            background: none;
+            border: none;
+            color: #d1493f;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .record-item .r-photo {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #dceef6;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🐦 BirdCloud 观鸟笔记</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="records.html" class="active">观鸟记录本</a>
+            <a href="forum.html">观鸟地点</a>
+            <a href="gallery.html">观鸟相册</a>
+            <a href="tools.html">实用工具</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1 class="page-title">📒 观鸟记录本</h1>
+        <p class="page-sub">随手记录每次观测，可上传照片存入云端观鸟相册</p>
+
+        <div class="card">
+            <div class="record-form">
+                <input type="text" id="recName" placeholder="鸟种名称（如：白鹭）">
+                <input type="text" id="recPlace" placeholder="观测地点（如：西湖湿地）">
+                <input type="date" id="recDate">
+                <input type="text" id="recNote" placeholder="备注（可选，如：3 只，清晨）">
+                <div class="rec-photo-row">
+                    <label class="btn" for="recPhoto">📷 添加照片</label>
+                    <input type="file" id="recPhoto" accept="image/*" style="display:none">
+                    <span id="recPhotoName" class="rec-photo-name"></span>
+                    <img id="recPhotoPreview" class="rec-photo-preview" alt="照片预览" style="display:none">
+                    <button id="recPhotoClear" class="rec-photo-clear" type="button" style="display:none">移除</button>
+                </div>
+                <button class="btn" id="addRec">添加记录</button>
+            </div>
+            <div class="record-list" id="recordList"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>BirdCloud 观鸟笔记 © 2026 · 记录美好观鸟时光，不打扰鸟类栖息</p>
+    </footer>
+
+    <script src="vendor/supabase.min.js"></script>
+    <script>
+    (function () {
+
+        var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        var BUCKET = "bird-gallery";
+        var supabase = null;
+
+        try {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.log("Supabase 初始化失败：" + e.message);
+        }
+
+        // 登录态导航：已登录显示"我的鸟窝"
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                var link = document.getElementById("nest-link");
+                if (!link) return;
+                if (res.data && res.data.session) {
+                    link.href = "profile.html";
+                    link.textContent = "我的鸟窝";
+                } else {
+                    link.href = "login.html";
+                    link.textContent = "鸟窝入住";
+                }
+            });
+        }
+
+        // ============ 观鸟记录本（localStorage + 云端照片） ============
+        var STORE_KEY = "birdcloud-records";
+        var recName = document.getElementById("recName");
+        var recPlace = document.getElementById("recPlace");
+        var recDate = document.getElementById("recDate");
+        var recNote = document.getElementById("recNote");
+        var addRec = document.getElementById("addRec");
+        var recordList = document.getElementById("recordList");
+        var recPhoto = document.getElementById("recPhoto");
+        var recPhotoName = document.getElementById("recPhotoName");
+        var recPhotoPreview = document.getElementById("recPhotoPreview");
+        var recPhotoClear = document.getElementById("recPhotoClear");
+        var pendingPhoto = null; // { out: Blob, fileName, isJpeg }
+
+        function getRecords() {
+            try {
+                var raw = localStorage.getItem(STORE_KEY);
+                var arr = raw ? JSON.parse(raw) : [];
+                return Array.isArray(arr) ? arr : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveRecords(arr) {
+            try {
+                localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+            } catch (e) { }
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function renderRecords() {
+            var arr = getRecords();
+            if (arr.length === 0) {
+                recordList.innerHTML = '<div class="empty-hint">还没有记录，添加第一条观鸟记录吧</div>';
+                return;
+            }
+            var html = "";
+            var photoIdx = []; // 带照片的记录在 arr 中的下标
+            for (var i = 0; i < arr.length; i++) {
+                var r = arr[i];
+                if (r.photo) photoIdx.push(i);
+                html += '<div class="record-item">' +
+                    (r.photo ? '<img class="r-photo" alt="观鸟照片" title="照片已存入云端相册">' : '') +
+                    '<div class="r-info">' +
+                    '<div class="r-name">🐦 ' + esc(r.name) + '</div>' +
+                    '<div class="r-meta">' + esc(r.date) + ' · ' + esc(r.place) + '</div>' +
+                    (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '') +
+                    '</div>' +
+                    '<button class="record-del" data-i="' + i + '" title="删除这条记录">✕</button>' +
+                    '</div>';
+            }
+            recordList.innerHTML = html;
+
+            // 私有桶没有公开链接：逐张生成临时签名 URL 显示缩略图
+            if (supabase && photoIdx.length > 0) {
+                var imgs = recordList.querySelectorAll(".r-photo");
+                for (var j = 0; j < imgs.length && j < photoIdx.length; j++) {
+                    (function (img, ri) {
+                        var rec = arr[ri];
+                        if (!rec.photo) return;
+                        supabase.storage.from(BUCKET).createSignedUrl(rec.photo, 60 * 60).then(function (res2) {
+                            if (!res2.error && res2.data && res2.data.signedUrl) {
+                                img.src = res2.data.signedUrl;
+                            } else {
+                                img.style.opacity = "0.4";
+                            }
+                        });
+                    })(imgs[j], photoIdx[j]);
+                }
+            }
+        }
+
+        // 保存一条记录（清空表单 + 刷新列表）
+        function addRecordToStore(rec) {
+            var arr = getRecords();
+            arr.unshift(rec);
+            saveRecords(arr);
+            recName.value = "";
+            recPlace.value = "";
+            recNote.value = "";
+            clearPhoto();
+            renderRecords();
+        }
+
+        // 选择照片：压缩转 JPEG（与相册上传同款），未登录也能先选，保存时再要求登录
+        recPhoto.addEventListener("change", function () {
+            var file = recPhoto.files && recPhoto.files[0];
+            if (!file) return;
+            readAsJPEG(file, function (out) {
+                pendingPhoto = {
+                    out: out,
+                    fileName: file.name,
+                    isJpeg: out.type === "image/jpeg"
+                };
+                recPhotoName.textContent = file.name;
+                recPhotoPreview.src = URL.createObjectURL(out);
+                recPhotoPreview.style.display = "";
+                recPhotoClear.style.display = "";
+            });
+        });
+
+        function clearPhoto() {
+            pendingPhoto = null;
+            recPhoto.value = "";
+            recPhotoName.textContent = "";
+            recPhotoPreview.src = "";
+            recPhotoPreview.style.display = "none";
+            recPhotoClear.style.display = "none";
+        }
+
+        recPhotoClear.addEventListener("click", clearPhoto);
+
+        // 上传照片到云端相册（与 gallery 同桶同路径：{userId}/xxx），返回照片路径
+        function uploadRecordPhoto() {
+            return new Promise(function (resolve, reject) {
+                if (!pendingPhoto) { resolve(null); return; }
+                if (!supabase) { reject("云端服务未初始化"); return; }
+                supabase.auth.getSession().then(function (res) {
+                    var session = res.data && res.data.session;
+                    if (!session || !session.user) { reject("未登录"); return; }
+                    var ext = pendingPhoto.isJpeg ? "jpg"
+                        : (pendingPhoto.fileName.split(".").pop() || "jpg").toLowerCase();
+                    var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                    var path = session.user.id + "/" + name;
+                    supabase.storage.from(BUCKET).upload(path, pendingPhoto.out, {
+                        contentType: pendingPhoto.out.type || undefined,
+                        upsert: false
+                    }).then(function (up) {
+                        if (up.error) { reject(up.error.message); return; }
+                        resolve(path);
+                    });
+                });
+            });
+        }
+
+        // 把图片统一转成 JPEG（压缩最长边 2048px），解决手机 HEIC/大图兼容问题
+        function readAsJPEG(file, cb) {
+            var url = URL.createObjectURL(file);
+            var img = new Image();
+            img.onload = function () {
+                try {
+                    var maxDim = 2048;
+                    var w = img.naturalWidth || 0;
+                    var h = img.naturalHeight || 0;
+                    if (!w || !h) { URL.revokeObjectURL(url); cb(file); return; }
+                    var scale = Math.min(1, maxDim / Math.max(w, h));
+                    var canvas = document.createElement("canvas");
+                    canvas.width = Math.round(w * scale);
+                    canvas.height = Math.round(h * scale);
+                    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(url);
+                    canvas.toBlob(function (blob) {
+                        cb(blob || file);
+                    }, "image/jpeg", 0.85);
+                } catch (e) {
+                    URL.revokeObjectURL(url);
+                    cb(file);
+                }
+            };
+            img.onerror = function () {
+                URL.revokeObjectURL(url);
+                cb(file);
+            };
+            img.src = url;
+        }
+
+        addRec.addEventListener("click", function () {
+            var name = recName.value.trim();
+            var place = recPlace.value.trim() || "未填写";
+            var date = recDate.value || new Date().toISOString().slice(0, 10);
+            var note = recNote.value.trim();
+            if (!name) {
+                alert("请先填写鸟种名称");
+                return;
+            }
+            var rec = { name: name, place: place, date: date, note: note };
+
+            var finalize = function () {
+                addRec.disabled = false;
+                addRec.textContent = "添加记录";
+            };
+
+            if (!pendingPhoto) {
+                // 无照片：直接保存
+                addRecordToStore(rec);
+                return;
+            }
+
+            // 有照片：上传成功后再保存记录，照片路径记入记录
+            addRec.disabled = true;
+            addRec.textContent = "上传中……";
+            uploadRecordPhoto().then(function (path) {
+                rec.photo = path;
+                addRecordToStore(rec);
+            }).catch(function (errMsg) {
+                if (errMsg === "未登录") {
+                    alert("上传照片需要登录账号，本次记录未保存。");
+                    if (confirm("是否前往登录页？")) {
+                        window.location.href = "login.html?next=records.html";
+                    }
+                } else {
+                    alert("照片上传失败：" + errMsg + "\n（本次记录未保存，请重试）");
+                }
+            }).then(finalize);
+        });
+
+        recordList.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".record-del") : null;
+            if (!btn) return;
+            var arr = getRecords();
+            arr.splice(parseInt(btn.getAttribute("data-i"), 10), 1);
+            saveRecords(arr);
+            renderRecords();
+        });
+
+        renderRecords();
+
+        // 日期默认今天
+        if (!recDate.value) {
+            recDate.value = new Date().toISOString().slice(0, 10);
+        }
+
+    })();
+    </script>
+</body>
+</html>

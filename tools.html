@@ -181,62 +181,158 @@
             line-height: 1.7;
         }
 
-        /* ---- 观鸟记录本 ---- */
-        .record-form {
-            display: grid;
-            gap: 10px;
-        }
-
-        .record-list {
-            margin-top: 16px;
-            display: grid;
-            gap: 10px;
-        }
-
-        .record-item {
-            background: #f4fafd;
-            border: 1px solid #dceef6;
-            border-radius: 10px;
-            padding: 12px 14px;
+        /* ---- 观鸟清单 ---- */
+        .check-head {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
-        .record-item .r-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .record-item .r-name {
-            font-weight: bold;
-            color: #2c5f8a;
-        }
-
-        .record-item .r-meta {
-            font-size: 12px;
-            color: #888;
-            margin-top: 2px;
-        }
-
-        .record-item .r-note {
+        .check-prog {
             font-size: 13px;
             color: #555;
-            margin-top: 2px;
         }
 
-        .record-del {
+        .check-reset {
             background: none;
             border: none;
             color: #d1493f;
-            font-size: 16px;
+            font-size: 12px;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 0;
+            text-decoration: underline;
         }
 
-        .record-del:hover {
+        .prog-wrap {
+            height: 10px;
+            background: #eaf0f5;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0 14px;
+        }
+
+        .prog-bar {
+            height: 100%;
+            background: #2c9e6b;
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+        }
+
+        .check-item {
+            background: #f7fbfd;
+            border: 1px solid #dceef6;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-item:hover {
+            background: #eef7fb;
+        }
+
+        .check-item .ck {
+            color: #bbb;
+        }
+
+        .check-item.done {
+            background: #e9f7f0;
+            border-color: #bfe6d0;
+            color: #1e6b4a;
+        }
+
+        .check-item.done .ck {
+            color: #2c9e6b;
+        }
+
+        /* ---- 看图猜鸟 ---- */
+        .quiz-img {
+            width: 100%;
+            height: auto;
+            max-height: 260px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #eaf3f8;
+            margin-bottom: 12px;
+        }
+
+        .quiz-score {
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 8px;
+        }
+
+        .quiz-opt {
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #dceef6;
+            background: #f7fbfd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #2c5f8a;
+        }
+
+        .quiz-opt:hover {
+            background: #eef7fb;
+        }
+
+        .quiz-opt.correct {
+            background: #e9f7f0;
+            border-color: #bfe6d0;
+            color: #1e6b4a;
+        }
+
+        .quiz-opt.wrong {
             background: #fdecea;
+            border-color: #f3b7af;
+            color: #a33;
+        }
+
+        .quiz-opt:disabled {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .quiz-status {
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .quiz-actions {
+            margin-top: 10px;
+        }
+
+        /* ---- 冷知识 ---- */
+        .tip-box {
+            background: #fff8e6;
+            border: 1px solid #f0dfa8;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #6b5716;
+            min-height: 70px;
         }
 
         .btn {
@@ -250,7 +346,8 @@
         <div class="logo">🐦 BirdCloud 观鸟笔记</div>
         <nav>
             <a href="index.html">首页</a>
-            <a href="forum.html">鸟言鸟语</a>
+            <a href="records.html">观鸟记录本</a>
+            <a href="forum.html">观鸟地点</a>
             <a href="gallery.html">观鸟相册</a>
             <a href="tools.html" class="active">实用工具</a>
             <a href="login.html" id="nest-link">鸟窝入住</a>
@@ -259,7 +356,7 @@
 
     <main class="container">
         <h1 class="page-title">🛠️ 观鸟实用工具</h1>
-        <p class="page-sub">野外识别、每日推荐、观测记录，一页搞定</p>
+        <p class="page-sub">图鉴查询、每日推荐、清单打卡、猜鸟游戏，一页玩转</p>
 
         <div class="tools-grid">
             <!-- 工具一：鸟类图鉴 -->
@@ -278,18 +375,37 @@
                 <div class="pick-result" id="pickResult"></div>
             </section>
 
-            <!-- 工具三：观鸟记录本 -->
+            <!-- 工具三：我的观鸟清单 -->
             <section class="tool-card">
-                <h2>📒 观鸟记录本</h2>
-                <p class="tool-desc">随手记录每次观测，保存在本机浏览器，随时回看</p>
-                <div class="record-form">
-                    <input type="text" id="recName" placeholder="鸟种名称（如：白鹭）">
-                    <input type="text" id="recPlace" placeholder="观测地点（如：西湖湿地）">
-                    <input type="date" id="recDate">
-                    <input type="text" id="recNote" placeholder="备注（可选，如：3 只，清晨）">
-                    <button class="btn" id="addRec">添加记录</button>
+                <h2>✅ 我的观鸟清单</h2>
+                <p class="tool-desc">把看过的鸟种点亮，追踪你的观鸟进度</p>
+                <div class="check-head">
+                    <span class="check-prog" id="checkProg">已记录 0 / 0 种（0%）</span>
+                    <button class="check-reset" id="checkReset">清空清单</button>
                 </div>
-                <div class="record-list" id="recordList"></div>
+                <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+                <div class="check-grid" id="checkGrid"></div>
+            </section>
+
+            <!-- 工具四：看图猜鸟 -->
+            <section class="tool-card">
+                <h2>🎯 看图猜鸟</h2>
+                <p class="tool-desc">看照片猜鸟名，测测你的识鸟功力</p>
+                <div class="quiz-score" id="quizScore">得分 0 · 已答 0</div>
+                <img class="quiz-img" id="quizImg" alt="猜猜这是哪种鸟">
+                <div class="quiz-options" id="quizOpts"></div>
+                <div class="quiz-status" id="quizStatus"></div>
+                <div class="quiz-actions">
+                    <button class="btn" id="quizNext">下一题</button>
+                </div>
+            </section>
+
+            <!-- 工具五：观鸟冷知识 -->
+            <section class="tool-card">
+                <h2>💡 观鸟冷知识</h2>
+                <p class="tool-desc">一分钟了解一个鸟类小秘密</p>
+                <div class="tip-box" id="tipBox"></div>
+                <button class="btn" id="tipBtn" style="margin-top:10px;">换一条</button>
             </section>
         </div>
     </main>
@@ -304,6 +420,7 @@
 
         var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
         var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        var BUCKET = "bird-gallery";
         var supabase = null;
 
         try {
@@ -481,85 +598,161 @@
             pickResult.classList.add("show");
         });
 
-        // ============ 工具三：观鸟记录本（localStorage） ============
-        var STORE_KEY = "birdcloud-records";
-        var recName = document.getElementById("recName");
-        var recPlace = document.getElementById("recPlace");
-        var recDate = document.getElementById("recDate");
-        var recNote = document.getElementById("recNote");
-        var addRec = document.getElementById("addRec");
-        var recordList = document.getElementById("recordList");
+        // ============ 工具三：我的观鸟清单 ============
+        var CHECK_KEY = "birdcloud-checklist";
+        var checkGrid = document.getElementById("checkGrid");
+        var checkProg = document.getElementById("checkProg");
+        var progBar = document.getElementById("progBar");
+        var checkReset = document.getElementById("checkReset");
 
-        function getRecords() {
+        function getChecklist() {
             try {
-                var raw = localStorage.getItem(STORE_KEY);
-                var arr = raw ? JSON.parse(raw) : [];
-                return Array.isArray(arr) ? arr : [];
-            } catch (e) {
-                return [];
-            }
+                var raw = localStorage.getItem(CHECK_KEY);
+                var obj = raw ? JSON.parse(raw) : {};
+                return obj && typeof obj === "object" ? obj : {};
+            } catch (e) { return {}; }
         }
 
-        function saveRecords(arr) {
-            try {
-                localStorage.setItem(STORE_KEY, JSON.stringify(arr));
-            } catch (e) { }
+        function saveChecklist(obj) {
+            try { localStorage.setItem(CHECK_KEY, JSON.stringify(obj)); } catch (e) { }
         }
 
-        function renderRecords() {
-            var arr = getRecords();
-            if (arr.length === 0) {
-                recordList.innerHTML = '<div class="empty-hint">还没有记录，添加第一条观鸟记录吧</div>';
-                return;
-            }
+        function renderChecklist() {
+            var obj = getChecklist();
+            var done = 0;
             var html = "";
-            for (var i = 0; i < arr.length; i++) {
-                var r = arr[i];
-                html += '<div class="record-item">' +
-                    '<div class="r-info">' +
-                    '<div class="r-name">🐦 ' + esc(r.name) + '</div>' +
-                    '<div class="r-meta">' + esc(r.date) + ' · ' + esc(r.place) + '</div>' +
-                    (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '') +
-                    '</div>' +
-                    '<button class="record-del" data-i="' + i + '" title="删除这条记录">✕</button>' +
-                    '</div>';
+            for (var i = 0; i < BIRDS.length; i++) {
+                var name = BIRDS[i].name;
+                var has = !!obj[name];
+                if (has) done++;
+                html += '<div class="check-item' + (has ? " done" : "") + '" data-name="' + esc(name) + '">' +
+                    '<span class="ck">' + (has ? "✅" : "⚪") + '</span>' +
+                    '<span>' + esc(name) + '</span></div>';
             }
-            recordList.innerHTML = html;
+            checkGrid.innerHTML = html;
+            var pct = BIRDS.length ? Math.round(done * 100 / BIRDS.length) : 0;
+            checkProg.textContent = "已记录 " + done + " / " + BIRDS.length + " 种（" + pct + "%）";
+            progBar.style.width = pct + "%";
         }
 
-        addRec.addEventListener("click", function () {
-            var name = recName.value.trim();
-            var place = recPlace.value.trim() || "未填写";
-            var date = recDate.value || new Date().toISOString().slice(0, 10);
-            var note = recNote.value.trim();
-            if (!name) {
-                alert("请先填写鸟种名称");
-                return;
+        checkGrid.addEventListener("click", function (e) {
+            var item = e.target.closest ? e.target.closest(".check-item") : null;
+            if (!item) return;
+            var obj = getChecklist();
+            var name = item.getAttribute("data-name");
+            if (obj[name]) {
+                delete obj[name];
+            } else {
+                obj[name] = true;
             }
-            var arr = getRecords();
-            arr.unshift({ name: name, place: place, date: date, note: note });
-            saveRecords(arr);
-            recName.value = "";
-            recPlace.value = "";
-            recNote.value = "";
-            renderRecords();
+            saveChecklist(obj);
+            renderChecklist();
         });
 
-        recordList.addEventListener("click", function (e) {
-            var btn = e.target.closest ? e.target.closest(".record-del") : null;
-            if (!btn) return;
-            var arr = getRecords();
-            arr.splice(parseInt(btn.getAttribute("data-i"), 10), 1);
-            saveRecords(arr);
-            renderRecords();
+        checkReset.addEventListener("click", function () {
+            if (confirm("确定清空观鸟清单吗？")) {
+                saveChecklist({});
+                renderChecklist();
+            }
         });
 
-        renderRecords();
+        renderChecklist();
 
-        // 日期默认今天
-        if (!recDate.value) {
-            recDate.value = new Date().toISOString().slice(0, 10);
+        // ============ 工具四：看图猜鸟 ============
+        var quizImg = document.getElementById("quizImg");
+        var quizOpts = document.getElementById("quizOpts");
+        var quizStatus = document.getElementById("quizStatus");
+        var quizScore = document.getElementById("quizScore");
+        var quizNext = document.getElementById("quizNext");
+        var quizData = { score: 0, answered: 0, answerIdx: -1, locked: false };
+
+        function shuffleArr(a) {
+            for (var i = a.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var t = a[i]; a[i] = a[j]; a[j] = t;
+            }
+            return a;
         }
+
+        function newQuiz() {
+            quizData.locked = false;
+            var answer = Math.floor(Math.random() * BIRDS.length);
+            var distractors = [];
+            var guard = 0;
+            while (distractors.length < 3 && guard < 200) {
+                guard++;
+                var r = Math.floor(Math.random() * BIRDS.length);
+                if (r !== answer && distractors.indexOf(r) === -1) distractors.push(r);
+            }
+            var opts = shuffleArr(distractors.concat([answer]));
+            quizData.opts = opts;
+            quizData.answerIdx = opts.indexOf(answer);
+            quizImg.src = BIRD_IMGS[answer];
+            quizImg.alt = "猜猜这是哪种鸟";
+            var html = "";
+            for (var i = 0; i < opts.length; i++) {
+                html += '<button class="quiz-opt" data-i="' + i + '">' + esc(BIRDS[opts[i]].name) + '</button>';
+            }
+            quizOpts.innerHTML = html;
+            quizStatus.innerHTML = "";
+        }
+
+        quizOpts.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".quiz-opt") : null;
+            if (!btn || quizData.locked) return;
+            quizData.locked = true;
+            quizData.answered++;
+            var picked = parseInt(btn.getAttribute("data-i"), 10);
+            var optEls = quizOpts.querySelectorAll(".quiz-opt");
+            var correctName = BIRDS[quizData.opts[quizData.answerIdx]].name;
+            if (picked === quizData.answerIdx) {
+                quizData.score++;
+                btn.classList.add("correct");
+                quizStatus.innerHTML = '🎉 答对了！是「' + esc(correctName) + '」';
+            } else {
+                btn.classList.add("wrong");
+                optEls[quizData.answerIdx].classList.add("correct");
+                quizStatus.innerHTML = '😅 答错啦，正确答案是「' + esc(correctName) + '」';
+            }
+            quizScore.textContent = "得分 " + quizData.score + " · 已答 " + quizData.answered;
+        });
+
+        quizNext.addEventListener("click", newQuiz);
+
+        newQuiz();
+
+        // ============ 工具五：观鸟冷知识 ============
+        var TIPS = [
+            "蜂鸟每秒能扇动翅膀 50~80 次，是世界上振翅最快的鸟之一。",
+            "猫头鹰的脖子可以旋转约 270 度，几乎转一整圈。",
+            "啄木鸟啄树时头部承受的冲击力堪比撞墙，但特殊的头骨结构能完美缓冲。",
+            "鸵鸟是现存最大的鸟，跑起来时速可达 70 公里。",
+            "企鹅是鸟类，虽然不会飞，却是出色的游泳健将。",
+            "翠鸟俯冲入水捕鱼时速度极快，几乎不溅起水花。",
+            "燕子每年迁徙距离可达上万公里，却能精准回到去年的旧巢。",
+            "画眉鸟叫声婉转多变，一只画眉能模仿十几种鸟鸣。",
+            "白鹭捕食时会用脚在水中轻搅，惊出小鱼再快速啄取。",
+            "鸟类没有牙齿，靠胃里的砂囊磨碎食物。",
+            "喜鹊是少数能认出镜子里自己的鸟之一，认知能力很高。",
+            "啄木鸟的舌头可以伸出比嘴长 3 倍，用来钩取树干里的虫子。",
+            "黄鹂的巢像一个小吊篮，悬挂在高高的树梢上。",
+            "斑嘴鸭飞行时脖颈直伸，和家鸭的姿态略有不同。",
+            "白腰文鸟睡觉时喜欢挤成一团，几十只抱在一起过夜。"
+        ];
+        var tipBox = document.getElementById("tipBox");
+        var tipBtn = document.getElementById("tipBtn");
+        var lastTip = -1;
+
+        function showTip() {
+            var i = Math.floor(Math.random() * TIPS.length);
+            if (TIPS.length > 1 && i === lastTip) i = (i + 1) % TIPS.length;
+            lastTip = i;
+            tipBox.innerHTML = '🐦 ' + esc(TIPS[i]);
+        }
+
+        tipBtn.addEventListener("click", showTip);
+
+        showTip();
 
     })();
     </script>
