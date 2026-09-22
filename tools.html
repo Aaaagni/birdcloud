@@ -98,6 +98,16 @@
             display: block;
         }
 
+        .photo-pair {
+            display: flex;
+            gap: 8px;
+        }
+
+        .photo-pair .bird-photo {
+            flex: 1;
+            min-width: 0;
+        }
+
         .bird-item h3 {
             margin: 0 0 2px;
             font-size: 16px;
@@ -479,7 +489,8 @@
             { name: "灰椋鸟", sci: "Spodiopsar cineraceus", feat: "灰褐羽、脸颊白斑，嘴脚橙黄醒目", habitat: "城区、农田、旷野", food: "杂食：昆虫、果实、谷物", tip: "秋冬成大群，铺天盖地迁徙" },
             { name: "山斑鸠", sci: "Streptopelia orientalis", feat: "灰粉褐羽，颈侧黑白条纹斑，无珠点", habitat: "林缘、农田、公园", food: "谷物、种子、浆果", tip: "与珠颈斑鸠相似，颈斑呈条纹状" },
             { name: "小鸊鷉", sci: "Tachybaptus ruficollis", feat: "小水鸟，颈侧红棕、嘴基黄斑，善潜泳", habitat: "公园湖泊、水塘、湿地", food: "小鱼、虾、水生昆虫", tip: "遇险先潜水，只露脑袋观察" },
-            { name: "棕头鸦雀", sci: "Sinosuthora webbiana", feat: "棕褐色小圆球，尾长，喙短厚似鹦鹉嘴", habitat: "芦苇丛、灌丛、竹丛", food: "昆虫、草籽", tip: "常成群在草丛里“啾啾”窜动" }
+            { name: "棕头鸦雀", sci: "Sinosuthora webbiana", feat: "棕褐色小圆球，尾长，喙短厚似鹦鹉嘴", habitat: "芦苇丛、灌丛、竹丛", food: "昆虫、草籽", tip: "常成群在草丛里“啾啾”窜动" },
+            { name: "牛背鹭", sci: "Bubulcus ibis", feat: "白色鹭鸟，繁殖期头、颈、背饰橙黄羽，嘴橙黄、脚深色", habitat: "草地、农田、牧场、湿地边缘", food: "昆虫（蝗虫、蚱蜢）、蛙、小鱼", tip: "爱跟随牛群啄食惊起的虫子，常站在牛背上" }
         ];
 
         // ============ 工具一：图鉴查询 ============
@@ -515,12 +526,18 @@
             "images/birds/25-redwhiskeredbulbul.png",
             "images/birds/26-greattit.png",
             "images/birds/27-japwhiteeye.png",
-            "images/birds/28-magpierobin.png",
+            "images/birds/28-magpierobin-a.jpg",
             "images/birds/29-whitecheekedstarling.png",
             "images/birds/30-orientalturtledove.png",
             "images/birds/31-littlegrebe.png",
-            "images/birds/32-parrotbill.png"
+            "images/birds/32-parrotbill.png",
+            "images/birds/33-cattleegret.jpg"
         ];
+
+        // 部分鸟种附第二张实拍照片（索引 → 副图），图鉴中并排展示
+        var BIRD_IMGS_EXTRA = {
+            27: "images/birds/28-magpierobin-b.jpg"
+        };
 
         function esc(s) {
             return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -551,12 +568,16 @@
             for (var i = 0; i < list.length; i++) {
                 var b = list[i].bird;
                 var img = BIRD_IMGS[list[i].idx] || "";
+                var extra = BIRD_IMGS_EXTRA[list[i].idx] || "";
+                var photos = '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">' +
+                    (extra ? '<img class="bird-photo" src="' + esc(extra) + '" alt="' + esc(b.name) + '（实拍）" decoding="async">' : "");
+                if (extra) photos = '<div class="photo-pair">' + photos + '</div>';
                 html += '<div class="bird-item" data-i="' + list[i].idx + '">' +
                     '<h3>' + esc(b.name) + '</h3>' +
                     '<div class="sci">' + esc(b.sci) + '</div>' +
                     '<div class="feat">' + esc(b.feat) + '</div>' +
                     '<div class="extra">' +
-                    '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">' +
+                    photos +
                     '🏠 栖息：' + esc(b.habitat) + '<br>' +
                     '🍽 食性：' + esc(b.food) + '<br>' +
                     '💡 ' + esc(b.tip) + '</div>' +
