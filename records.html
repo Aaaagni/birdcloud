@@ -146,6 +146,32 @@
             flex-shrink: 0;
         }
 
+        /* ---- 登录锁提示 ---- */
+        .lock-card {
+            text-align: center;
+            padding: 44px 20px;
+        }
+
+        .lock-card .lock-icon {
+            font-size: 44px;
+        }
+
+        .lock-card p {
+            color: #777;
+            margin: 14px 0 22px;
+            line-height: 1.9;
+        }
+
+        .lock-card .btn {
+            display: inline-block;
+            padding: 10px 28px;
+            background: #4682b4;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
         .btn {
             cursor: pointer;
             border: none;
@@ -167,9 +193,15 @@
 
     <main class="container">
         <h1 class="page-title">📒 观鸟记录本</h1>
-        <p class="page-sub">随手记录每次观测，可上传照片存入云端观鸟相册</p>
+        <p class="page-sub">登录后使用，记录仅自己可见，可上传照片存入云端观鸟相册</p>
 
-        <div class="card">
+        <div class="card lock-card" id="lockCard" style="display:none">
+            <div class="lock-icon">🔒</div>
+            <p>记录本是私密的<br>请先登录，才能查看你的专属观鸟记录</p>
+            <a class="btn" href="login.html?next=records.html">去登录</a>
+        </div>
+
+        <div class="card" id="recordCard" style="display:none">
             <div class="record-form">
                 <input type="text" id="recName" placeholder="鸟种名称（如：白鹭）">
                 <input type="text" id="recPlace" placeholder="观测地点（如：西湖湿地）">
@@ -224,8 +256,14 @@
             });
         }
 
-        // ============ 观鸟记录本（localStorage + 云端照片） ============
-        var STORE_KEY = "birdcloud-records";
+        // ============ 观鸟记录本（云端私有 · Supabase 表，按账号隔离） ============
+        var TABLE = "records";
+        var STORE_KEY = "birdcloud-records"; // 仅用于迁移旧版存于本机的记录
+        var isLoggedIn = false;
+        var currentUserId = "";
+
+        var recordCard = document.getElementById("recordCard");
+        var lockCard = document.getElementById("lockCard");
         var recName = document.getElementById("recName");
         var recPlace = document.getElementById("recPlace");
         var recDate = document.getElementById("recDate");
@@ -238,37 +276,73 @@
         var recPhotoClear = document.getElementById("recPhotoClear");
         var pendingPhoto = null; // { out: Blob, fileName, isJpeg }
 
-        function getRecords() {
-            try {
-                var raw = localStorage.getItem(STORE_KEY);
-                var arr = raw ? JSON.parse(raw) : [];
-                return Array.isArray(arr) ? arr : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function saveRecords(arr) {
-            try {
-                localStorage.setItem(STORE_KEY, JSON.stringify(arr));
-            } catch (e) { }
+        // 日期默认今天
+        if (recDate && !recDate.value) {
+            recDate.value = new Date().toISOString().slice(0, 10);
         }
 
         function esc(s) {
             return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        function renderRecords() {
-            var arr = getRecords();
-            if (arr.length === 0) {
+        function showRecordCard() {
+            if (recordCard) recordCard.style.display = "";
+            if (lockCard) lockCard.style.display = "none";
+        }
+
+        function showLockCard() {
+            if (recordCard) recordCard.style.display = "none";
+            if (lockCard) lockCard.style.display = "";
+        }
+
+        // 登录门禁：未登录只显示锁提示，登录后加载自己的记录
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                var session = res.data && res.data.session;
+                isLoggedIn = !!session;
+                if (isLoggedIn && session.user) {
+                    currentUserId = session.user.id;
+                    showRecordCard();
+                    loadRecords();
+                    maybeMigrateLocal();
+                } else {
+                    showLockCard();
+                }
+            });
+        } else {
+            showLockCard();
+        }
+
+        // 只读取当前账号的记录（user_id 由服务端 RLS 强制匹配）
+        function loadRecords() {
+            return supabase.from(TABLE).select("*")
+                .eq("user_id", currentUserId)
+                .order("created_at", { ascending: false })
+                .then(function (res) {
+                    if (res.error) {
+                        var msg = res.error.message || "";
+                        if (msg.indexOf("PGRST205") > -1 || msg.indexOf("does not exist") > -1) {
+                            recordList.innerHTML = '<div class="empty-hint">📦 云端记录表尚未创建<br>需要在 Supabase 控制台执行建表 SQL（见项目 schema.sql）</div>';
+                        } else {
+                            recordList.innerHTML = '<div class="empty-hint">记录加载失败：' + esc(msg) + '</div>';
+                        }
+                        return [];
+                    }
+                    renderRecords(res.data || []);
+                    return res.data || [];
+                });
+        }
+
+        function renderRecords(rows) {
+            if (!rows || rows.length === 0) {
                 recordList.innerHTML = '<div class="empty-hint">还没有记录，添加第一条观鸟记录吧</div>';
                 return;
             }
             var html = "";
-            var photoIdx = []; // 带照片的记录在 arr 中的下标
-            for (var i = 0; i < arr.length; i++) {
-                var r = arr[i];
-                if (r.photo) photoIdx.push(i);
+            var photoRows = [];
+            for (var i = 0; i < rows.length; i++) {
+                var r = rows[i];
+                if (r.photo) photoRows.push(r);
                 html += '<div class="record-item">' +
                     (r.photo ? '<img class="r-photo" alt="观鸟照片" title="照片已存入云端相册">' : '') +
                     '<div class="r-info">' +
@@ -276,18 +350,16 @@
                     '<div class="r-meta">' + esc(r.date) + ' · ' + esc(r.place) + '</div>' +
                     (r.note ? '<div class="r-note">' + esc(r.note) + '</div>' : '') +
                     '</div>' +
-                    '<button class="record-del" data-i="' + i + '" title="删除这条记录">✕</button>' +
+                    '<button class="record-del" data-id="' + esc(r.id) + '" title="删除这条记录">✕</button>' +
                     '</div>';
             }
             recordList.innerHTML = html;
 
             // 私有桶没有公开链接：逐张生成临时签名 URL 显示缩略图
-            if (supabase && photoIdx.length > 0) {
+            if (photoRows.length > 0) {
                 var imgs = recordList.querySelectorAll(".r-photo");
-                for (var j = 0; j < imgs.length && j < photoIdx.length; j++) {
-                    (function (img, ri) {
-                        var rec = arr[ri];
-                        if (!rec.photo) return;
+                for (var j = 0; j < imgs.length && j < photoRows.length; j++) {
+                    (function (img, rec) {
                         supabase.storage.from(BUCKET).createSignedUrl(rec.photo, 60 * 60).then(function (res2) {
                             if (!res2.error && res2.data && res2.data.signedUrl) {
                                 img.src = res2.data.signedUrl;
@@ -295,24 +367,80 @@
                                 img.style.opacity = "0.4";
                             }
                         });
-                    })(imgs[j], photoIdx[j]);
+                    })(imgs[j], photoRows[j]);
                 }
             }
         }
 
-        // 保存一条记录（清空表单 + 刷新列表）
-        function addRecordToStore(rec) {
-            var arr = getRecords();
-            arr.unshift(rec);
-            saveRecords(arr);
+        // 写入当前账号的记录
+        function saveRecordToCloud(rec) {
+            return supabase.from(TABLE).insert({
+                user_id: currentUserId,
+                name: rec.name,
+                place: rec.place,
+                date: rec.date,
+                note: rec.note,
+                photo: rec.photo || ""
+            }).then(function (res) {
+                if (res.error) { throw new Error(res.error.message); }
+            });
+        }
+
+        function resetForm() {
             recName.value = "";
             recPlace.value = "";
             recNote.value = "";
             clearPhoto();
-            renderRecords();
         }
 
-        // 选择照片：压缩转 JPEG（与相册上传同款），未登录也能先选，保存时再要求登录
+        // 旧版本存于本机的记录：仅当云端还没有记录时询问是否同步（防止换账号重复同步）
+        function maybeMigrateLocal() {
+            var raw = null;
+            try { raw = localStorage.getItem(STORE_KEY); } catch (e) { }
+            if (!raw) return;
+            var arr = [];
+            try {
+                arr = JSON.parse(raw);
+                if (!Array.isArray(arr)) return;
+            } catch (e) { return; }
+            var pending = arr.filter(function (r) { return r && r.name; });
+            if (pending.length === 0) {
+                try { localStorage.removeItem(STORE_KEY); } catch (e) { }
+                return;
+            }
+            supabase.from(TABLE).select("id", { count: "exact", head: true })
+                .eq("user_id", currentUserId)
+                .then(function (cnt) {
+                    if (cnt.error || (cnt.count || 0) > 0) return;
+                    if (confirm("检测到本机有 " + pending.length + " 条未同步的旧记录，是否同步到当前账号？（同步完成后会删除本机数据）")) {
+                        migrateLocal(pending);
+                    }
+                });
+        }
+
+        function migrateLocal(arr) {
+            var rows = arr.map(function (r) {
+                return {
+                    user_id: currentUserId,
+                    name: r.name,
+                    place: r.place || "未填写",
+                    date: r.date || "",
+                    note: r.note || "",
+                    photo: r.photo || ""
+                };
+            });
+            supabase.from(TABLE).insert(rows).then(function (res) {
+                if (res.error) {
+                    alert("同步失败：" + res.error.message);
+                    return;
+                }
+                try { localStorage.removeItem(STORE_KEY); } catch (e) { }
+                alert("已同步 " + rows.length + " 条记录到当前账号");
+                loadRecords();
+            });
+        }
+
+        // 选择照片：压缩转 JPEG（与相册上传同款）
         recPhoto.addEventListener("change", function () {
             var file = recPhoto.files && recPhoto.files[0];
             if (!file) return;
@@ -395,6 +523,13 @@
         }
 
         addRec.addEventListener("click", function () {
+            if (!isLoggedIn) {
+                alert("记录本为私密内容，请先登录。");
+                if (confirm("是否前往登录页？")) {
+                    window.location.href = "login.html?next=records.html";
+                }
+                return;
+            }
             var name = recName.value.trim();
             var place = recPlace.value.trim() || "未填写";
             var date = recDate.value || new Date().toISOString().slice(0, 10);
@@ -411,17 +546,25 @@
             };
 
             if (!pendingPhoto) {
-                // 无照片：直接保存
-                addRecordToStore(rec);
+                // 无照片：直接写入云端
+                saveRecordToCloud(rec).then(function () {
+                    resetForm();
+                    loadRecords();
+                }).catch(function (e) {
+                    alert("保存失败：" + e.message + "\n（本次记录未保存，请重试）");
+                }).then(finalize);
                 return;
             }
 
-            // 有照片：上传成功后再保存记录，照片路径记入记录
+            // 有照片：先上传照片再写入记录
             addRec.disabled = true;
             addRec.textContent = "上传中……";
             uploadRecordPhoto().then(function (path) {
                 rec.photo = path;
-                addRecordToStore(rec);
+                return saveRecordToCloud(rec);
+            }).then(function () {
+                resetForm();
+                loadRecords();
             }).catch(function (errMsg) {
                 if (errMsg === "未登录") {
                     alert("上传照片需要登录账号，本次记录未保存。");
@@ -429,7 +572,8 @@
                         window.location.href = "login.html?next=records.html";
                     }
                 } else {
-                    alert("照片上传失败：" + errMsg + "\n（本次记录未保存，请重试）");
+                    var m = (errMsg && errMsg.message) ? errMsg.message : errMsg;
+                    alert("保存失败：" + m + "\n（本次记录未保存，请重试）");
                 }
             }).then(finalize);
         });
@@ -437,18 +581,17 @@
         recordList.addEventListener("click", function (e) {
             var btn = e.target.closest ? e.target.closest(".record-del") : null;
             if (!btn) return;
-            var arr = getRecords();
-            arr.splice(parseInt(btn.getAttribute("data-i"), 10), 1);
-            saveRecords(arr);
-            renderRecords();
+            var id = btn.getAttribute("data-id");
+            if (!id) return;
+            if (!confirm("确定删除这条记录吗？")) return;
+            supabase.from(TABLE).delete().eq("id", id).then(function (res) {
+                if (res.error) {
+                    alert("删除失败：" + res.error.message);
+                    return;
+                }
+                loadRecords();
+            });
         });
-
-        renderRecords();
-
-        // 日期默认今天
-        if (!recDate.value) {
-            recDate.value = new Date().toISOString().slice(0, 10);
-        }
 
     })();
     </script>
