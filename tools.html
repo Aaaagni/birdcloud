@@ -108,6 +108,20 @@
             min-width: 0;
         }
 
+        .bird-photo-empty {
+            width: 100%;
+            min-height: 140px;
+            border-radius: 8px;
+            background: #f2f6f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 10px;
+            border: 1px dashed #d5e0e8;
+        }
+
         .bird-item h3 {
             margin: 0 0 2px;
             font-size: 16px;
@@ -199,6 +213,22 @@
             gap: 10px;
             margin-bottom: 8px;
             flex-wrap: wrap;
+        }
+
+        .check-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .check-toggle {
+            background: none;
+            border: none;
+            color: #2c5f8a;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
         }
 
         .check-prog {
@@ -391,7 +421,10 @@
                 <p class="tool-desc">把看过的鸟种点亮，追踪你的观鸟进度</p>
                 <div class="check-head">
                     <span class="check-prog" id="checkProg">已记录 0 / 0 种（0%）</span>
-                    <button class="check-reset" id="checkReset">清空清单</button>
+                    <div class="check-head-actions">
+                        <button class="check-toggle" id="checkToggle">收起 ▲</button>
+                        <button class="check-reset" id="checkReset">清空清单</button>
+                    </div>
                 </div>
                 <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
                 <div class="check-grid" id="checkGrid"></div>
@@ -490,7 +523,12 @@
             { name: "山斑鸠", sci: "Streptopelia orientalis", feat: "灰粉褐羽，颈侧黑白条纹斑，无珠点", habitat: "林缘、农田、公园", food: "谷物、种子、浆果", tip: "与珠颈斑鸠相似，颈斑呈条纹状" },
             { name: "小鸊鷉", sci: "Tachybaptus ruficollis", feat: "小水鸟，颈侧红棕、嘴基黄斑，善潜泳", habitat: "公园湖泊、水塘、湿地", food: "小鱼、虾、水生昆虫", tip: "遇险先潜水，只露脑袋观察" },
             { name: "棕头鸦雀", sci: "Sinosuthora webbiana", feat: "棕褐色小圆球，尾长，喙短厚似鹦鹉嘴", habitat: "芦苇丛、灌丛、竹丛", food: "昆虫、草籽", tip: "常成群在草丛里“啾啾”窜动" },
-            { name: "牛背鹭", sci: "Bubulcus ibis", feat: "白色鹭鸟，繁殖期头、颈、背饰橙黄羽，嘴橙黄、脚深色", habitat: "草地、农田、牧场、湿地边缘", food: "昆虫（蝗虫、蚱蜢）、蛙、小鱼", tip: "爱跟随牛群啄食惊起的虫子，常站在牛背上" }
+            { name: "牛背鹭", sci: "Bubulcus ibis", feat: "白色鹭鸟，繁殖期头、颈、背饰橙黄羽，嘴橙黄、脚深色", habitat: "草地、农田、牧场、湿地边缘", food: "昆虫（蝗虫、蚱蜢）、蛙、小鱼", tip: "爱跟随牛群啄食惊起的虫子，常站在牛背上" },
+            { name: "北灰鹟", sci: "Muscicapa dauurica", feat: "上体灰褐、下体污白，眼周有浅色眼圈，喙黑细尖", habitat: "阔叶林、公园、疏林灌丛", food: "昆虫", tip: "常从枝头飞出捕虫后飞回原枝，秋季过境常见" },
+            { name: "栗背短脚鹎", sci: "Hemixos castanonotus", feat: "头顶栗棕色，喉部纯白，胸腹灰白，翅尾黑褐", habitat: "常绿阔叶林、山地林缘", food: "果实、昆虫", tip: "华南常见，常结群活动，叫声清脆" },
+            { name: "黑水鸡", sci: "Gallinula chloropus", feat: "通体黑褐色，头颈浅灰，喙基红色（成鸟），体侧白纹，尾下覆羽两侧白色，游泳时尾羽翘起", habitat: "湖泊、池塘、水田等静水湿地，常在浮水植物间活动", food: "水生植物嫩芽、种子、昆虫、小鱼虾", tip: "脚趾细长，能在浮叶上行走；幼鸟无红色额甲，常随亲鸟觅食" },
+            { name: "灰头鹀", sci: "Emberiza spodocephala", feat: "雄鸟头颈灰绿色，雌鸟头灰褐；上体棕褐带黑纵纹，下体黄白带纵纹，尾羽外侧白色", habitat: "林地、灌丛、农田、苇塘边缘", food: "草籽、谷粒、昆虫", tip: "冬季常结小群活动；飞行时尾羽外侧白色醒目，是重要辨识点" },
+            { name: "红喉歌鸲", sci: "Calliope calliope", feat: "雄鸟喉部具鲜艳橙红色斑（红点颏），红斑外缘黑色细边；上体橄榄褐，白色眉纹，黑色贯眼纹，尾羽上翘", habitat: "灌丛、林缘、苇塘边等近水灌草丛", food: "昆虫、蜘蛛及少量植物种子", tip: "俗称红点颏，鸣声婉转多变，善模仿；雌鸟喉部无红斑" }
         ];
 
         // ============ 工具一：图鉴查询 ============
@@ -499,18 +537,18 @@
 
         // 每只鸟对应的图片（顺序与 BIRDS 数组一致）
         var BIRD_IMGS = [
-            "images/birds/01-treesparrow.png",
+            "images/birds/01-treesparrow-a.jpg",
             "images/birds/02-magpie.png",
             "images/birds/03-barnswallow.png",
             "images/birds/04-bulbul.png",
             "images/birds/05-blackbird.png",
             "images/birds/06-spotteddove.png",
-            "images/birds/07-littleegret.png",
+            "images/birds/07-littleegret.jpg",
             "images/birds/08-greyheron.png",
             "images/birds/09-kingfisher.png",
             "images/birds/10-woodpecker.png",
             "images/birds/11-redbilledbluemagpie.png",
-            "images/birds/12-hoopoe.png",
+            "images/birds/12-hoopoe-a.jpg",
             "images/birds/13-crestedmyna.png",
             "images/birds/14-whitewagtail.png",
             "images/birds/15-scopsowl.png",
@@ -529,14 +567,20 @@
             "images/birds/28-magpierobin-a.jpg",
             "images/birds/29-whitecheekedstarling.png",
             "images/birds/30-orientalturtledove.png",
-            "images/birds/31-littlegrebe.png",
+            "images/birds/31-littlegrebe.jpg",
             "images/birds/32-parrotbill.png",
-            "images/birds/33-cattleegret.jpg"
+            "images/birds/33-cattleegret.jpg",
+            "images/birds/34-asianbrownflycatcher.jpg",
+            "images/birds/35-chesnutbulbul.jpg",
+            "images/birds/36-moorhen.jpg",
+            "images/birds/37-blackfacedbunting.jpg",
+            "images/birds/38-siberianrubythroat.jpg"
         ];
 
-        // 部分鸟种附第二张实拍照片（索引 → 副图），图鉴中并排展示
+        // 部分鸟种附多张实拍照片（索引 → 副图数组），图鉴中并排展示
         var BIRD_IMGS_EXTRA = {
-            27: "images/birds/28-magpierobin-b.jpg"
+            0: ["images/birds/01-treesparrow-b.jpg", "images/birds/01-treesparrow-c.jpg", "images/birds/01-treesparrow-d.jpg"],
+            27: ["images/birds/28-magpierobin-b.jpg", "images/birds/28-magpierobin-c.jpg"]
         };
 
         function esc(s) {
@@ -568,10 +612,14 @@
             for (var i = 0; i < list.length; i++) {
                 var b = list[i].bird;
                 var img = BIRD_IMGS[list[i].idx] || "";
-                var extra = BIRD_IMGS_EXTRA[list[i].idx] || "";
-                var photos = '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">' +
-                    (extra ? '<img class="bird-photo" src="' + esc(extra) + '" alt="' + esc(b.name) + '（实拍）" decoding="async">' : "");
-                if (extra) photos = '<div class="photo-pair">' + photos + '</div>';
+                var extra = BIRD_IMGS_EXTRA[list[i].idx] || [];
+                var photos = (img
+                    ? '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">'
+                    : '<div class="bird-photo-empty">暂无照片，待补充</div>') +
+                    extra.map(function (p) {
+                        return '<img class="bird-photo" src="' + esc(p) + '" alt="' + esc(b.name) + '（实拍）" decoding="async">';
+                    }).join("");
+                if (extra.length) photos = '<div class="photo-pair">' + photos + '</div>';
                 html += '<div class="bird-item" data-i="' + list[i].idx + '">' +
                     '<h3>' + esc(b.name) + '</h3>' +
                     '<div class="sci">' + esc(b.sci) + '</div>' +
@@ -606,7 +654,8 @@
         var pickResult = document.getElementById("pickResult");
 
         pickBtn.addEventListener("click", function () {
-            var bi = Math.floor(Math.random() * BIRDS.length);
+            var bi;
+            do { bi = Math.floor(Math.random() * BIRDS.length); } while (!BIRD_IMGS[bi]);
             var b = BIRDS[bi];
             pickResult.innerHTML =
                 '<img class="pick-photo" src="' + esc(BIRD_IMGS[bi]) + '" alt="' + esc(b.name) + '">' +
@@ -677,6 +726,27 @@
             }
         });
 
+        // 一键收起 / 展开清单网格
+        var CHECK_COLLAPSED_KEY = "birdcloud-checklist-collapsed";
+        var checkToggle = document.getElementById("checkToggle");
+
+        function isChecklistCollapsed() {
+            try { return localStorage.getItem(CHECK_COLLAPSED_KEY) === "1"; } catch (e) { return false; }
+        }
+
+        function applyCheckCollapsed() {
+            var collapsed = isChecklistCollapsed();
+            checkGrid.style.display = collapsed ? "none" : "";
+            checkToggle.textContent = collapsed ? "展开 ▼" : "收起 ▲";
+        }
+
+        checkToggle.addEventListener("click", function () {
+            var collapsed = !isChecklistCollapsed();
+            try { localStorage.setItem(CHECK_COLLAPSED_KEY, collapsed ? "1" : "0"); } catch (e) { }
+            applyCheckCollapsed();
+        });
+
+        applyCheckCollapsed();
         renderChecklist();
 
         // ============ 工具四：看图猜鸟 ============
@@ -697,7 +767,8 @@
 
         function newQuiz() {
             quizData.locked = false;
-            var answer = Math.floor(Math.random() * BIRDS.length);
+            var answer;
+            do { answer = Math.floor(Math.random() * BIRDS.length); } while (!BIRD_IMGS[answer]);
             var distractors = [];
             var guard = 0;
             while (distractors.length < 3 && guard < 200) {
