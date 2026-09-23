@@ -3,52 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIRDCLOUD-你的专属观鸟笔记</title>
+    <title>感谢名单 | BirdCloud</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        main.container {
+            width: 92%;
+            max-width: 900px;
+            display: block;
+        }
+
+        .thanks-hero {
+            text-align: center;
+            padding: 50px 20px 30px;
+        }
+
+        .thanks-hero h1 {
+            color: #4682b4;
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .thanks-hero p {
+            color: #668;
+            font-size: 15px;
+        }
+
+        .thanks-card {
+            background: #fff;
+            border: 1px solid #dceef6;
+            border-radius: 12px;
+            padding: 60px 30px;
+            text-align: center;
+            margin-bottom: 60px;
+            box-shadow: 0 4px 12px rgba(173, 216, 230, 0.2);
+        }
+
+        .thanks-card .placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .thanks-card h2 {
+            color: #4682b4;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .thanks-card p {
+            color: #8199a3;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <!-- 顶部导航栏 -->
     <header>
         <div class="logo">🐦 BirdCloud 观鸟笔记</div>
         <nav>
-            <a href=" " class="active">首页</a >
+            <a href="index.html">首页</a >
             <a href="records.html">观鸟记录本</a >
             <a href="forum.html">观鸟地点</a >
             <a href="gallery.html">观鸟相册</a >
             <a href="tools.html">实用工具</a >
             <a href="login.html" id="nest-link">鸟窝入住</a >
-            <a href="thanks.html">感谢名单</a >
+            <a href="thanks.html" class="active">感谢名单</a >
         </nav>
     </header>
 
-    <!-- 主横幅 -->
-    <section class="banner">
-        <h1>记录野生鸟类，写成你的观鸟笔记</h1>
-        <p>专注鸟类观测与记录，打造你的专属观鸟笔记</p >
-    </section>
-
-    <!-- 内容板块 -->
+    <!-- 感谢名单板块 -->
     <main class="container">
-        <div class="card">
-            <h2>📒 观鸟记录本</h2>
-            <p>随手记录每次观测，可上传照片存入云端观鸟相册</p >
-            <a href="records.html" class="btn">记一笔</a >
-        </div>
-        <div class="card">
-            <h2>观鸟地点推荐</h2>
-            <p>全国各省份知名观鸟地，带最佳季节与观鸟提示</p >
-            <a href="forum.html" class="btn">查看地点</a >
-        </div>
-        <div class="card">
-            <h2>精选鸟类相册</h2>
-            <p>高清实拍鸟类美图，按物种、地点分类归档</p >
-            <a href="gallery.html" class="btn">浏览相册</a >
-        </div>
-        <div class="card">
-            <h2>实用工具</h2>
-            <p>鸟类图鉴查询、每日观鸟推荐，野外观鸟好帮手</p >
-            <a href="tools.html" class="btn">去用工具</a >
-        </div>
+        <section class="thanks-hero">
+            <h1>🙏 感谢名单</h1>
+            <p>感谢每一位支持 BirdCloud 的朋友，名单陆续补充中</p >
+        </section>
+
+        <section class="thanks-card">
+            <div class="placeholder-icon">🐦</div>
+            <h2>名单整理中</h2>
+            <p>感谢名单内容正在整理，敬请期待</p >
+        </section>
     </main>
 
     <footer>
