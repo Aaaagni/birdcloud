@@ -22,29 +22,83 @@
         }
 
         .upload-panel {
-            text-align: center;
             margin-bottom: 26px;
         }
 
         .upload-panel h2 {
-            margin: 0 0 10px;
+            margin: 0 0 12px;
             font-size: 32px;
         }
 
+        /* ---- 公共 / 私有 标签页 ---- */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+            font-size: 15px;
+            cursor: pointer;
+            background: #eef4f8;
+            color: #345;
+            transition: all 0.15s;
+        }
+
+        .tab:hover {
+            background: #e2eef5;
+        }
+
+        .tab.active {
+            background: #72bcd4;
+            color: #fff;
+            font-weight: 600;
+        }
+
         #hint {
-            margin: 0 0 20px;
-            font-size: 16px;
+            margin: 0 0 16px;
+            font-size: 15px;
             color: #789;
+            min-height: 20px;
+        }
+
+        /* ---- 上传表单 ---- */
+        .upload-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-form input[type="text"],
+        .upload-form input[type="date"] {
+            padding: 11px 12px;
+            border: 1px solid #cfe3ee;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            background: #fbfdff;
+        }
+
+        .upload-form input[type="text"] { width: 200px; }
+
+        .upload-form input:focus {
+            border-color: #72bcd4;
         }
 
         .btn-add {
             display: inline-block;
-            padding: 14px 42px;
+            padding: 12px 28px;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             background: #72bcd4;
             color: #fff;
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: opacity 0.15s;
@@ -57,11 +111,12 @@
         #status {
             min-height: 20px;
             margin: 14px 0 0;
-            font-size: 17px;
+            font-size: 15px;
             color: #4c9ab5;
             text-align: center;
         }
 
+        /* ---- 相册网格 ---- */
         .gallery-panel h3 {
             margin: 0 0 18px;
             font-size: 20px;
@@ -118,6 +173,7 @@
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.15s;
+            z-index: 2;
         }
 
         .gallery-item:hover .del-btn {
@@ -136,13 +192,47 @@
             opacity: 1;
         }
 
+        .share-btn {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(37, 99, 235, 0.88);
+            color: #fff;
+            font-size: 12px;
+            padding: 5px 8px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .gallery-item:hover .share-btn {
+            opacity: 1;
+        }
+
+        .share-btn:hover {
+            background: #1d4ed8;
+        }
+
         .gallery-item .caption {
             padding: 10px 12px;
+        }
+
+        .caption .cap-author {
             font-size: 14px;
+            color: #345;
+            font-weight: 600;
+        }
+
+        .caption .cap-meta {
+            font-size: 12px;
             color: #789;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-top: 3px;
+            line-height: 1.5;
         }
 
         .empty {
@@ -171,18 +261,27 @@
 
     <main class="container">
 
-        <!-- 上区：添加图片 -->
+        <!-- 上区：添加图片（公共 / 私有共用，按当前标签页决定去向） -->
         <section class="panel upload-panel">
             <h2>观鸟相册</h2>
-            <p id="hint">图片存入云端相册</p>
-            <button id="addBtn" class="btn-add">添加图片</button>
+            <div class="tabs">
+                <button class="tab active" data-tab="public">🌍 公共相册</button>
+                <button class="tab" data-tab="private">🔒 我的相册</button>
+            </div>
+            <p id="hint">公共相册 · 所有人可见，登录后即可发图</p>
+            <div class="upload-form">
+                <input type="text" id="photoPlace" placeholder="📍 观测地点（必填），如：杭州西溪湿地">
+                <input type="date" id="photoDate" title="观测日期">
+                <input type="text" id="photoAuthor" placeholder="🐦 发布者名字（必填）">
+                <button id="addBtn" class="btn-add">＋ 添加图片</button>
+            </div>
             <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
             <div id="status"></div>
         </section>
 
         <!-- 下区：图片展示 -->
         <section class="panel gallery-panel">
-            <h3>已上传照片</h3>
+            <h3 id="gridTitle">公共相册</h3>
             <div id="grid" class="gallery-grid">
                 <div class="empty">加载中……</div>
             </div>
@@ -197,286 +296,462 @@
     <script src="vendor/supabase.min.js"></script>
 
     <script>
-(function () {
+    (function () {
 
-    var BUCKET = "bird-gallery";
-    var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
-    var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
-    var supabase = null;
-    var isLoggedIn = false;
-    var currentUserId = "";
+        var BUCKET_PUBLIC = "bird-public";
+        var BUCKET_PRIVATE = "bird-gallery";
+        var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        var supabase = null;
+        var isLoggedIn = false;
+        var currentUserId = "";
+        var currentTab = "public"; // public（公共相册）| private（我的相册）
 
-    var grid = document.getElementById("grid");
-    var addBtn = document.getElementById("addBtn");
-    var fileInput = document.getElementById("fileInput");
-    var statusEl = document.getElementById("status");
-    var hintEl = document.getElementById("hint");
+        var grid = document.getElementById("grid");
+        var gridTitle = document.getElementById("gridTitle");
+        var addBtn = document.getElementById("addBtn");
+        var fileInput = document.getElementById("fileInput");
+        var statusEl = document.getElementById("status");
+        var hintEl = document.getElementById("hint");
+        var photoPlace = document.getElementById("photoPlace");
+        var photoDate = document.getElementById("photoDate");
+        var photoAuthor = document.getElementById("photoAuthor");
+        var tabBtns = document.querySelectorAll(".tab");
 
-    function setStatus(text, isError) {
-        if (statusEl) {
-            statusEl.textContent = text;
-            statusEl.style.color = isError ? "#d1493f" : "#4c9ab5";
+        function setStatus(text, isError) {
+            if (statusEl) {
+                statusEl.textContent = text;
+                statusEl.style.color = isError ? "#d1493f" : "#4c9ab5";
+            }
         }
-    }
 
-    function esc(s) {
-        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    // 最先注册全局错误捕获
-    window.addEventListener("error", function (e) {
-        setStatus("页面脚本错误：" + e.message, true);
-    });
-
-    // 初始化（try-catch 包裹）
-    try {
-        if (!window.supabase || typeof window.supabase.createClient !== "function") {
-            setStatus("错误：Supabase 库未加载", true);
-        } else {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
-    } catch (err) {
-        setStatus("初始化失败：" + err.message, true);
-    }
 
-    // 登录状态 + 导航"我的鸟窝"逻辑
-    if (supabase) {
-        supabase.auth.getSession().then(function (res) {
-            isLoggedIn = !!(res.data && res.data.session);
-            if (isLoggedIn && res.data.session.user) {
-                currentUserId = res.data.session.user.id;
-            }
+        function pad(n) {
+            return n < 10 ? "0" + n : "" + n;
+        }
 
-            var nest = document.getElementById("nest-link");
-            if (nest) {
-                if (isLoggedIn) {
-                    nest.href = "profile.html";
-                    nest.textContent = "我的鸟窝";
-                } else {
-                    nest.href = "login.html";
-                    nest.textContent = "鸟窝入住";
-                }
-            }
+        function todayStr() {
+            var d = new Date();
+            return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+        }
 
-            if (isLoggedIn) {
-                hintEl.textContent = "已登录 · 相册仅自己可见 · 点击「添加图片」上传照片";
-            } else {
-                hintEl.textContent = "未登录 · 相册为私密内容，请先登录查看";
-            }
-
-            // 登录状态确定后，再加载相册
-            loadGallery();
+        // 最先注册全局错误捕获
+        window.addEventListener("error", function (e) {
+            setStatus("页面脚本错误：" + e.message, true);
         });
-    }
 
-    // 加载相册（仅自己的私有文件夹）
-    function loadGallery() {
-        if (!supabase) return;
-
-        // 未登录：相册是私密的，不加载任何内容
-        if (!isLoggedIn) {
-            grid.innerHTML = '<div class="empty">🔒 相册是私密的<br>请先登录，才能查看你的专属观鸟相册</div>';
-            setStatus("", false);
-            return;
+        // 初始化（try-catch 包裹）
+        try {
+            if (!window.supabase || typeof window.supabase.createClient !== "function") {
+                setStatus("错误：Supabase 库未加载", true);
+            } else {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (err) {
+            setStatus("初始化失败：" + err.message, true);
         }
 
-        var prefix = currentUserId + "/";
-        setStatus("正在加载相册……");
+        function updateHint() {
+            if (currentTab === "public") {
+                hintEl.textContent = isLoggedIn
+                    ? "🌍 公共相册 · 所有人可见，登录后即可发图（请填写地点、日期和发布者名字）"
+                    : "🌍 公共相册 · 所有人可见；登录后即可发图";
+            } else {
+                hintEl.textContent = isLoggedIn
+                    ? "🔒 我的私有相册 · 仅自己可见；悬停照片可点 📤 分享到公共相册"
+                    : "🔒 我的私有相册 · 请先登录，才能查看和上传";
+            }
+        }
 
-        supabase.storage.from(BUCKET).list(prefix).then(function (res) {
-            if (res.error) {
-                var msg = (res.error.message || "");
-                if (msg.indexOf("not found") > -1) {
-                    grid.innerHTML = '<div class="empty">📦 云端相册尚未配置<br>' +
-                        '需要在 Supabase 控制台创建私有存储桶 <b>bird-gallery</b><br>' +
-                        '创建后可在此上传和查看图片</div>';
-                } else {
-                    grid.innerHTML = '<div class="empty">相册加载失败：' + esc(msg) + '</div>';
+        // 登录状态 + 导航"我的鸟窝"逻辑
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                isLoggedIn = !!(res.data && res.data.session);
+                if (isLoggedIn && res.data.session.user) {
+                    currentUserId = res.data.session.user.id;
+                    // 登录后自动填入发布者名字（取资料昵称，否则取邮箱前缀）
+                    var u = res.data.session.user;
+                    var nm = (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name))
+                        || (u.email ? u.email.split("@")[0] : "");
+                    if (nm && !photoAuthor.value) photoAuthor.value = nm;
                 }
-                setStatus("", false);
-                return;
-            }
 
-            var files = (res.data || []).filter(function (f) {
-                // 只保留图片文件（排除目录项：目录没有 metadata）
-                return f && f.metadata &&
-                    typeof f.metadata.mimetype === "string" &&
-                    f.metadata.mimetype.indexOf("image/") === 0;
+                var nest = document.getElementById("nest-link");
+                if (nest) {
+                    if (isLoggedIn) {
+                        nest.href = "profile.html";
+                        nest.textContent = "我的鸟窝";
+                    } else {
+                        nest.href = "login.html";
+                        nest.textContent = "鸟窝入住";
+                    }
+                }
+
+                photoDate.value = todayStr();
+                updateHint();
+                loadGallery();
             });
+        }
 
-            if (files.length === 0) {
-                grid.innerHTML = '<div class="empty">🐦 相册还是空的<br>点击上方「添加图片」上传第一张观鸟照片吧</div>';
+        // 标签页切换
+        for (var t = 0; t < tabBtns.length; t++) {
+            (function (btn) {
+                btn.addEventListener("click", function () {
+                    currentTab = btn.getAttribute("data-tab");
+                    for (var i = 0; i < tabBtns.length; i++) {
+                        tabBtns[i].classList.toggle("active", tabBtns[i] === btn);
+                    }
+                    gridTitle.textContent = currentTab === "public" ? "公共相册" : "我的相册";
+                    // 私有相册只有自己可见，无需填写发布者名字
+                    photoAuthor.style.display = currentTab === "private" ? "none" : "";
+                    updateHint();
+                    loadGallery();
+                });
+            })(tabBtns[t]);
+        }
+
+        // 加载相册：公共 = 全站共享；私有 = 仅自己的记录
+        function loadGallery() {
+            if (!supabase) return;
+            updateHint();
+
+            if (currentTab === "private" && !isLoggedIn) {
+                grid.innerHTML = '<div class="empty">🔒 我的相册是私密的<br>请先登录，才能查看你的专属观鸟相册</div>';
                 setStatus("", false);
                 return;
             }
 
-            // 私有桶没有公开链接：逐张生成临时签名 URL（1 小时有效）
-            var items = [];
-            var pending = files.length;
+            setStatus("正在加载相册……");
+
+            var q = supabase.from("photos")
+                .select("*")
+                .eq("bucket", currentTab)
+                .order("created_at", { ascending: false });
+            if (currentTab === "private") {
+                q = q.eq("user_id", currentUserId);
+            }
+
+            q.then(function (res) {
+                if (res.error) {
+                    var msg = (res.error.message || "");
+                    if (msg.indexOf("does not exist") > -1 || msg.indexOf("relation") > -1) {
+                        grid.innerHTML = '<div class="empty">📦 相册数据库尚未配置<br>' +
+                            '请在 Supabase 控制台执行 <b>gallery-v2.sql</b><br>' +
+                            '（创建 photos 元数据表与公共桶 bird-public）</div>';
+                    } else {
+                        grid.innerHTML = '<div class="empty">相册加载失败：' + esc(msg) + '</div>';
+                    }
+                    setStatus("", false);
+                    return;
+                }
+
+                var rows = res.data || [];
+                if (rows.length === 0) {
+                    if (currentTab === "public") {
+                        grid.innerHTML = '<div class="empty">🐦 公共相册还是空的<br>登录后点击上方「＋ 添加图片」，发布第一张观鸟照片吧</div>';
+                    } else {
+                        grid.innerHTML = '<div class="empty">🐦 你的相册还是空的<br>点击上方「＋ 添加图片」上传第一张观鸟照片吧</div>';
+                    }
+                    setStatus("", false);
+                    return;
+                }
+
+                if (currentTab === "public") {
+                    // 公共桶：公开 URL 直接读取
+                    var items = [];
+                    for (var i = 0; i < rows.length; i++) {
+                        items.push({
+                            row: rows[i],
+                            url: SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_PUBLIC + "/" + encodeURI(rows[i].path)
+                        });
+                    }
+                    renderGrid(items);
+                } else {
+                    // 私有桶：逐张生成临时签名 URL（1 小时有效）
+                    var items = [];
+                    var pending = rows.length;
+                    for (var i = 0; i < rows.length; i++) {
+                        (function (row) {
+                            supabase.storage.from(BUCKET_PRIVATE).createSignedUrl(row.path, 60 * 60).then(function (r) {
+                                pending--;
+                                if (!r.error && r.data && r.data.signedUrl) {
+                                    items.push({ row: row, url: r.data.signedUrl });
+                                }
+                                if (pending === 0) {
+                                    renderGrid(items);
+                                }
+                            });
+                        })(rows[i]);
+                    }
+                }
+            });
+        }
+
+        // 渲染照片网格（备注：发布者 · 地点 · 日期）
+        function renderGrid(items) {
+            if (items.length === 0) {
+                grid.innerHTML = '<div class="empty">图片加载失败，请刷新重试</div>';
+                setStatus("", true);
+                return;
+            }
+            var html = "";
+            for (var i = 0; i < items.length; i++) {
+                var row = items[i].row;
+                var mine = isLoggedIn && row.user_id === currentUserId;
+                var delBtn = mine
+                    ? '<button class="del-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="删除这张照片">✕</button>'
+                    : "";
+                var shareBtn = (currentTab === "private" && mine)
+                    ? '<button class="share-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="分享到公共相册">📤 分享</button>'
+                    : "";
+                var author = row.author_name || "匿名鸟友";
+                var place = row.place || "未填写";
+                var date = row.taken_at || "未知日期";
+                // 私有相册只有自己可见，不显示发布者名字
+                var authorRow = currentTab === "private" ? "" : '<div class="cap-author">🐦 ' + esc(author) + '</div>';
+                var altText = currentTab === "private" ? "我的观鸟照片" : esc(author) + " 拍摄";
+                html += '<div class="gallery-item">' + shareBtn + delBtn +
+                    '<img src="' + esc(items[i].url) + '" alt="' + altText + '" loading="lazy" ' +
+                    'onclick="window.open(\'' + esc(items[i].url) + '\',\'_blank\')">' +
+                    '<div class="caption">' +
+                        authorRow +
+                        '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) + '</div>' +
+                    '</div></div>';
+            }
+            grid.innerHTML = html;
+            setStatus("共 " + items.length + " 张照片", false);
+        }
+
+        // 删除图片（事件委托 + 两段式确认，仅自己的照片显示删除按钮）
+        var pendingDelete = null;
+
+        grid.addEventListener("click", function (e) {
+            var shareBtnEl = e.target.closest ? e.target.closest(".share-btn") : null;
+            if (shareBtnEl) {
+                shareToPublic(shareBtnEl);
+                return;
+            }
+
+            var btn = e.target.closest ? e.target.closest(".del-btn") : null;
+            if (!btn) return;
+
+            var id = btn.getAttribute("data-id");
+
+            // 第一次点击：进入"确认删除？"待确认状态
+            if (pendingDelete !== id) {
+                var prev = grid.querySelector('.del-btn[data-pending="1"]');
+                if (prev) {
+                    prev.textContent = "✕";
+                    prev.removeAttribute("data-pending");
+                }
+                pendingDelete = id;
+                btn.textContent = "确认?";
+                btn.setAttribute("data-pending", "1");
+                return;
+            }
+
+            // 第二次点击：执行删除（先删元数据记录，再删存储文件）
+            pendingDelete = null;
+            btn.textContent = "✕";
+            btn.removeAttribute("data-pending");
+            setStatus("正在删除……");
+
+            var bucket = currentTab === "public" ? BUCKET_PUBLIC : BUCKET_PRIVATE;
+
+            supabase.from("photos").delete().eq("id", id).then(function (res) {
+                if (res.error) {
+                    setStatus("删除记录失败：" + res.error.message, true);
+                    return;
+                }
+                return supabase.storage.from(bucket).remove([btn.getAttribute("data-path")]).then(function (up) {
+                    if (up.error) {
+                        setStatus("已从相册列表移除，但文件删除失败：" + up.error.message, true);
+                        return;
+                    }
+                    setStatus("已删除");
+                    loadGallery();
+                });
+            });
+        });
+
+        // 分享到公共相册：私有桶文件复制到公共桶 → 记录改公开并补发布者名字 → 删私有副本
+        function shareToPublic(btn) {
+            var id = btn.getAttribute("data-id");
+            var path = btn.getAttribute("data-path");
+            var defaultName = (photoAuthor.value.trim() || "匿名鸟友");
+            var name = prompt("在公共相册展示这张照片，发布者名字：", defaultName);
+            if (name === null) return; // 用户取消
+            name = String(name).trim() || "匿名鸟友";
+
+            setStatus("正在分享到公共相册……");
+
+            // 1) 私有桶生成临时签名 URL，拉取图片数据
+            supabase.storage.from(BUCKET_PRIVATE).createSignedUrl(path, 300).then(function (r) {
+                if (r.error || !r.data || !r.data.signedUrl) {
+                    setStatus("分享失败：无法读取私有照片（" + ((r.error && r.error.message) || "未知错误") + "）", true);
+                    return;
+                }
+                fetch(r.data.signedUrl).then(function (resp) {
+                    if (!resp.ok) throw new Error("下载失败 HTTP " + resp.status);
+                    return resp.blob();
+                }).then(function (blob) {
+                    // 2) 按扩展名推断 MIME，避免 octet-stream 被公共桶白名单拒绝
+                    var ext = path.split(".").pop().toLowerCase();
+                    var mimeMap = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", heic: "image/heic", heif: "image/heic" };
+                    var mime = mimeMap[ext] || blob.type || "image/jpeg";
+                    return supabase.storage.from(BUCKET_PUBLIC).upload(path, blob, { contentType: mime, upsert: false }).then(function (up) {
+                        if (up.error) throw new Error("复制到公共桶失败：" + up.error.message);
+                        // 3) 元数据记录改为公开，补上发布者名字
+                        return supabase.from("photos").update({ bucket: "public", author_name: name }).eq("id", id).then(function (ins) {
+                            if (ins.error) throw new Error("更新记录失败：" + ins.error.message);
+                            // 4) 删除私有桶副本
+                            return supabase.storage.from(BUCKET_PRIVATE).remove([path]).then(function (rm) {
+                                if (rm.error) {
+                                    setStatus("已公开，但私有副本清理失败：" + rm.error.message, true);
+                                } else {
+                                    setStatus("已分享到公共相册！");
+                                }
+                                loadGallery();
+                            });
+                        }).catch(function (err) {
+                            // 记录更新失败：清理刚复制到公共桶的文件，保持原状
+                            supabase.storage.from(BUCKET_PUBLIC).remove([path]).then(function () {
+                                setStatus("分享失败：" + err.message, true);
+                            });
+                        });
+                    });
+                }).catch(function (err) {
+                    setStatus("分享失败：" + err.message, true);
+                });
+            });
+        }
+
+        // 添加图片：先校验备注（地点、发布者名字必填）
+        addBtn.addEventListener("click", function () {
+            if (!isLoggedIn) {
+                setStatus("请先登录后再上传图片", true);
+                setTimeout(function () { window.location.href = "login.html?next=gallery.html"; }, 900);
+                return;
+            }
+            if (!photoPlace.value.trim()) {
+                setStatus("请填写观测地点", true);
+                photoPlace.focus();
+                return;
+            }
+            if (currentTab === "public" && !photoAuthor.value.trim()) {
+                setStatus("请填写发布者名字", true);
+                photoAuthor.focus();
+                return;
+            }
+            fileInput.value = "";
+            fileInput.click(); // 调起系统相册/文件选择器
+        });
+
+        // 把图片统一转成 JPEG（压缩最长边 2048px），解决手机 HEIC/大图/预览兼容问题；
+        // 浏览器无法解码时（个别旧机型 HEIC）回退原文件，不丢数据
+        function readAsJPEG(file, cb) {
+            var url = URL.createObjectURL(file);
+            var img = new Image();
+            img.onload = function () {
+                try {
+                    var maxDim = 2048;
+                    var w = img.naturalWidth || 0;
+                    var h = img.naturalHeight || 0;
+                    if (!w || !h) { URL.revokeObjectURL(url); cb(file); return; }
+                    var scale = Math.min(1, maxDim / Math.max(w, h));
+                    var canvas = document.createElement("canvas");
+                    canvas.width = Math.round(w * scale);
+                    canvas.height = Math.round(h * scale);
+                    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(url);
+                    canvas.toBlob(function (blob) {
+                        cb(blob || file);
+                    }, "image/jpeg", 0.85);
+                } catch (e) {
+                    URL.revokeObjectURL(url);
+                    cb(file);
+                }
+            };
+            img.onerror = function () {
+                URL.revokeObjectURL(url);
+                cb(file);
+            };
+            img.src = url;
+        }
+
+        // 选择文件后上传：图片 → 对应桶（公共/私有）→ 写入备注元数据
+        fileInput.addEventListener("change", function () {
+            var files = fileInput.files;
+            if (!files || files.length === 0) return;
+
+            var place = photoPlace.value.trim() || "未填写";
+            // 私有相册无需发布者名字；公共相册必填（默认昵称/邮箱前缀）
+            var author = currentTab === "private" ? "" : (photoAuthor.value.trim() || "匿名鸟友");
+            var date = photoDate.value || todayStr();
+            var bucket = currentTab === "public" ? BUCKET_PUBLIC : BUCKET_PRIVATE;
+
+            var total = files.length;
+            var done = 0;
+            var failed = 0;
+            var firstErr = null;
+
+            setStatus("正在处理 0/" + total + " ……");
+
             for (var i = 0; i < files.length; i++) {
-                (function (f) {
-                    supabase.storage.from(BUCKET).createSignedUrl(prefix + f.name, 60 * 60).then(function (r) {
-                        pending--;
-                        if (!r.error && r.data && r.data.signedUrl) {
-                            items.push({ name: f.name, url: r.data.signedUrl });
-                        }
-                        if (pending === 0) {
-                            renderGrid(items, files.length);
-                        }
+                (function (file) {
+                    readAsJPEG(file, function (out) {
+                        // 转码成功的统一为 .jpg；回退的原文件保留原扩展名（如 .heic）
+                        var ext = out.type === "image/jpeg" ? "jpg"
+                            : (file.name.split(".").pop() || "jpg").toLowerCase();
+                        var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+                        var path = currentUserId + "/" + name;
+
+                        supabase.storage.from(bucket).upload(path, out, {
+                            contentType: out.type || undefined,
+                            upsert: false
+                        }).then(function (up) {
+                            if (up.error) {
+                                done++;
+                                failed++;
+                                if (!firstErr) firstErr = up.error.message;
+                                setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
+                                finish();
+                                return;
+                            }
+                            // 写入备注：地点 / 日期 / 发布者名字
+                            supabase.from("photos").insert({
+                                bucket: currentTab,
+                                path: path,
+                                user_id: currentUserId,
+                                author_name: author,
+                                place: place,
+                                taken_at: date
+                            }).then(function (ins) {
+                                done++;
+                                if (ins.error) {
+                                    failed++;
+                                    if (!firstErr) firstErr = ins.error.message;
+                                }
+                                setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
+                                finish();
+                            });
+                        });
                     });
                 })(files[i]);
             }
+
+            function finish() {
+                if (done < total) return;
+                setStatus(failed === 0 ? "上传完成！"
+                    : "上传失败：" + firstErr, failed > 0);
+                loadGallery();
+            }
         });
-    }
 
-    // 渲染照片网格
-    function renderGrid(items, total) {
-        if (items.length === 0) {
-            grid.innerHTML = '<div class="empty">图片加载失败，请刷新重试</div>';
-            setStatus("", true);
-            return;
-        }
-        var html = "";
-        for (var i = 0; i < items.length; i++) {
-            var name = items[i].name;
-            var url = items[i].url;
-            var delBtn = '<button class="del-btn" data-name="' + esc(name) + '" title="删除这张照片">✕</button>';
-            html += '<div class="gallery-item">' +
-                    delBtn +
-                    '<img src="' + esc(url) + '" alt="' + esc(name) + '" loading="lazy" ' +
-                    'onclick="window.open(\'' + esc(url) + '\',\'_blank\')">' +
-                    '<div class="caption">' + esc(name) + '</div></div>';
-        }
-        grid.innerHTML = html;
-        setStatus("共 " + total + " 张照片", false);
-    }
-
-    // 删除图片（事件委托 + 两段式确认，不依赖系统弹窗）
-    var pendingDelete = null;
-
-    grid.addEventListener("click", function (e) {
-        var btn = e.target.closest ? e.target.closest(".del-btn") : null;
-        if (!btn) return;
-
-        var name = btn.getAttribute("data-name");
-
-        // 第一次点击：进入"确认删除？"待确认状态
-        if (pendingDelete !== name) {
-            var prev = grid.querySelector('.del-btn[data-pending="1"]');
-            if (prev) {
-                prev.textContent = "✕";
-                prev.removeAttribute("data-pending");
-            }
-            pendingDelete = name;
-            btn.textContent = "确认?";
-            btn.setAttribute("data-pending", "1");
-            return;
-        }
-
-        // 第二次点击：执行删除
-        pendingDelete = null;
-        btn.textContent = "✕";
-        btn.removeAttribute("data-pending");
-        setStatus("正在删除……");
-
-        supabase.storage.from(BUCKET).remove([currentUserId + "/" + name]).then(function (res) {
-            if (res.error) {
-                setStatus("删除失败：" + res.error.message, true);
-                return;
-            }
-            setStatus("已删除");
-            loadGallery();
-        });
-    });
-
-    // 添加图片
-    addBtn.addEventListener("click", function () {
-        if (!isLoggedIn) {
-            setStatus("请先登录后再上传图片", true);
-            setTimeout(function () { window.location.href = "login.html?next=gallery.html"; }, 900);
-            return;
-        }
-        fileInput.value = "";
-        fileInput.click(); // 调起系统相册/文件选择器
-    });
-
-    // 把图片统一转成 JPEG（压缩最长边 2048px），解决手机 HEIC/大图/预览兼容问题；
-    // 浏览器无法解码时（个别旧机型 HEIC）回退原文件，不丢数据
-    function readAsJPEG(file, cb) {
-        var url = URL.createObjectURL(file);
-        var img = new Image();
-        img.onload = function () {
-            try {
-                var maxDim = 2048;
-                var w = img.naturalWidth || 0;
-                var h = img.naturalHeight || 0;
-                if (!w || !h) { URL.revokeObjectURL(url); cb(file); return; }
-                var scale = Math.min(1, maxDim / Math.max(w, h));
-                var canvas = document.createElement("canvas");
-                canvas.width = Math.round(w * scale);
-                canvas.height = Math.round(h * scale);
-                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-                URL.revokeObjectURL(url);
-                canvas.toBlob(function (blob) {
-                    cb(blob || file);
-                }, "image/jpeg", 0.85);
-            } catch (e) {
-                URL.revokeObjectURL(url);
-                cb(file);
-            }
-        };
-        img.onerror = function () {
-            URL.revokeObjectURL(url);
-            cb(file);
-        };
-        img.src = url;
-    }
-
-    // 选择文件后上传
-    fileInput.addEventListener("change", function () {
-        var files = fileInput.files;
-        if (!files || files.length === 0) return;
-
-        var total = files.length;
-        var done = 0;
-        var failed = 0;
-        var firstErr = null;
-
-        setStatus("正在处理 0/" + total + " ……");
-
-        for (var i = 0; i < files.length; i++) {
-            (function (file) {
-                readAsJPEG(file, function (out) {
-                    // 转码成功的统一为 .jpg；回退的原文件保留原扩展名（如 .heic）
-                    var ext = out.type === "image/jpeg" ? "jpg"
-                        : (file.name.split(".").pop() || "jpg").toLowerCase();
-                    var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-                    var path = currentUserId + "/" + name;
-
-                    supabase.storage.from(BUCKET).upload(path, out, {
-                        contentType: out.type || undefined,
-                        upsert: false
-                    }).then(function (up) {
-                        done++;
-                        if (up.error) {
-                            failed++;
-                            if (!firstErr) firstErr = up.error.message;
-                        }
-                        setStatus("正在上传 " + done + "/" + total + " ……" + (failed > 0 ? "（失败 " + failed + " 张）" : ""), failed > 0);
-                        if (done === total) {
-                            setStatus(failed === 0 ? "上传完成！"
-                                : "上传失败：" + firstErr, failed > 0);
-                            loadGallery();
-                        }
-                    });
-                });
-            })(files[i]);
-        }
-    });
-
-    // 启动（登录状态确定后由 getSession 回调触发 loadGallery）
-
-})();
+    })();
     </script>
 
 </body>

@@ -98,14 +98,79 @@
             display: block;
         }
 
-        .photo-pair {
-            display: flex;
-            gap: 8px;
+        /* 多图轮播：图片尺寸与单图一致（占满整行），左右按钮切换 */
+        .bird-carousel {
+            position: relative;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #eaf3f8;
         }
 
-        .photo-pair .bird-photo {
-            flex: 1;
-            min-width: 0;
+        .bird-carousel .bird-photo {
+            display: none;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+
+        .bird-carousel .bird-photo.active {
+            display: block;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(70, 130, 180, 0.65);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            z-index: 2;
+            transition: background .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(70, 130, 180, 0.92);
+        }
+
+        .carousel-btn.prev { left: 8px; }
+        .carousel-btn.next { right: 8px; }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            z-index: 2;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .carousel-dot.active {
+            background: #4682b4;
         }
 
         .bird-photo-empty {
@@ -266,6 +331,19 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 8px;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 6px;
+            overscroll-behavior: contain;
+        }
+
+        .check-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .check-grid::-webkit-scrollbar-thumb {
+            background: #c6d8e8;
+            border-radius: 4px;
         }
 
         .check-item {
@@ -372,7 +450,46 @@
             font-size: 14px;
             line-height: 1.8;
             color: #6b5716;
-            min-height: 70px;
+            min-height: 84px;
+        }
+
+        .tip-cat {
+            display: inline-block;
+            background: #f0dfa8;
+            color: #7a5d00;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+
+        .tip-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #6b5716;
+        }
+
+        .tip-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tip-count {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 收集满 30 条的礼花特效层 */
+        #fireworks {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
         }
 
         .btn {
@@ -449,7 +566,10 @@
                 <h2>💡 观鸟冷知识</h2>
                 <p class="tool-desc">一分钟了解一个鸟类小秘密</p>
                 <div class="tip-box" id="tipBox"></div>
-                <button class="btn" id="tipBtn" style="margin-top:10px;">换一条</button>
+                <div class="tip-actions">
+                    <span class="tip-count" id="tipCount">已探索 0 / 30 条</span>
+                    <button class="btn" id="tipBtn">换一条</button>
+                </div>
             </section>
         </div>
     </main>
@@ -546,59 +666,59 @@
 
         // 每只鸟对应的图片（顺序与 BIRDS 数组一致）
         var BIRD_IMGS = [
-            "images/birds/01-treesparrow-a.jpg",
-            "images/birds/02-magpie.png",
-            "images/birds/03-barnswallow.png",
-            "images/birds/04-bulbul.png",
-            "images/birds/05-blackbird.png",
-            "images/birds/06-spotteddove.png",
-            "images/birds/07-littleegret.jpg",
-            "images/birds/08-greyheron.png",
-            "images/birds/09-kingfisher.png",
-            "images/birds/10-woodpecker.png",
-            "images/birds/11-redbilledbluemagpie.png",
-            "images/birds/12-hoopoe-a.jpg",
-            "images/birds/13-crestedmyna.png",
-            "images/birds/14-whitewagtail.png",
-            "images/birds/15-scopsowl.png",
-            "images/birds/16-nightheron.png",
-            "images/birds/17-hwamei.png",
-            "images/birds/18-oriole.png",
-            "images/birds/19-longtailshrike.png",
-            "images/birds/20-cormorant.png",
-            "images/birds/21-coot.png",
-            "images/birds/22-azurewingedmagpie.png",
-            "images/birds/23-redstart.png",
-            "images/birds/24-spotbilledduck.png",
-            "images/birds/25-redwhiskeredbulbul.png",
-            "images/birds/26-greattit.png",
-            "images/birds/27-japwhiteeye.png",
-            "images/birds/28-magpierobin-a.jpg",
-            "images/birds/29-whitecheekedstarling.png",
-            "images/birds/30-orientalturtledove.png",
-            "images/birds/31-littlegrebe.jpg",
-            "images/birds/32-parrotbill.png",
-            "images/birds/33-cattleegret.jpg",
-            "images/birds/34-asianbrownflycatcher.jpg",
-            "images/birds/35-chesnutbulbul.jpg",
-            "images/birds/36-moorhen.jpg",
-            "images/birds/37-blackfacedbunting.jpg",
-            "images/birds/38-siberianrubythroat.jpg",
-            "images/birds/39-bluewhistlingthrush.jpg",
-            "images/birds/40-sanderling.jpg",
-            "images/birds/41-streckershearwater.jpg",
-            "images/birds/42-whitecappedredstart.jpg",
-            "images/birds/43-chinesepondheron.jpg",
-            "images/birds/44-barheadedgoose.jpg",
-            "images/birds/45-elliottslaughingthrush.jpg",
-            "images/birds/46-vinaceousrosefinch.jpg"
+            "images/birds/01-treesparrow-a.jpg?v=20260924",
+            "images/birds/02-magpie.png?v=20260924",
+            "images/birds/03-barnswallow.png?v=20260924",
+            "images/birds/04-bulbul.png?v=20260924",
+            "images/birds/05-blackbird.png?v=20260924",
+            "images/birds/06-spotteddove.png?v=20260924",
+            "images/birds/07-littleegret.jpg?v=20260924",
+            "images/birds/08-greyheron.png?v=20260924",
+            "images/birds/09-kingfisher.png?v=20260924",
+            "images/birds/10-woodpecker.png?v=20260924",
+            "images/birds/11-redbilledbluemagpie.png?v=20260924",
+            "images/birds/12-hoopoe-a.jpg?v=20260924",
+            "images/birds/13-crestedmyna.png?v=20260924",
+            "images/birds/14-whitewagtail.png?v=20260924",
+            "images/birds/15-scopsowl.png?v=20260924",
+            "images/birds/16-nightheron.png?v=20260924",
+            "images/birds/17-hwamei.png?v=20260924b",
+            "images/birds/18-oriole.png?v=20260924",
+            "images/birds/19-longtailshrike.png?v=20260924",
+            "images/birds/20-cormorant.png?v=20260924",
+            "images/birds/21-coot.png?v=20260924",
+            "images/birds/22-azurewingedmagpie.png?v=20260924",
+            "images/birds/23-redstart.png?v=20260924b",
+            "images/birds/24-spotbilledduck.png?v=20260924",
+            "images/birds/25-redwhiskeredbulbul.png?v=20260924",
+            "images/birds/26-greattit.png?v=20260924",
+            "images/birds/27-japwhiteeye.png?v=20260924",
+            "images/birds/28-magpierobin-a.jpg?v=20260924",
+            "images/birds/29-whitecheekedstarling.png?v=20260924",
+            "images/birds/30-orientalturtledove.png?v=20260924",
+            "images/birds/31-littlegrebe.jpg?v=20260924",
+            "images/birds/32-parrotbill.png?v=20260924",
+            "images/birds/33-cattleegret.jpg?v=20260924",
+            "images/birds/34-asianbrownflycatcher.jpg?v=20260924",
+            "images/birds/35-chesnutbulbul.jpg?v=20260924",
+            "images/birds/36-moorhen.jpg?v=20260924",
+            "images/birds/37-blackfacedbunting.jpg?v=20260924",
+            "images/birds/38-siberianrubythroat.jpg?v=20260924",
+            "images/birds/39-bluewhistlingthrush.jpg?v=20260924",
+            "images/birds/40-sanderling.jpg?v=20260924",
+            "images/birds/41-streckershearwater.jpg?v=20260924",
+            "images/birds/42-whitecappedredstart.jpg?v=20260924",
+            "images/birds/43-chinesepondheron.jpg?v=20260924",
+            "images/birds/44-barheadedgoose.jpg?v=20260924",
+            "images/birds/45-elliottslaughingthrush.jpg?v=20260924",
+            "images/birds/46-vinaceousrosefinch.jpg?v=20260924b"
         ];
 
         // 部分鸟种附多张实拍照片（索引 → 副图数组），图鉴中并排展示
         var BIRD_IMGS_EXTRA = {
-            0: ["images/birds/01-treesparrow-b.jpg", "images/birds/01-treesparrow-c.jpg", "images/birds/01-treesparrow-d.jpg"],
-            27: ["images/birds/28-magpierobin-b.jpg", "images/birds/28-magpierobin-c.jpg"],
-            37: ["images/birds/38-siberianrubythroat-b.jpg"]
+            0: ["images/birds/01-treesparrow-b.jpg?v=20260924", "images/birds/01-treesparrow-c.jpg?v=20260924", "images/birds/01-treesparrow-d.jpg?v=20260924"],
+            27: ["images/birds/28-magpierobin-b.jpg?v=20260924", "images/birds/28-magpierobin-c.jpg?v=20260924"],
+            37: ["images/birds/38-siberianrubythroat-b.jpg?v=20260924"]
         };
 
         function esc(s) {
@@ -631,13 +751,31 @@
                 var b = list[i].bird;
                 var img = BIRD_IMGS[list[i].idx] || "";
                 var extra = BIRD_IMGS_EXTRA[list[i].idx] || [];
-                var photos = (img
-                    ? '<img class="bird-photo" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">'
-                    : '<div class="bird-photo-empty">暂无照片，待补充</div>') +
-                    extra.map(function (p) {
-                        return '<img class="bird-photo" src="' + esc(p) + '" alt="' + esc(b.name) + '（实拍）" decoding="async">';
-                    }).join("");
-                if (extra.length) photos = '<div class="photo-pair">' + photos + '</div>';
+                // 图片集合：主图 + 副图；单图直接展示，多图轮播滑动
+                var imgsArr = [];
+                if (img) {
+                    imgsArr.push('<img class="bird-photo active" src="' + esc(img) + '" alt="' + esc(b.name) + '" decoding="async">');
+                }
+                for (var pi = 0; pi < extra.length; pi++) {
+                    imgsArr.push('<img class="bird-photo" src="' + esc(extra[pi]) + '" alt="' + esc(b.name) + '（实拍）" decoding="async">');
+                }
+                var photos;
+                if (imgsArr.length === 0) {
+                    photos = '<div class="bird-photo-empty">暂无照片，待补充</div>';
+                } else if (imgsArr.length === 1) {
+                    photos = imgsArr[0];
+                } else {
+                    var dotsHtml = "";
+                    for (var di = 0; di < imgsArr.length; di++) {
+                        dotsHtml += '<span class="carousel-dot' + (di === 0 ? " active" : "") + '" data-go="' + di + '"></span>';
+                    }
+                    photos = '<div class="bird-carousel">' +
+                        imgsArr.join("") +
+                        '<button class="carousel-btn prev" data-dir="prev" aria-label="上一张">‹</button>' +
+                        '<button class="carousel-btn next" data-dir="next" aria-label="下一张">›</button>' +
+                        '<div class="carousel-dots">' + dotsHtml + '</div>' +
+                        '</div>';
+                }
                 html += '<div class="bird-item" data-i="' + list[i].idx + '">' +
                     '<h3>' + esc(b.name) + '</h3>' +
                     '<div class="sci">' + esc(b.sci) + '</div>' +
@@ -657,6 +795,34 @@
         });
 
         birdList.addEventListener("click", function (e) {
+            // 轮播按钮 / 指示点：切换图片，不触发卡片开合
+            var navEl = e.target.closest ? (e.target.closest(".carousel-btn") || e.target.closest(".carousel-dot")) : null;
+            if (navEl) {
+                var carousel = navEl.closest(".bird-carousel");
+                if (!carousel) return;
+                var imgs = carousel.querySelectorAll(".bird-photo");
+                var cur = 0;
+                for (var ci = 0; ci < imgs.length; ci++) {
+                    if (imgs[ci].classList.contains("active")) { cur = ci; break; }
+                }
+                var next;
+                if (navEl.classList.contains("carousel-dot")) {
+                    next = parseInt(navEl.getAttribute("data-go"), 10) || 0;
+                } else {
+                    next = navEl.classList.contains("prev") ? cur - 1 : cur + 1;
+                }
+                if (next < 0) next = imgs.length - 1;
+                if (next >= imgs.length) next = 0;
+                for (var ci2 = 0; ci2 < imgs.length; ci2++) {
+                    imgs[ci2].classList.toggle("active", ci2 === next);
+                }
+                var dots = carousel.querySelectorAll(".carousel-dot");
+                for (var ci3 = 0; ci3 < dots.length; ci3++) {
+                    dots[ci3].classList.toggle("active", ci3 === next);
+                }
+                return;
+            }
+
             var item = e.target.closest ? e.target.closest(".bird-item") : null;
             if (!item) return;
             var wasOpen = item.classList.contains("open");
@@ -832,35 +998,212 @@
         newQuiz();
 
         // ============ 工具五：观鸟冷知识 ============
+        var CAT_EMOJI = {
+            "行为": "🐾", "身体": "🔬", "迁徙": "🧭", "繁殖": "🐣",
+            "趣事": "🤣", "鸣唱": "🎵"
+        };
         var TIPS = [
-            "蜂鸟每秒能扇动翅膀 50~80 次，是世界上振翅最快的鸟之一。",
-            "猫头鹰的脖子可以旋转约 270 度，几乎转一整圈。",
-            "啄木鸟啄树时头部承受的冲击力堪比撞墙，但特殊的头骨结构能完美缓冲。",
-            "鸵鸟是现存最大的鸟，跑起来时速可达 70 公里。",
-            "企鹅是鸟类，虽然不会飞，却是出色的游泳健将。",
-            "翠鸟俯冲入水捕鱼时速度极快，几乎不溅起水花。",
-            "燕子每年迁徙距离可达上万公里，却能精准回到去年的旧巢。",
-            "画眉鸟叫声婉转多变，一只画眉能模仿十几种鸟鸣。",
-            "白鹭捕食时会用脚在水中轻搅，惊出小鱼再快速啄取。",
-            "鸟类没有牙齿，靠胃里的砂囊磨碎食物。",
-            "喜鹊是少数能认出镜子里自己的鸟之一，认知能力很高。",
-            "啄木鸟的舌头可以伸出比嘴长 3 倍，用来钩取树干里的虫子。",
-            "黄鹂的巢像一个小吊篮，悬挂在高高的树梢上。",
-            "斑嘴鸭飞行时脖颈直伸，和家鸭的姿态略有不同。",
-            "白腰文鸟睡觉时喜欢挤成一团，几十只抱在一起过夜。"
+            { c: "身体", t: "蜂鸟每秒能扇动翅膀 50~80 次，是世界上振翅最快的鸟之一。" },
+            { c: "身体", t: "猫头鹰的脖子可以旋转约 270 度，几乎转一整圈。" },
+            { c: "身体", t: "啄木鸟啄树时头部承受的冲击力堪比撞墙，但特殊的头骨结构能完美缓冲。" },
+            { c: "趣事", t: "鸵鸟是现存最大的鸟，跑起来时速可达 70 公里。" },
+            { c: "趣事", t: "企鹅是鸟类，虽然不会飞，却是出色的游泳健将。" },
+            { c: "行为", t: "翠鸟俯冲入水捕鱼时速度极快，几乎不溅起水花。" },
+            { c: "迁徙", t: "燕子每年迁徙距离可达上万公里，却能精准回到去年的旧巢。" },
+            { c: "鸣唱", t: "画眉鸟叫声婉转多变，一只画眉能模仿十几种鸟鸣。" },
+            { c: "行为", t: "白鹭捕食时会用脚在水中轻搅，惊出小鱼再快速啄取。" },
+            { c: "身体", t: "鸟类没有牙齿，靠胃里的砂囊磨碎食物。" },
+            { c: "行为", t: "喜鹊是少数能认出镜子里自己的鸟之一，认知能力很高。" },
+            { c: "身体", t: "啄木鸟的舌头可以伸出比嘴长 3 倍，用来钩取树干里的虫子。" },
+            { c: "繁殖", t: "黄鹂的巢像一个小吊篮，悬挂在高高的树梢上。" },
+            { c: "行为", t: "斑嘴鸭飞行时脖颈直伸，和家鸭的姿态略有不同。" },
+            { c: "行为", t: "白腰文鸟睡觉时喜欢挤成一团，几十只抱在一起过夜。" },
+            { c: "行为", t: "麻雀总在人类身边安家，巢几乎不离房屋百米范围。" },
+            { c: "繁殖", t: "家燕和金腰燕衔泥筑巢，一口口垒成半碗形，一个巢能用好几年。" },
+            { c: "趣事", t: "白头鹎头上那撮白毛像白头巾，因此得了「白头翁」的外号。" },
+            { c: "趣事", t: "珠颈斑鸠脖子上像撒了一把珍珠，名字就是这么来的。" },
+            { c: "鸣唱", t: "乌鸫模仿能力超强，能学手机铃声，甚至模仿汽车警报。" },
+            { c: "鸣唱", t: "八哥能学人说话，靠的是特别发达的鸣管结构。" },
+            { c: "行为", t: "白鹡鸰走路一颠一颠、尾巴上下摆动，俗称「点水雀」。" },
+            { c: "行为", t: "北红尾鸲常在山溪边点头摆尾，尾羽展开露出橙红色，非常醒目。" },
+            { c: "趣事", t: "大山雀智商很高，英国有记录它们会掀开牛奶瓶盖偷喝奶。" },
+            { c: "行为", t: "红嘴蓝鹊是群居鸟，会集体保卫领地，连猛禽都敢上前驱赶。" },
+            { c: "身体", t: "戴胜头顶的冠羽像一把扇子，受惊时「刷」地一下全部展开。" },
+            { c: "行为", t: "小鸊鷉是潜水高手，遇到危险整个沉入水下，只露出一个尖嘴。" },
+            { c: "繁殖", t: "凤头鸊鷉求偶时会在水面上跳「草裙舞」，互相赠送水草。" },
+            { c: "行为", t: "灰椋鸟傍晚会成千上万聚成「鸟浪」，在空中不断变换队形。" },
+            { c: "鸣唱", t: "黑脸噪鹛嗓门很大，总是一大群叽叽喳喳，人称「嘈杂鸟」。" }
         ];
+        var TIPS_SEEN_KEY = "birdcloud-tips-seen";
         var tipBox = document.getElementById("tipBox");
         var tipBtn = document.getElementById("tipBtn");
+        var tipCount = document.getElementById("tipCount");
         var lastTip = -1;
+
+        function getTipSeen() {
+            try {
+                var raw = localStorage.getItem(TIPS_SEEN_KEY);
+                var obj = raw ? JSON.parse(raw) : {};
+                return obj && typeof obj === "object" ? obj : {};
+            } catch (e) { return {}; }
+        }
+
+        function updateTipCount() {
+            var n = Object.keys(getTipSeen()).length;
+            tipCount.textContent = "已探索 " + n + " / " + TIPS.length + " 条";
+        }
+
+        // 全屏礼花特效：爆点礼花 + 彩色小飘带飘落（纯 Canvas，无外部依赖）
+        function launchFireworks() {
+            var c = document.createElement("canvas");
+            c.id = "fireworks";
+            document.body.appendChild(c);
+            var ctx = c.getContext("2d");
+            var stopped = false;
+            var parts = [];
+            var confetti = [];
+            var colors = ["#ff5f5f", "#ffb45f", "#ffe45f", "#5fd97a", "#5fc4ff", "#b05fff", "#ff5fd0", "#ff8fb8"];
+
+            function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+            resize();
+            window.addEventListener("resize", resize);
+
+            function burst(x, y) {
+                var n = 60 + Math.floor(Math.random() * 30);
+                for (var i = 0; i < n; i++) {
+                    var a = Math.random() * Math.PI * 2;
+                    var sp = 2 + Math.random() * 5;
+                    parts.push({
+                        x: x, y: y,
+                        vx: Math.cos(a) * sp,
+                        vy: Math.sin(a) * sp - 2,
+                        life: 1,
+                        decay: 0.012 + Math.random() * 0.015,
+                        size: 2 + Math.random() * 2.5,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+                // 爆点同时洒出一小簇飘带
+                for (var j = 0; j < 12; j++) {
+                    confetti.push({
+                        x: x + (Math.random() - 0.5) * 20,
+                        y: y + (Math.random() - 0.5) * 20,
+                        vx: (Math.random() - 0.5) * 2.5,
+                        vy: 1.5 + Math.random() * 2.5,
+                        w: 6 + Math.random() * 5,
+                        h: 3 + Math.random() * 3,
+                        rot: Math.random() * Math.PI,
+                        vrot: (Math.random() - 0.5) * 0.18,
+                        sway: 6 + Math.random() * 14,
+                        swaySpeed: 0.04 + Math.random() * 0.06,
+                        phase: Math.random() * Math.PI * 2,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            // 顶部持续飘落的小飘带雨
+            function spawnTop() {
+                var n = 2 + Math.floor(Math.random() * 3);
+                for (var i = 0; i < n; i++) {
+                    confetti.push({
+                        x: Math.random() * c.width,
+                        y: -20 - Math.random() * 40,
+                        vx: (Math.random() - 0.5) * 1.2,
+                        vy: 1.2 + Math.random() * 1.8,
+                        w: 7 + Math.random() * 7,
+                        h: 3 + Math.random() * 3,
+                        rot: Math.random() * Math.PI,
+                        vrot: (Math.random() - 0.5) * 0.22,
+                        sway: 8 + Math.random() * 16,
+                        swaySpeed: 0.05 + Math.random() * 0.07,
+                        phase: Math.random() * Math.PI * 2,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            function stop() {
+                if (stopped) return;
+                stopped = true;
+                window.removeEventListener("resize", resize);
+                if (c.parentNode) c.parentNode.removeChild(c);
+            }
+
+            window.addEventListener("click", stop, { once: true });
+
+            var t = 0;
+            function frame() {
+                if (stopped) return;
+                ctx.clearRect(0, 0, c.width, c.height);
+
+                // 礼花爆点粒子
+                for (var i = parts.length - 1; i >= 0; i--) {
+                    var p = parts[i];
+                    p.vy += 0.12;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= p.decay;
+                    if (p.life <= 0) { parts.splice(i, 1); continue; }
+                    ctx.globalAlpha = Math.max(p.life, 0);
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 小飘带：摇摆 + 旋转 + 下落
+                for (var k = confetti.length - 1; k >= 0; k--) {
+                    var q = confetti[k];
+                    q.phase += q.swaySpeed;
+                    q.x += q.vx + Math.sin(q.phase) * q.sway * 0.05;
+                    q.y += q.vy;
+                    q.vy += 0.02;
+                    q.rot += q.vrot;
+                    if (q.y > c.height + 30) { confetti.splice(k, 1); continue; }
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = q.color;
+                    ctx.save();
+                    ctx.translate(q.x, q.y);
+                    ctx.rotate(q.rot);
+                    ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h);
+                    ctx.restore();
+                }
+
+                ctx.globalAlpha = 1;
+                t++;
+                if (t % 45 === 0) burst(c.width * (0.2 + Math.random() * 0.6), c.height * (0.15 + Math.random() * 0.4));
+                if (t < 160 && Math.random() < 0.55) spawnTop();
+                // 等飘带全部落完再清理
+                if (t < 240 && (parts.length || confetti.length)) {
+                    requestAnimationFrame(frame);
+                } else {
+                    stop();
+                }
+            }
+
+            burst(c.width * 0.5, c.height * 0.4);
+            requestAnimationFrame(frame);
+        }
 
         function showTip() {
             var i = Math.floor(Math.random() * TIPS.length);
             if (TIPS.length > 1 && i === lastTip) i = (i + 1) % TIPS.length;
             lastTip = i;
-            tipBox.innerHTML = '🐦 ' + esc(TIPS[i]);
+            var t = TIPS[i];
+            tipBox.innerHTML = '<span class="tip-cat">' + (CAT_EMOJI[t.c] || "🐦") + " " + esc(t.c) + '</span>' +
+                '<div class="tip-text">' + esc(t.t) + '</div>';
+            var seen = getTipSeen();
+            seen[String(i)] = true;
+            try { localStorage.setItem(TIPS_SEEN_KEY, JSON.stringify(seen)); } catch (e) { }
+            updateTipCount();
         }
 
-        tipBtn.addEventListener("click", showTip);
+        // 满 30 条后：每点一次「换一条」就放一次礼花特效
+        tipBtn.addEventListener("click", function () {
+            showTip();
+            if (Object.keys(getTipSeen()).length >= TIPS.length) launchFireworks();
+        });
 
         showTip();
 
