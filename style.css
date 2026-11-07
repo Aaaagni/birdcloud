@@ -12,22 +12,20 @@ body {
     line-height: 1.6;
 }
 
-/* 天气背景切换栏（置顶胶囊） */
+/* 天气背景切换栏（横幅右下角） */
 .weather-switch {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
+    position: absolute;
+    right: 22px;
+    bottom: 16px;
     display: flex;
     gap: 4px;
-    background: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(135, 206, 235, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 999px;
     padding: 4px;
-    box-shadow: 0 4px 14px rgba(70, 130, 180, 0.2);
+    box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25);
 }
 
 .weather-switch button {
@@ -113,6 +111,7 @@ nav a.active {
 
 /* 横幅 */
 .banner {
+    position: relative;
     background: linear-gradient(135deg, #87ceeb, #b0e0e6);
     color: white;
     text-align: center;

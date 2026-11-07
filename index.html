@@ -7,16 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 天气背景切换栏（置顶） -->
-    <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on">☀️ 晴天</button>
-        <button data-mode="cloudy">☁️ 阴天</button>
-        <button data-mode="rainy">🌧️ 雨天</button>
-        <button data-mode="night">🌙 夜晚</button>
-    </div>
-
     <!-- 顶部导航栏 -->
-    <header style="margin-top:52px;top:52px;">
+    <header>
         <div class="logo">🐦 BirdCloud 观鸟笔记</div>
         <nav>
             <a href=" " class="active">首页</a >
@@ -35,6 +27,13 @@
     <section class="banner">
         <h1>记录野生鸟类，写成你的观鸟笔记</h1>
         <p>专注鸟类观测与记录，打造你的专属观鸟笔记</p >
+        <!-- 天气背景切换栏（横幅右下角） -->
+        <div class="weather-switch" id="weatherSwitch">
+            <button data-mode="sunny" class="on">☀️ 晴天</button>
+            <button data-mode="cloudy">☁️ 阴天</button>
+            <button data-mode="rainy">🌧️ 雨天</button>
+            <button data-mode="night">🌙 夜晚</button>
+        </div>
     </section>
 
     <!-- 内容板块 -->
