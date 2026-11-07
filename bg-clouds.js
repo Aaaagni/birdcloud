@@ -29,13 +29,21 @@
     };
 
     var current = "sunny";
-    var clouds = [], drops = [], stars = [], puffs = [];
+    var clouds = [], drops = [], stars = [], feathers = [];
     var mouse = { x: -9999, y: -9999, vx: 0, vy: 0, moved: false };
     var lastT = 0;
 
     // 过渡状态：切换后天空色从 fromSky 平滑渐变到新模式，元素渐显
     var fade = 1;                       // 0..1 新场景显现度（1 = 完全显示）
     var fromSky = { top: null, bottom: null };
+
+    // 羽毛颜色：羽片 / 羽轴（随天气模式变化）
+    var FEATHERS = {
+        sunny:  { f: "255,255,255", s: "214,232,248" },
+        cloudy: { f: "232,238,244", s: "196,208,220" },
+        rainy:  { f: "206,216,228", s: "168,180,194" },
+        night:  { f: "186,200,218", s: "138,153,176" }
+    };
 
     function rand(a, b) { return a + Math.random() * (b - a); }
 
@@ -149,6 +157,35 @@
         ctx.fill();
     }
 
+    // ---------- 羽毛（鼠标拖尾） ----------
+    function drawFeather(f) {
+        var c = FEATHERS[current];
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(f.rot);
+        ctx.scale(f.scale, f.scale);
+        ctx.globalAlpha = f.alpha;
+        // 羽片：左右两条贝塞尔包络成柳叶形
+        ctx.fillStyle = "rgba(" + c.f + "," + f.alpha.toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-7, -11, -4.5, -24);
+        ctx.quadraticCurveTo(-5, -29, 0, -34);
+        ctx.quadraticCurveTo(5, -29, 4.5, -24);
+        ctx.quadraticCurveTo(7, -11, 0, 0);
+        ctx.closePath();
+        ctx.fill();
+        // 羽轴
+        ctx.strokeStyle = "rgba(" + c.s + ",1)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, 1);
+        ctx.lineTo(0, -33);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    }
+
     // ---------- 构建当前模式的场景 ----------
     function buildSky() {
         var cfg = CLOUDS[current];
@@ -247,24 +284,18 @@
             for (i = 0; i < stars.length; i++) drawStar(stars[i], t / 1000, k);
         }
 
-        // 晴天独有的气流涟漪
-        if (current === "sunny" && mouse.moved) {
-            for (i = 0; i < puffs.length; i++) {
-                var p = puffs[i];
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.r += p.gr * dt;
-                p.a -= dt * 1.1;
-                if (p.a > 0) {
-                    ctx.strokeStyle = "rgba(135,206,235," + Math.max(0, p.a * 0.25 * k) + ")";
-                    ctx.lineWidth = 1.4;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-            }
-            puffs = puffs.filter(function (p) { return p.a > 0; });
+        // 羽毛拖尾（所有模式都有，随鼠标风飘动）
+        for (i = 0; i < feathers.length; i++) {
+            var f = feathers[i];
+            f.vx *= 0.985;
+            f.vy *= 0.985;
+            f.x += f.vx * dt;
+            f.y += f.vy * dt;
+            f.rot = f.baseRot + Math.sin(f.phase + t * 0.004) * 0.28;
+            f.alpha -= dt * 0.9;
+            if (f.alpha > 0.02) drawFeather(f);
         }
+        feathers = feathers.filter(function (f) { return f.alpha > 0.02; });
 
         // 持续动画：每一帧再次调度（缺失会导致背景静止不动）
         requestAnimationFrame(frame);
@@ -318,17 +349,20 @@
         mouse.x = nx;
         mouse.y = ny;
         mouse.moved = true;
-        if (current === "sunny") {
-            puffs.push({
-                x: nx + rand(-12, 12),
-                y: ny + rand(-12, 12),
-                vx: mouse.vx * 0.06,
-                vy: mouse.vy * 0.06,
-                r: rand(6, 12),
-                gr: rand(14, 26),
-                a: 1
+        // 鼠标移动时撒出羽毛（节流：随机概率 + 上限）
+        if (Math.random() < 0.75) {
+            feathers.push({
+                x: nx + rand(-8, 8),
+                y: ny + rand(-8, 8),
+                vx: mouse.vx * 0.22 + rand(-15, 15),
+                vy: mouse.vy * 0.22 + rand(-20, 6),
+                rot: rand(-0.4, 0.4),
+                baseRot: rand(-0.5, 0.5),
+                phase: rand(0, Math.PI * 2),
+                scale: rand(0.8, 1.6),
+                alpha: rand(0.55, 0.9)
             });
-            if (puffs.length > 40) puffs.shift();
+            if (feathers.length > 45) feathers.shift();
         }
     });
 
