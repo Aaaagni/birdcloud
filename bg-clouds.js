@@ -284,15 +284,15 @@
             for (i = 0; i < stars.length; i++) drawStar(stars[i], t / 1000, k);
         }
 
-        // 羽毛拖尾（所有模式都有，随鼠标风飘动）
+        // 羽毛拖尾（所有模式都有，轻盈飘落）
         for (i = 0; i < feathers.length; i++) {
             var f = feathers[i];
-            f.vx *= 0.985;
-            f.vy *= 0.985;
+            f.vx *= 0.995;
+            f.vy *= 0.995;
             f.x += f.vx * dt;
             f.y += f.vy * dt;
-            f.rot = f.baseRot + Math.sin(f.phase + t * 0.004) * 0.28;
-            f.alpha -= dt * 0.9;
+            f.rot = f.baseRot + Math.sin(f.phase + t * 0.006) * 0.5;
+            f.alpha -= dt * 0.45;
             if (f.alpha > 0.02) drawFeather(f);
         }
         feathers = feathers.filter(function (f) { return f.alpha > 0.02; });
@@ -349,20 +349,20 @@
         mouse.x = nx;
         mouse.y = ny;
         mouse.moved = true;
-        // 鼠标移动时撒出羽毛（节流：随机概率 + 上限）
-        if (Math.random() < 0.75) {
+        // 鼠标移动时偶有羽毛飘出（低概率，轻盈不密集）
+        if (Math.random() < 0.22) {
             feathers.push({
-                x: nx + rand(-8, 8),
-                y: ny + rand(-8, 8),
-                vx: mouse.vx * 0.22 + rand(-15, 15),
-                vy: mouse.vy * 0.22 + rand(-20, 6),
+                x: nx + rand(-14, 14),
+                y: ny + rand(-14, 14),
+                vx: mouse.vx * 0.12 + rand(-12, 12),
+                vy: mouse.vy * 0.12 + rand(-28, -2),
                 rot: rand(-0.4, 0.4),
-                baseRot: rand(-0.5, 0.5),
+                baseRot: rand(-0.6, 0.6),
                 phase: rand(0, Math.PI * 2),
-                scale: rand(0.8, 1.6),
-                alpha: rand(0.55, 0.9)
+                scale: rand(0.6, 1.2),
+                alpha: rand(0.5, 0.8)
             });
-            if (feathers.length > 45) feathers.shift();
+            if (feathers.length > 18) feathers.shift();
         }
     });
 
