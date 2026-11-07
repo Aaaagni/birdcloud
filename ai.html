@@ -373,40 +373,32 @@
             <p class="hint">支持 JPG / PNG / HEIC，图片会自动压缩。鸟尽量占画面主体、光线充足时识别最准。</p>
         </section>
 
-        <!-- 第二步：识别服务配置 -->
+        <!-- 第二步：识别服务（服务端代理） -->
         <section class="panel">
-            <h2>② 识别服务</h2>
-            <div class="model-row" style="margin-top:0;">
-                服务商：
-                <select id="provider-select">
-                    <option value="dashscope">阿里云百炼（DashScope）</option>
-                    <option value="siliconflow">硅基流动（SiliconFlow · 有免费额度）</option>
-                </select>
-            </div>
-            <div class="key-row" style="margin-top:10px;">
-                <input type="password" id="api-key" placeholder="粘贴 API-Key（sk-…）" autocomplete="off">
-                <button id="btn-save-key">保存 Key</button>
+            <h2>② 识别服务（服务端代理）</h2>
+            <p class="hint">
+                识别接口通过<b>你自己的服务端代理</b>调用，API-Key 存放在代理端（如 Cloudflare Worker / Supabase Edge Function），
+                <b>不会出现在页面、源码或网络请求里</b>，访客看不到也拿不到。<br>
+                页面只保存代理地址（仅存本机浏览器）。
+            </p>
+            <div class="key-row">
+                <input type="text" id="api-key" placeholder="粘贴识别服务代理地址，如 https://birdid.xxx.workers.dev" autocomplete="off">
+                <button id="btn-save-key">保存地址</button>
                 <button id="btn-clear-key" hidden>清除</button>
             </div>
-            <p class="hint" id="key-guide">
-                Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>
-                获取方法：点击打开 <a href="https://bailian.console.aliyun.com" target="_blank" rel="noopener" style="color:#4682b4;font-weight:bold;">阿里云百炼控制台</a>
-                （bailian.console.aliyun.com）→ 左侧菜单「API-KEY」→「创建我的 API-KEY」→ 复制以 sk- 开头的 Key。<br>
-                💡 建议在百炼控制台为该 Key 设置<b>消费限额</b>，防止被他人盗用产生费用。
-            </p>
-            <div class="model-row">
-                识别模型：
-                <select id="model-select">
-                    <optgroup label="阿里云百炼">
-                        <option value="qwen-vl-plus">qwen-vl-plus（快 · 便宜）</option>
-                        <option value="qwen-vl-max">qwen-vl-max（更准 · 略贵）</option>
-                    </optgroup>
-                    <optgroup label="硅基流动">
-                        <option value="Qwen/Qwen2.5-VL-7B-Instruct">Qwen2.5-VL-7B（免费额度 · 快）</option>
-                        <option value="Qwen/Qwen2.5-VL-32B-Instruct">Qwen2.5-VL-32B（更准）</option>
-                    </optgroup>
+            <div class="model-row" style="margin-top:10px;">
+                服务商 / 模型：
+                <select id="provider-select">
+                    <option value="dashscope|qwen-vl-plus">阿里云百炼 · qwen-vl-plus（快）</option>
+                    <option value="dashscope|qwen-vl-max">阿里云百炼 · qwen-vl-max（更准）</option>
+                    <option value="siliconflow|Qwen/Qwen2.5-VL-7B-Instruct">硅基流动 · Qwen2.5-VL-7B（免费额度）</option>
+                    <option value="siliconflow|Qwen/Qwen2.5-VL-32B-Instruct">硅基流动 · Qwen2.5-VL-32B（更准）</option>
                 </select>
             </div>
+            <p class="hint">
+                代理部署：仓库 <b>server/ai-proxy.js</b> 提供现成代码（推荐 Cloudflare Workers，免费），
+                把两个 API-Key 设为该 Worker 的环境变量后即可上线；部署步骤见交付说明。
+            </p>
         </section>
 
         <!-- 第三步：识别 -->
@@ -467,34 +459,16 @@
 (function () {
 
     // ============ 常量与状态 ============
-    // 服务商配置：两家均已实测支持浏览器直连（CORS 开放）
-    var PROVIDERS = {
-        dashscope: {
-            name: "阿里云百炼",
-            endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            keyStore: "birdcloud-dashscope-key",
-            guide: [
-                "Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>",
-                "获取方法：点击打开 <a href=\"https://bailian.console.aliyun.com\" target=\"_blank\" rel=\"noopener\" style=\"color:#4682b4;font-weight:bold;\">阿里云百炼控制台</a>",
-                "（bailian.console.aliyun.com）→ 左侧菜单「API-KEY」→「创建我的 API-KEY」→ 复制以 sk- 开头的 Key。<br>",
-                "💡 建议在百炼控制台为该 Key 设置<b>消费限额</b>，防止被他人盗用产生费用。"
-            ].join("\n")
-        },
-        siliconflow: {
-            name: "硅基流动",
-            endpoint: "https://api.siliconflow.cn/v1/chat/completions",
-            keyStore: "birdcloud-sf-key",
-            guide: [
-                "Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>",
-                "获取方法：点击打开 <a href=\"https://siliconflow.cn/account/ak\" target=\"_blank\" rel=\"noopener\" style=\"color:#4682b4;font-weight:bold;\">硅基流动 API 密钥页</a>",
-                "（siliconflow.cn/account/ak）→「新建 API 密钥」→ 复制 sk- 开头的 Key。<br>",
-                "💡 新用户注册即送免费额度，Qwen2.5-VL 系列模型有免费档，适合尝鲜。"
-            ].join("\n")
-        }
-    };
-    var OLD_KEY_STORE = "birdcloud-dashscope-key";
-    var provider = "dashscope";
-    var key = null;
+    // 识别服务采用“服务端代理”模式：API-Key 存放在代理环境变量中，
+    // 页面里只保存代理地址（本地浏览器），页面源码与网络请求中不出现任何 Key。
+    var PROXY_STORE = "birdcloud-proxy-url";
+    var key = ""; // 代理地址
+
+    // 清理旧版“页面直连”模式残留在本机的 API-Key（不再使用，避免留在浏览器里）
+    try {
+        localStorage.removeItem("birdcloud-dashscope-key");
+        localStorage.removeItem("birdcloud-sf-key");
+    } catch (e) { }
 
     // Supabase：与 records.html 一致（云端观鸟记录本）
     var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
@@ -523,7 +497,6 @@
     var apiKeyInput = document.getElementById("api-key");
     var btnSaveKey = document.getElementById("btn-save-key");
     var btnClearKey = document.getElementById("btn-clear-key");
-    var modelSelect = document.getElementById("model-select");
     var btnIdentify = document.getElementById("btn-identify");
     var statusEl = document.getElementById("status");
     var resultPanel = document.getElementById("result-panel");
@@ -543,74 +516,30 @@
 
     var currentDataUrl = null; // 当前待识别的图片 dataURL
 
-    // ============ 服务商切换 ============
+    // ============ 代理地址加载 ============
     var providerSelect = document.getElementById("provider-select");
-    var keyGuideEl = document.getElementById("key-guide");
 
-    function keyStoreOf() { return PROVIDERS[provider].keyStore; }
-    function endpointOf() { return PROVIDERS[provider].endpoint; }
-
-    function applyProvider() {
-        provider = providerSelect.value;
-        // 模型分组联动：禁用其他服务商的模型，选中当前服务商默认模型
-        var groups = modelSelect.querySelectorAll("optgroup");
-        for (var g = 0; g < groups.length; g++) {
-            var grp = groups[g];
-            var match = grp.getAttribute("label") === PROVIDERS[provider].name;
-            grp.disabled = !match;
-            var opts = grp.querySelectorAll("option");
-            for (var o = 0; o < opts.length; o++) {
-                opts[o].disabled = !match;
-                if (match && opts[o].selected === false && o === 0) opts[o].selected = true;
-            }
-        }
-        // 载入该服务商的 Key
-        var saved = "";
-        try { saved = localStorage.getItem(keyStoreOf()) || ""; } catch (e) { }
-        // 兼容旧 Key：dashscope 槽位为空时迁移旧存储
-        if (!saved && provider === "dashscope") {
-            try { saved = localStorage.getItem(OLD_KEY_STORE) || ""; } catch (e) { }
-            if (saved) { try { localStorage.setItem(keyStoreOf(), saved); } catch (e) { } }
-        }
-        key = saved;
-        apiKeyInput.value = saved;
-        btnClearKey.hidden = !saved;
-        // 更新获取指引
-        keyGuideEl.innerHTML = PROVIDERS[provider].guide;
-        updateIdentifyState();
-    }
-
-    providerSelect.addEventListener("change", applyProvider);
-    applyProvider();
-
-    // ============ Key 存取 ============
-    try {
-        key = localStorage.getItem(keyStoreOf()) || "";
-        if (key) {
-            apiKeyInput.value = key;
-            btnClearKey.hidden = false;
-        }
-    } catch (e) { key = ""; }
+    // ============ 代理地址存取 ============
 
     btnSaveKey.addEventListener("click", function () {
         var v = apiKeyInput.value.trim();
-        if (!v) { setStatus("请先粘贴 API-Key", true); return; }
+        if (!v) { setStatus("请先粘贴代理地址", true); return; }
         try {
-            localStorage.setItem(keyStoreOf(), v);
+            localStorage.setItem(PROXY_STORE, v);
             key = v;
             btnClearKey.hidden = false;
-            setStatus("✓ Key 已保存到本地浏览器（仅本机可见）");
+            setStatus("✓ 代理地址已保存到本地浏览器（仅本机可见）");
         } catch (e) {
             setStatus("保存失败：" + e.message, true);
         }
     });
 
     btnClearKey.addEventListener("click", function () {
-        try { localStorage.removeItem(keyStoreOf()); } catch (e) {}
+        try { localStorage.removeItem(PROXY_STORE); } catch (e) {}
         key = "";
         apiKeyInput.value = "";
         btnClearKey.hidden = true;
-        setStatus("已清除本地 Key");
+        setStatus("已清除本地代理地址");
     });
 
     apiKeyInput.addEventListener("input", function () {
@@ -737,7 +666,7 @@
 
     function identify() {
         if (!key) {
-            setStatus("请先在「② 识别服务」中粘贴并保存 API-Key", true);
+            setStatus("请先在「② 识别服务」中粘贴并保存代理地址", true);
             apiKeyInput.focus();
             return;
         }
@@ -748,51 +677,34 @@
         setStatus("🔍 正在识别，请稍候（约 3~10 秒）……");
         setStatusHTML('<div class="loading-bird"><span>🐦🔍</span> 正在识别，请稍候（约 3~10 秒）……</div>');
 
-        var sysPrompt = [
-            "你是一位专业的中国鸟类识别专家。仔细观察用户提供的照片，识别画面中的鸟类。",
-            "只输出一个 JSON 对象，不要输出任何其他文字、解释或 Markdown 代码块。",
-            "JSON 格式必须为：",
-            '{"is_bird": true或false, "species": "最可能的鸟种中文名，如不确定可写近似描述", "sci": "拉丁学名，不知道则填空字符串", "confidence": 0到100的整数，表示判断把握", "features": ["3到5个识别特征，按明显程度排序"], "habitat": "一句话描述其典型生境", "fun_fact": "一句趣味知识", "alternatives": ["其他可能候选鸟种名，最多2个，没有则空数组"]}',
-            "如果画面中没有鸟、主体不是鸟或根本无法判断，则 is_bird 为 false，species 填空字符串，其余字段可为空。"
-        ].join("\n");
-
+        // 请求体只含图片与模型选择；API-Key 由服务端代理注入，不出现在本请求中
+        var pv = providerSelect.value.split("|");
         var body = {
-            model: modelSelect.value,
-            temperature: 0.2,
-            max_tokens: 600,
-            messages: [
-                { role: "system", content: sysPrompt },
-                { role: "user", content: [
-                    { type: "image_url", image_url: { url: currentDataUrl } },
-                    { type: "text", text: "请识别这张照片里的鸟，并严格按照要求输出 JSON。" }
-                ] }
-            ]
+            provider: pv[0],
+            model: pv[1],
+            image: currentDataUrl
         };
 
-        fetch(endpointOf(), {
+        fetch(key, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + key
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
         }).then(function (res) {
             return res.json().then(function (data) {
                 return { ok: res.ok, data: data };
             });
         }).then(function (r) {
-            if (!r.ok) {
-                var msg = (r.data && r.data.error && r.data.error.message) || ("HTTP " + (r.status || "错误"));
+            if (!r.ok || !r.data || !r.data.ok) {
+                var msg = (r.data && r.data.error) || ("HTTP " + (r.status || "错误"));
                 throw new Error(msg);
             }
-            var content = r.data.choices && r.data.choices[0] && r.data.choices[0].message
-                ? r.data.choices[0].message.content : "";
-            if (!content) throw new Error("模型返回为空，请重试");
+            var content = r.data.content || "";
+            if (!content) throw new Error("代理返回为空，请重试");
             var parsed = parseJSON(content);
             if (!parsed) throw new Error("无法解析模型返回结果：" + content.slice(0, 120));
             renderResult(parsed);
         }).catch(function (err) {
-            setStatus("识别失败：" + err.message + "（请检查 Key 是否正确、是否欠费）", true);
+            setStatus("识别失败：" + err.message + "（请检查代理地址是否正确、服务端 Key 是否已配置）", true);
         }).finally(function () {
             btnIdentify.disabled = !currentDataUrl;
         });
