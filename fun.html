@@ -534,10 +534,10 @@
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on">☀️ 晴天</button>
-        <button data-mode="cloudy">☁️ 阴天</button>
-        <button data-mode="rainy">🌧️ 雨天</button>
-        <button data-mode="night">🌙 夜晚</button>
+        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
+        <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
+        <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
     </div>
 
     <header>

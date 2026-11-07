@@ -190,8 +190,8 @@
         var dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0.016;
         lastT = t;
 
-        // 过渡：约 2 秒内 fade 0 → 1（smoothstep 缓动）
-        if (fade < 1) fade = Math.min(1, fade + dt / 2.0);
+        // 过渡：约 1.2 秒内 fade 0 → 1（smoothstep 缓动），点击后迅速生效
+        if (fade < 1) fade = Math.min(1, fade + dt / 1.2);
         var k = fade * fade * (3 - 2 * fade);
 
         ctx.clearRect(0, 0, W, H);
@@ -264,9 +264,8 @@
         }
     }
 
-    // 切换天气：约 2 秒内自然渐变完成
+    // 切换天气：点击后约 1 秒多自然渐变完成（同模式点击也重建，保证有反馈）
     function setWeather(mode) {
-        if (mode === current) return;
         fromSky = { top: hex2rgb(MODES[current].skyTop), bottom: hex2rgb(MODES[current].skyBottom) };
         current = mode;
         buildSky();
@@ -280,6 +279,8 @@
             }
         }
     }
+    // 暴露给页面按钮 onclick 直接调用
+    window.setWeather = setWeather;
 
     // ---------- 右下角切换按钮 ----------
     function bindSwitch() {
@@ -288,7 +289,10 @@
         var btns = el.querySelectorAll("button");
         var stored = null;
         try { stored = localStorage.getItem("birdcloudBgMode"); } catch (e) { }
-        if (stored && MODES[stored]) current = stored;
+        if (stored && MODES[stored]) {
+            current = stored;
+            buildSky();   // 同步重建粒子，避免与存储模式不匹配
+        }
         for (var i = 0; i < btns.length; i++) {
             (function (btn) {
                 if (btn.getAttribute("data-mode") === current) btn.className = "on";
