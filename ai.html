@@ -375,13 +375,20 @@
 
         <!-- 第二步：识别服务配置 -->
         <section class="panel">
-            <h2>② 识别服务（阿里云百炼 Qwen-VL）</h2>
-            <div class="key-row">
-                <input type="password" id="api-key" placeholder="粘贴你的 DashScope API-Key（sk-…）" autocomplete="off">
+            <h2>② 识别服务</h2>
+            <div class="model-row" style="margin-top:0;">
+                服务商：
+                <select id="provider-select">
+                    <option value="dashscope">阿里云百炼（DashScope）</option>
+                    <option value="siliconflow">硅基流动（SiliconFlow · 有免费额度）</option>
+                </select>
+            </div>
+            <div class="key-row" style="margin-top:10px;">
+                <input type="password" id="api-key" placeholder="粘贴 API-Key（sk-…）" autocomplete="off">
                 <button id="btn-save-key">保存 Key</button>
                 <button id="btn-clear-key" hidden>清除</button>
             </div>
-            <p class="hint">
+            <p class="hint" id="key-guide">
                 Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>
                 获取方法：点击打开 <a href="https://bailian.console.aliyun.com" target="_blank" rel="noopener" style="color:#4682b4;font-weight:bold;">阿里云百炼控制台</a>
                 （bailian.console.aliyun.com）→ 左侧菜单「API-KEY」→「创建我的 API-KEY」→ 复制以 sk- 开头的 Key。<br>
@@ -390,10 +397,15 @@
             <div class="model-row">
                 识别模型：
                 <select id="model-select">
-                    <option value="qwen-vl-plus">qwen-vl-plus（快 · 便宜）</option>
-                    <option value="qwen-vl-max">qwen-vl-max（更准 · 略贵）</option>
+                    <optgroup label="阿里云百炼">
+                        <option value="qwen-vl-plus">qwen-vl-plus（快 · 便宜）</option>
+                        <option value="qwen-vl-max">qwen-vl-max（更准 · 略贵）</option>
+                    </optgroup>
+                    <optgroup label="硅基流动">
+                        <option value="Qwen/Qwen2.5-VL-7B-Instruct">Qwen2.5-VL-7B（免费额度 · 快）</option>
+                        <option value="Qwen/Qwen2.5-VL-32B-Instruct">Qwen2.5-VL-32B（更准）</option>
+                    </optgroup>
                 </select>
-                <span class="hint" style="display:inline; margin-left:8px;">约 1～3 分钱 / 次</span>
             </div>
         </section>
 
@@ -449,12 +461,39 @@
         <p>BirdCloud 观鸟笔记 © 2026 · AI 识鸟由阿里云百炼 Qwen-VL 提供支持</p>
     </footer>
 
+<script src="vendor/supabase.min.js"></script>
+<script src="vendor/keepalive.js"></script>
 <script>
 (function () {
 
     // ============ 常量与状态 ============
-    var ENDPOINT = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-    var KEY_STORE = "birdcloud-dashscope-key";
+    // 服务商配置：两家均已实测支持浏览器直连（CORS 开放）
+    var PROVIDERS = {
+        dashscope: {
+            name: "阿里云百炼",
+            endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            keyStore: "birdcloud-dashscope-key",
+            guide: [
+                "Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>",
+                "获取方法：点击打开 <a href=\"https://bailian.console.aliyun.com\" target=\"_blank\" rel=\"noopener\" style=\"color:#4682b4;font-weight:bold;\">阿里云百炼控制台</a>",
+                "（bailian.console.aliyun.com）→ 左侧菜单「API-KEY」→「创建我的 API-KEY」→ 复制以 sk- 开头的 Key。<br>",
+                "💡 建议在百炼控制台为该 Key 设置<b>消费限额</b>，防止被他人盗用产生费用。"
+            ].join("\n")
+        },
+        siliconflow: {
+            name: "硅基流动",
+            endpoint: "https://api.siliconflow.cn/v1/chat/completions",
+            keyStore: "birdcloud-sf-key",
+            guide: [
+                "Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>",
+                "获取方法：点击打开 <a href=\"https://siliconflow.cn/account/ak\" target=\"_blank\" rel=\"noopener\" style=\"color:#4682b4;font-weight:bold;\">硅基流动 API 密钥页</a>",
+                "（siliconflow.cn/account/ak）→「新建 API 密钥」→ 复制 sk- 开头的 Key。<br>",
+                "💡 新用户注册即送免费额度，Qwen2.5-VL 系列模型有免费档，适合尝鲜。"
+            ].join("\n")
+        }
+    };
+    var OLD_KEY_STORE = "birdcloud-dashscope-key";
+    var provider = "dashscope";
     var key = null;
 
     // Supabase：与 records.html 一致（云端观鸟记录本）
@@ -504,9 +543,49 @@
 
     var currentDataUrl = null; // 当前待识别的图片 dataURL
 
+    // ============ 服务商切换 ============
+    var providerSelect = document.getElementById("provider-select");
+    var keyGuideEl = document.getElementById("key-guide");
+
+    function keyStoreOf() { return PROVIDERS[provider].keyStore; }
+    function endpointOf() { return PROVIDERS[provider].endpoint; }
+
+    function applyProvider() {
+        provider = providerSelect.value;
+        // 模型分组联动：禁用其他服务商的模型，选中当前服务商默认模型
+        var groups = modelSelect.querySelectorAll("optgroup");
+        for (var g = 0; g < groups.length; g++) {
+            var grp = groups[g];
+            var match = grp.getAttribute("label") === PROVIDERS[provider].name;
+            grp.disabled = !match;
+            var opts = grp.querySelectorAll("option");
+            for (var o = 0; o < opts.length; o++) {
+                opts[o].disabled = !match;
+                if (match && opts[o].selected === false && o === 0) opts[o].selected = true;
+            }
+        }
+        // 载入该服务商的 Key
+        var saved = "";
+        try { saved = localStorage.getItem(keyStoreOf()) || ""; } catch (e) { }
+        // 兼容旧 Key：dashscope 槽位为空时迁移旧存储
+        if (!saved && provider === "dashscope") {
+            try { saved = localStorage.getItem(OLD_KEY_STORE) || ""; } catch (e) { }
+            if (saved) { try { localStorage.setItem(keyStoreOf(), saved); } catch (e) { } }
+        }
+        key = saved;
+        apiKeyInput.value = saved;
+        btnClearKey.hidden = !saved;
+        // 更新获取指引
+        keyGuideEl.innerHTML = PROVIDERS[provider].guide;
+        updateIdentifyState();
+    }
+
+    providerSelect.addEventListener("change", applyProvider);
+    applyProvider();
+
     // ============ Key 存取 ============
     try {
-        key = localStorage.getItem(KEY_STORE) || "";
+        key = localStorage.getItem(keyStoreOf()) || "";
         if (key) {
             apiKeyInput.value = key;
             btnClearKey.hidden = false;
@@ -517,7 +596,7 @@
         var v = apiKeyInput.value.trim();
         if (!v) { setStatus("请先粘贴 API-Key", true); return; }
         try {
-            localStorage.setItem(KEY_STORE, v);
+            localStorage.setItem(keyStoreOf(), v);
             key = v;
             btnClearKey.hidden = false;
             setStatus("✓ Key 已保存到本地浏览器（仅本机可见）");
@@ -527,7 +606,7 @@
     });
 
     btnClearKey.addEventListener("click", function () {
-        try { localStorage.removeItem(KEY_STORE); } catch (e) {}
+        try { localStorage.removeItem(keyStoreOf()); } catch (e) {}
         key = "";
         apiKeyInput.value = "";
         btnClearKey.hidden = true;
@@ -690,7 +769,7 @@
             ]
         };
 
-        fetch(ENDPOINT, {
+        fetch(endpointOf(), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -900,8 +979,6 @@
 
 })();
 </script>
-<script src="vendor/supabase.min.js"></script>
-<script src="vendor/keepalive.js"></script>
 <script src="bg-clouds.js"></script>
 </body>
 </html>
