@@ -51,11 +51,11 @@
         return {
             x: Math.random() * (W + 500) - 250,
             y: rand(0.08, 0.6) * H,
-            size: far ? rand(0.75, 1.05) : rand(1.15, 1.7),
-            speed: rand(45, 85),              // px/s，比云快
+            size: far ? rand(1.1, 1.5) : rand(1.7, 2.4),
+            speed: rand(50, 90),              // px/s，比云快
             phase: Math.random() * Math.PI * 2,
             flapSpeed: rand(4, 7),
-            alpha: far ? 0.38 : 0.62,
+            alpha: far ? 0.5 : 0.85,
             pushX: 0,
             sway: rand(0, Math.PI * 2),
             swayAmp: rand(4, 12),
@@ -140,9 +140,23 @@
         ctx.translate(b.x, b.y);
         ctx.scale(b.size, b.size);
         ctx.globalAlpha = b.alpha;
-        ctx.strokeStyle = "#3c5f86";        // 深蓝灰剪影
-        ctx.lineWidth = 1.4;
         ctx.lineCap = "round";
+
+        // 淡蓝衬边：让白鸟在浅蓝天空与白云之间依然清晰
+        ctx.strokeStyle = "rgba(70, 130, 180, 0.5)";
+        ctx.lineWidth = 3.8;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-0.6, -0.55 - flap * 0.4, -1.25, -0.12 - flap * 0.62);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(0.6, -0.55 - flap * 0.4, 1.25, -0.12 - flap * 0.62);
+        ctx.stroke();
+
+        // 白色主体
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.quadraticCurveTo(-0.6, -0.55 - flap * 0.4, -1.25, -0.12 - flap * 0.62);
