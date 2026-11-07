@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -397,6 +397,14 @@ button {
 
 
 <body>
+    <!-- Weather switch -->
+    <div class="weather-switch" id="weatherSwitch">
+        <button data-mode="sunny" class="on">☀️ 晴天</button>
+        <button data-mode="cloudy">☁️ 阴天</button>
+        <button data-mode="rainy">🌧️ 雨天</button>
+        <button data-mode="night">🌙 夜晚</button>
+    </div>
+
 
 
 <header class="header">
@@ -848,6 +856,7 @@ loadProfile();
 
 
 <script src="vendor/keepalive.js"></script>
+    <script src="bg-clouds.js"></script>
 </body>
 
 </html>

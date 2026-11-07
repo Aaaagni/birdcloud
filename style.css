@@ -12,17 +12,18 @@ body {
     line-height: 1.6;
 }
 
-/* 天气背景切换栏（横幅右下角） */
+/* 天气背景切换栏（全站统一：右下角悬浮胶囊） */
 .weather-switch {
-    position: absolute;
-    right: 22px;
-    bottom: 16px;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
     display: flex;
     gap: 4px;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(135, 206, 235, 0.5);
     border-radius: 999px;
     padding: 4px;
     box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25);
