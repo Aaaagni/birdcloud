@@ -166,3 +166,6 @@ function evResp(status, obj) {
     isBase64Encoded: false
   };
 }
+
+// ---- 兼容 fcnext v3 事件函数默认入口名 index.main ----
+exports.main = exports.handler;
