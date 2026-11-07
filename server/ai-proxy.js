@@ -1,26 +1,25 @@
 /**
  * BirdCloud AI 识鸟 · 服务端代理
  * ============================================================
- * 作用：隐藏第三方视觉 API 的 API-Key。
- *   - 页面只把图片与模型选择发给本代理；
+ * 作用：隐藏视觉识别 API 的 API-Key。
+ *   - 页面只把图片发给本代理（请求体仅 { image: "data:..." }）；
  *   - API-Key 只存在于本代理的环境变量中，不出现于页面源码/网络请求；
  *   - 代理把图片转发给上游视觉模型，返回识别结果。
  *
- * 部署（推荐 Cloudflare Workers，免费）：
+ * 部署（Cloudflare Workers，免费）：
  *   1) 注册/登录 https://dash.cloudflare.com → Workers & Pages → 创建 Worker；
  *   2) 把本文件全部代码粘贴进 Worker 编辑器；
- *   3) 在 Worker「设置 → 变量与机密」中添加环境变量（至少一个）：
- *        DASHSCOPE_KEY    = sk-...（阿里云百炼，https://bailian.console.aliyun.com）
- *        SILICONFLOW_KEY  = sk-...（硅基流动，https://siliconflow.cn/account/ak）
- *   4) 部署后得到形如 https://birdid.你的子域.workers.dev 的地址；
- *   5) 把该地址填入 ai.html「② 识别服务」的代理地址输入框，保存即可。
- *
- * 也可部署到 Supabase Edge Functions（改一下入口，见文件末尾注释）。
+ *   3) 在 Worker「设置 → 变量与机密」添加环境变量：
+ *        DASHSCOPE_KEY = 你的 Key（sk-...）
+ *      说明：兼容 DashScope 兼容端点（/compatible-mode/v1/chat/completions）的
+ *      聚合网关 Key 可直接使用（如 sk-ws- 开头的聚合 Key，模型名 qwen3-vl-plus 等）。
+ *   4) 部署后得到 https://birdid.你的子域.workers.dev 地址；
+ *   5) 把该地址替换到 ai.html 顶部 PROXY_URL 常量中并推送。
  *
  * 请求（POST 代理地址）：
- *   { "provider": "dashscope" | "siliconflow",
- *     "model":    "模型名，如 qwen-vl-plus 或 Qwen/Qwen2.5-VL-7B-Instruct",
- *     "image":    "data:image/jpeg;base64,..." }
+ *   { "image": "data:image/jpeg;base64,..." }            ← 页面实际发送
+ *   可选：{ "provider": "dashscope"|"siliconflow", "model": "模型名", "image": ... }
+ *   未提供 provider/model 时默认：dashscope + qwen3-vl-plus
  *
  * 响应：
  *   成功 { "ok": true,  "content": "模型返回的文本" }
@@ -37,11 +36,11 @@ export default {
     } catch (e) {
       return json({ ok: false, error: "请求体不是 JSON" }, 400);
     }
-    const provider = input.provider;
-    const model = input.model;
+    const provider = input.provider || "dashscope";
+    const model = input.model || "qwen3-vl-plus";
     const image = input.image;
-    if (!provider || !model || !image) {
-      return json({ ok: false, error: "缺少 provider / model / image 字段" }, 400);
+    if (!image) {
+      return json({ ok: false, error: "缺少 image 字段" }, 400);
     }
     if (image.length > 12 * 1024 * 1024) {
       return json({ ok: false, error: "图片过大（超过 12MB）" }, 413);

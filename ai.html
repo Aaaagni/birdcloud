@@ -352,7 +352,7 @@
     <!-- 主横幅 -->
     <section class="banner">
         <h1>🤖 AI 识鸟 · 拍一张，认出它是谁</h1>
-        <p>基于阿里云百炼 Qwen-VL 视觉大模型，支持拍照 / 上传图片实时识别鸟类</p>
+        <p>支持拍照 / 上传图片实时识别鸟类，自动给出鸟名、特征与趣味知识</p>
     </section>
 
     <!-- 内容 -->
@@ -373,35 +373,7 @@
             <p class="hint">支持 JPG / PNG / HEIC，图片会自动压缩。鸟尽量占画面主体、光线充足时识别最准。</p>
         </section>
 
-        <!-- 第二步：识别服务（服务端代理） -->
-        <section class="panel">
-            <h2>② 识别服务（服务端代理）</h2>
-            <p class="hint">
-                识别接口通过<b>你自己的服务端代理</b>调用，API-Key 存放在代理端（如 Cloudflare Worker / Supabase Edge Function），
-                <b>不会出现在页面、源码或网络请求里</b>，访客看不到也拿不到。<br>
-                页面只保存代理地址（仅存本机浏览器）。
-            </p>
-            <div class="key-row">
-                <input type="text" id="api-key" placeholder="粘贴识别服务代理地址，如 https://birdid.xxx.workers.dev" autocomplete="off">
-                <button id="btn-save-key">保存地址</button>
-                <button id="btn-clear-key" hidden>清除</button>
-            </div>
-            <div class="model-row" style="margin-top:10px;">
-                服务商 / 模型：
-                <select id="provider-select">
-                    <option value="dashscope|qwen-vl-plus">阿里云百炼 · qwen-vl-plus（快）</option>
-                    <option value="dashscope|qwen-vl-max">阿里云百炼 · qwen-vl-max（更准）</option>
-                    <option value="siliconflow|Qwen/Qwen2.5-VL-7B-Instruct">硅基流动 · Qwen2.5-VL-7B（免费额度）</option>
-                    <option value="siliconflow|Qwen/Qwen2.5-VL-32B-Instruct">硅基流动 · Qwen2.5-VL-32B（更准）</option>
-                </select>
-            </div>
-            <p class="hint">
-                代理部署：仓库 <b>server/ai-proxy.js</b> 提供现成代码（推荐 Cloudflare Workers，免费），
-                把两个 API-Key 设为该 Worker 的环境变量后即可上线；部署步骤见交付说明。
-            </p>
-        </section>
-
-        <!-- 第三步：识别 -->
+        <!-- 第二步：识别 -->
         <div class="action-row">
             <button id="btn-identify" class="identify-btn" disabled>🔍 开始识别</button>
             <div id="status" class="status"></div>
@@ -450,7 +422,7 @@
     </main>
 
     <footer>
-        <p>BirdCloud 观鸟笔记 © 2026 · AI 识鸟由阿里云百炼 Qwen-VL 提供支持</p>
+        <p>BirdCloud 观鸟笔记 © 2026 · 识别结果由 AI 生成，仅供参考，请以现场观察为准</p>
     </footer>
 
 <script src="vendor/supabase.min.js"></script>
@@ -459,10 +431,10 @@
 (function () {
 
     // ============ 常量与状态 ============
-    // 识别服务采用“服务端代理”模式：API-Key 存放在代理环境变量中，
-    // 页面里只保存代理地址（本地浏览器），页面源码与网络请求中不出现任何 Key。
-    var PROXY_STORE = "birdcloud-proxy-url";
-    var key = ""; // 代理地址
+    // 识别服务走“服务端代理”：服务商、模型与 API-Key 全部在代理端，
+    // 页面只发送图片、只调用代理地址，源码与网络请求中不出现任何 Key 与配置信息。
+    // ★ 部署 Worker 后，把下面地址替换为你的 Worker 地址（形如 https://birdid.xxx.workers.dev）
+    var PROXY_URL = "https://birdid.your-subdomain.workers.dev";
 
     // 清理旧版“页面直连”模式残留在本机的 API-Key（不再使用，避免留在浏览器里）
     try {
@@ -494,9 +466,6 @@
     var previewBox = document.getElementById("preview-box");
     var previewImg = document.getElementById("preview-img");
     var btnRemove = document.getElementById("btn-remove");
-    var apiKeyInput = document.getElementById("api-key");
-    var btnSaveKey = document.getElementById("btn-save-key");
-    var btnClearKey = document.getElementById("btn-clear-key");
     var btnIdentify = document.getElementById("btn-identify");
     var statusEl = document.getElementById("status");
     var resultPanel = document.getElementById("result-panel");
@@ -515,36 +484,6 @@
     var recordStatus = document.getElementById("record-status");
 
     var currentDataUrl = null; // 当前待识别的图片 dataURL
-
-    // ============ 代理地址加载 ============
-    var providerSelect = document.getElementById("provider-select");
-
-    // ============ 代理地址存取 ============
-
-    btnSaveKey.addEventListener("click", function () {
-        var v = apiKeyInput.value.trim();
-        if (!v) { setStatus("请先粘贴代理地址", true); return; }
-        try {
-            localStorage.setItem(PROXY_STORE, v);
-            key = v;
-            btnClearKey.hidden = false;
-            setStatus("✓ 代理地址已保存到本地浏览器（仅本机可见）");
-        } catch (e) {
-            setStatus("保存失败：" + e.message, true);
-        }
-    });
-
-    btnClearKey.addEventListener("click", function () {
-        try { localStorage.removeItem(PROXY_STORE); } catch (e) {}
-        key = "";
-        apiKeyInput.value = "";
-        btnClearKey.hidden = true;
-        setStatus("已清除本地代理地址");
-    });
-
-    apiKeyInput.addEventListener("input", function () {
-        btnClearKey.hidden = !apiKeyInput.value.trim();
-    });
 
     // ============ Supabase：登录态 + 云端记录本 ============
     try {
@@ -665,11 +604,6 @@
     btnIdentify.addEventListener("click", identify);
 
     function identify() {
-        if (!key) {
-            setStatus("请先在「② 识别服务」中粘贴并保存代理地址", true);
-            apiKeyInput.focus();
-            return;
-        }
         if (!currentDataUrl) { setStatus("请先选择一张照片", true); return; }
 
         btnIdentify.disabled = true;
@@ -677,18 +611,11 @@
         setStatus("🔍 正在识别，请稍候（约 3~10 秒）……");
         setStatusHTML('<div class="loading-bird"><span>🐦🔍</span> 正在识别，请稍候（约 3~10 秒）……</div>');
 
-        // 请求体只含图片与模型选择；API-Key 由服务端代理注入，不出现在本请求中
-        var pv = providerSelect.value.split("|");
-        var body = {
-            provider: pv[0],
-            model: pv[1],
-            image: currentDataUrl
-        };
-
-        fetch(key, {
+        // 页面只发送图片；服务商、模型与 API-Key 全部由服务端代理处理
+        fetch(PROXY_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
+            body: JSON.stringify({ image: currentDataUrl })
         }).then(function (res) {
             return res.json().then(function (data) {
                 return { ok: res.ok, data: data };
@@ -704,7 +631,7 @@
             if (!parsed) throw new Error("无法解析模型返回结果：" + content.slice(0, 120));
             renderResult(parsed);
         }).catch(function (err) {
-            setStatus("识别失败：" + err.message + "（请检查代理地址是否正确、服务端 Key 是否已配置）", true);
+            setStatus("识别失败：" + err.message + "（若持续失败，请联系站长检查识别服务）", true);
         }).finally(function () {
             btnIdentify.disabled = !currentDataUrl;
         });
