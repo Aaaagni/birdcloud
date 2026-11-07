@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BirdCloud AI 识鸟 · 服务端代理
  * ============================================================
  * 作用：隐藏视觉识别 API 的 API-Key。
@@ -10,9 +10,10 @@
  *   1) 注册/登录 https://dash.cloudflare.com → Workers & Pages → 创建 Worker；
  *   2) 把本文件全部代码粘贴进 Worker 编辑器；
  *   3) 在 Worker「设置 → 变量与机密」添加环境变量：
- *        DASHSCOPE_KEY = 你的 Key（sk-...）
- *      说明：兼容 DashScope 兼容端点（/compatible-mode/v1/chat/completions）的
- *      聚合网关 Key 可直接使用（如 sk-ws- 开头的聚合 Key，模型名 qwen3-vl-plus 等）。
+ *        DASHSCOPE_KEY = 你的阿里云百炼 API-Key（sk- 开头；百炼新版密钥为 sk-ws- 开头，均可）
+ *      说明：阿里云百炼官方 Key 直接可用；默认模型 qwen3-vl-plus（百炼新版视觉模型，
+ *      旧版模型名 qwen-vl-plus 已下线）。百炼"模型广场"中的第三方模型（Kimi/GLM 等）
+ *      也可通过同一 Key 调用，模型名按需传入。
  *   4) 部署后得到 https://birdid.你的子域.workers.dev 地址；
  *   5) 把该地址替换到 ai.html 顶部 PROXY_URL 常量中并推送。
  *
