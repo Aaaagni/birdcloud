@@ -103,15 +103,16 @@
         return {
             x: Math.random() * (W + 200) - 100,
             y: Math.random() * H * 0.9,
-            len: rand(14, 26),
-            sp: rand(520, 760),
+            len: rand(22, 38),
+            sp: rand(620, 900),
             slant: rand(-1, 1)
         };
     }
 
     function drawDrop(d, k) {
-        ctx.strokeStyle = "rgba(205, 222, 240, " + (0.55 * k).toFixed(3) + ")";
-        ctx.lineWidth = 1.4;
+        // 亮白雨丝，在灰暗天空下清晰可见
+        ctx.strokeStyle = "rgba(255, 255, 255, " + (0.8 * k).toFixed(3) + ")";
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
         ctx.moveTo(d.x, d.y);
         ctx.lineTo(d.x - d.slant * d.len * 0.4, d.y + d.len);
@@ -156,7 +157,7 @@
         }
         drops = [];
         if (current === "rainy") {
-            var dn = Math.round((W * H) / 9000);
+            var dn = Math.round((W * H) / 7000);   // 更密的雨丝
             for (var j = 0; j < dn; j++) drops.push(makeDrop());
         }
         stars = [];
