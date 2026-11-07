@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 天气背景切换栏（置顶） -->
+    <div class="weather-switch" id="weatherSwitch">
+        <button data-mode="sunny" class="on">☀️ 晴天</button>
+        <button data-mode="cloudy">☁️ 阴天</button>
+        <button data-mode="rainy">🌧️ 雨天</button>
+        <button data-mode="night">🌙 夜晚</button>
+    </div>
+
     <!-- 顶部导航栏 -->
-    <header>
+    <header style="margin-top:52px;top:52px;">
         <div class="logo">🐦 BirdCloud 观鸟笔记</div>
         <nav>
             <a href=" " class="active">首页</a >

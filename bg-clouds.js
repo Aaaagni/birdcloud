@@ -1,5 +1,6 @@
-/* BirdCloud 鸟云首页 白云流动互动背景
- * 白云缓缓漂移，鼠标移动如风般推动云朵，并带出淡淡气流涟漪
+/* BirdCloud 鸟云首页 天气互动背景
+ * 四种模式：晴天（白云蓝天）/ 阴天（灰云）/ 雨天（雨滴+灰云）/ 夜晚（星光+月牙+薄云）
+ * 顶栏切换按钮切换模式（记住偏好），鼠标移动如风般推动云朵
  * 纯 ES5，兼容旧浏览器；canvas 置于内容层之下，不拦截点击 */
 (function () {
     "use strict";
@@ -7,20 +8,38 @@
     var canvas = document.createElement("canvas");
     canvas.id = "cloud-bg";
     canvas.setAttribute("aria-hidden", "true");
-    canvas.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;";
+    canvas.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;transition:opacity .45s ease;";
     document.body.insertBefore(canvas, document.body.firstChild);
     var ctx = canvas.getContext("2d");
     var W = 0, H = 0;
 
-    var clouds = [];
+    // ---------- 模式配置 ----------
+    var MODES = {
+        sunny:  { skyTop: "#bcdcf8", skyBottom: "#e9f4fc" },
+        cloudy: { skyTop: "#9aa7b5", skyBottom: "#d3dbe2" },
+        rainy:  { skyTop: "#5f6d7c", skyBottom: "#9aa7b2" },
+        night:  { skyTop: "#081226", skyBottom: "#1c3350" }
+    };
+    // 云的颜色（rgb 三段）与透明度区间
+    var CLOUDS = {
+        sunny:  { c: ["255,255,255", "255,255,255", "255,255,255"], ea: 0.32, n: [0.68, 0.88], f: [0.42, 0.55], mul: 1.0 },
+        cloudy: { c: ["216,222,228", "205,212,220", "188,197,206"], ea: 0.38, n: [0.60, 0.78], f: [0.40, 0.52], mul: 1.1 },
+        rainy:  { c: ["168,178,188", "150,162,174", "132,144,156"], ea: 0.42, n: [0.55, 0.72], f: [0.38, 0.50], mul: 1.35 },
+        night:  { c: ["58,78,104", "46,64,88", "36,52,74"], ea: 0.40, n: [0.30, 0.42], f: [0.20, 0.30], mul: 0.55 }
+    };
+
+    var current = "sunny";
+    var clouds = [], drops = [], stars = [], puffs = [];
     var mouse = { x: -9999, y: -9999, vx: 0, vy: 0, moved: false };
-    var puffs = [];   // 鼠标气流涟漪
+    var skyGrad = null;
     var lastT = 0;
+    var firstFrame = true;
 
     function rand(a, b) { return a + Math.random() * (b - a); }
 
     // ---------- 云朵 ----------
     function makeCloud(far) {
+        var cfg = CLOUDS[current];
         var blobs = [];
         var n = 3 + Math.floor(Math.random() * 4);
         var baseR = 30 + Math.random() * 46;
@@ -36,8 +55,8 @@
             y: rand(0.04, 0.94) * H,
             blobs: blobs,
             scale: far ? rand(0.55, 0.9) : rand(1.0, 1.85),
-            opacity: far ? rand(0.42, 0.55) : rand(0.68, 0.88),  // 更白更明显
-            speed: far ? rand(6, 11) : rand(13, 26),   // px/s
+            opacity: far ? rand(cfg.f[0], cfg.f[1]) : rand(cfg.n[0], cfg.n[1]),
+            speed: far ? rand(6, 11) : rand(13, 26),
             pushX: 0,
             sway: rand(0, Math.PI * 2),
             swayAmp: rand(3, 13),
@@ -45,12 +64,113 @@
         };
     }
 
-    function build() {
+    function drawCloud(c) {
+        var cfg = CLOUDS[current];
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(c.scale, c.scale);
+        ctx.globalAlpha = c.opacity;
+        for (var i = 0; i < c.blobs.length; i++) {
+            var b = c.blobs[i];
+            var g = ctx.createRadialGradient(b.dx, b.dy, 0, b.dx, b.dy, b.r);
+            g.addColorStop(0, "rgba(" + cfg.c[0] + ",1)");
+            g.addColorStop(0.55, "rgba(" + cfg.c[1] + ",0.88)");
+            g.addColorStop(1, "rgba(" + cfg.c[2] + "," + cfg.ea + ")");
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(b.dx, b.dy, b.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    }
+
+    // ---------- 雨滴 ----------
+    function makeDrop() {
+        return {
+            x: Math.random() * (W + 200) - 100,
+            y: Math.random() * H * 0.9,
+            len: rand(14, 26),
+            sp: rand(520, 760),
+            slant: rand(-1, 1)
+        };
+    }
+
+    function drawDrop(d) {
+        ctx.strokeStyle = "rgba(205, 222, 240, 0.55)";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x - d.slant * d.len * 0.4, d.y + d.len);
+        ctx.stroke();
+    }
+
+    // ---------- 星星 ----------
+    function makeStar() {
+        return {
+            x: Math.random() * W,
+            y: Math.random() * H * 0.85,
+            r: rand(0.6, 1.8),
+            phase: Math.random() * Math.PI * 2,
+            sp: rand(2, 5)
+        };
+    }
+
+    function drawStar(s, t) {
+        var a = 0.25 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase + t * s.sp));
+        if (s.r > 1.4) {   // 大星带光晕
+            var g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+            g.addColorStop(0, "rgba(255,255,240," + (a * 0.28) + ")");
+            g.addColorStop(1, "rgba(255,255,240,0)");
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.fillStyle = "rgba(255,255,240," + a + ")";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // ---------- 月亮（夜晚） ----------
+    function drawMoon() {
+        var x = W - 130, y = 92, r = 34;
+        var glow = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
+        glow.addColorStop(0, "rgba(245,242,220,0.28)");
+        glow.addColorStop(1, "rgba(245,242,220,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#f5f2dc";
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.arc(x + r * 0.42, y - r * 0.26, r * 0.88, 0, Math.PI * 2);
+        ctx.fill("evenodd");
+    }
+
+    // ---------- 构建当前模式的场景 ----------
+    function buildSky() {
+        var cfg = CLOUDS[current];
+        var cn = Math.max(12, Math.round(W / 180) * cfg.mul);
         clouds = [];
-        var cn = Math.max(12, Math.round(W / 180));
         for (var i = 0; i < cn; i++) {
             clouds.push(makeCloud(Math.random() < 0.5));
         }
+        drops = [];
+        if (current === "rainy") {
+            var dn = Math.round((W * H) / 9000);
+            for (var j = 0; j < dn; j++) drops.push(makeDrop());
+        }
+        stars = [];
+        if (current === "night") {
+            var sn = Math.round((W * H) / 15000);
+            for (var k = 0; k < sn; k++) stars.push(makeStar());
+        }
+        skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+        skyGrad.addColorStop(0, MODES[current].skyTop);
+        skyGrad.addColorStop(1, MODES[current].skyBottom);
     }
 
     function resize() {
@@ -59,84 +179,41 @@
         canvas.width = W * dpr;
         canvas.height = H * dpr;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        build();
+        buildSky();
     }
 
-    window.addEventListener("mousemove", function (e) {
-        var px = mouse.x, py = mouse.y;
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        mouse.vx = mouse.x - px;
-        mouse.vy = mouse.y - py;
-        mouse.moved = true;
-        var sp = Math.sqrt(mouse.vx * mouse.vx + mouse.vy * mouse.vy);
-        if (sp > 0.5) {
-            puffs.push({
-                x: e.clientX, y: e.clientY,
-                r: 10, a: 0.5, life: 1,
-                vx: mouse.vx * 0.22, vy: mouse.vy * 0.22
-            });
-            if (puffs.length > 14) puffs.shift();
-        }
-    });
-    window.addEventListener("touchmove", function (e) {
-        if (e.touches && e.touches.length) {
-            var t = e.touches[0];
-            mouse.vx = t.clientX - mouse.x;
-            mouse.vy = t.clientY - mouse.y;
-            mouse.x = t.clientX;
-            mouse.y = t.clientY;
-            mouse.moved = true;
-        }
-    }, { passive: true });
-    window.addEventListener("resize", resize);
-
-    function drawCloud(c) {
-        ctx.save();
-        ctx.translate(c.x, c.y);
-        ctx.scale(c.scale, c.scale);
-        ctx.globalAlpha = c.opacity;
-        for (var i = 0; i < c.blobs.length; i++) {
-            var b = c.blobs[i];
-            var g = ctx.createRadialGradient(b.dx, b.dy, 0, b.dx, b.dy, b.r);
-            g.addColorStop(0, "rgba(255,255,255,1)");
-            g.addColorStop(0.55, "rgba(255,255,255,0.88)");
-            g.addColorStop(1, "rgba(255,255,255,0.32)");   // 边缘更实，轮廓清晰
-            ctx.fillStyle = g;
-            ctx.beginPath();
-            ctx.arc(b.dx, b.dy, b.r, 0, 6.2832);
-            ctx.fill();
-        }
-        ctx.restore();
-        ctx.globalAlpha = 1;
-    }
-
-    // 鼠标如风：靠近的云被推着走
+    // ---------- 鼠标如风 ----------
     function windApply(o, reach, vxK, vyK) {
-        var dx = mouse.x - o.x;
-        var dy = mouse.y - o.y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < reach) {
-            var f = (1 - dist / reach) * 1.5;
-            o.pushX += mouse.vx * f * vxK;
-            o.y += mouse.vy * f * vyK;
+        var dx = o.x - mouse.x, dy = o.y - mouse.y;
+        var d2 = dx * dx + dy * dy;
+        var r2 = reach * reach;
+        if (d2 < r2 && d2 > 0.01) {
+            var f = (1 - d2 / r2);
+            o.pushX += mouse.vx * vxK * f;
+            if (o.pushY !== undefined) o.pushY += mouse.vy * vyK * f;
         }
     }
 
     function frame(t) {
         var dt = lastT ? Math.min(0.05, (t - lastT) / 1000) : 0.016;
         lastT = t;
+        if (firstFrame) { firstFrame = false; buildSky(); }
         ctx.clearRect(0, 0, W, H);
 
-        var i, j;
+        // 天空
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // 云（所有模式都有，随鼠标如风推动）
+        var i;
         for (i = 0; i < clouds.length; i++) {
             var c = clouds[i];
             c.sway += dt * c.swayFreq;
-            if (mouse.moved) windApply(c, 230 * c.scale, 0.05, 0.02);
-            c.pushX *= 0.93;
+            if (mouse.moved) windApply(c, 210, 0.05, 0.02);
+            c.pushX *= 0.94;
             c.x += (c.speed + c.pushX) * dt;
             c.y += Math.sin(c.sway) * c.swayAmp * 0.06 * dt;
-            if (c.x > W + 350) {
+            if (c.x > W + 300) {
                 c.x = -280;
                 c.y = rand(0.04, 0.94) * H;
                 c.pushX = 0;
@@ -144,28 +221,102 @@
             drawCloud(c);
         }
 
-        // 气流涟漪（淡蓝线圈，随鼠标方向飘散）
-        for (j = puffs.length - 1; j >= 0; j--) {
-            var p = puffs[j];
-            p.x += p.vx * dt * 12;
-            p.y += p.vy * dt * 12;
-            p.r += 1.1;
-            p.a *= 0.94;
-            p.life -= 0.02;
-            p.vx *= 0.97;
-            p.vy *= 0.97;
-            if (p.life <= 0 || p.a < 0.02) { puffs.splice(j, 1); continue; }
-            ctx.globalAlpha = Math.max(0, p.a * 0.32);
-            ctx.strokeStyle = "#bfe3ff";
-            ctx.lineWidth = 1.6;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, 6.2832);
-            ctx.stroke();
+        // 雨滴
+        if (current === "rainy") {
+            for (i = 0; i < drops.length; i++) {
+                var d = drops[i];
+                d.y += d.sp * dt;
+                d.x += d.slant * d.sp * 0.3 * dt;
+                if (d.y > H + 30) {
+                    d.y = -30;
+                    d.x = Math.random() * (W + 200) - 100;
+                }
+                drawDrop(d);
+            }
         }
-        ctx.globalAlpha = 1;
-        requestAnimationFrame(frame);
+
+        // 星星与月亮
+        if (current === "night") {
+            for (i = 0; i < stars.length; i++) drawStar(stars[i], t / 1000);
+            drawMoon();
+        }
+
+        // 晴天独有的气流涟漪
+        if (current === "sunny" && mouse.moved) {
+            for (i = 0; i < puffs.length; i++) {
+                var p = puffs[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.r += p.gr * dt;
+                p.a -= dt * 1.1;
+                if (p.a > 0) {
+                    ctx.strokeStyle = "rgba(135,206,235," + Math.max(0, p.a * 0.25) + ")";
+                    ctx.lineWidth = 1.4;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+            puffs = puffs.filter(function (p) { return p.a > 0; });
+        }
     }
 
+    function setWeather(mode) {
+        if (mode === current) return;
+        current = mode;
+        try { localStorage.setItem("birdcloudBgMode", mode); } catch (e) { }
+        canvas.style.opacity = 0;
+        setTimeout(function () {
+            buildSky();
+            canvas.style.opacity = 1;
+        }, 260);
+    }
+
+    // ---------- 顶栏切换按钮 ----------
+    function bindSwitch() {
+        var el = document.getElementById("weatherSwitch");
+        if (!el) return;
+        var btns = el.querySelectorAll("button");
+        var stored = null;
+        try { stored = localStorage.getItem("birdcloudBgMode"); } catch (e) { }
+        if (stored && MODES[stored]) current = stored;
+        for (var i = 0; i < btns.length; i++) {
+            (function (btn) {
+                if (btn.getAttribute("data-mode") === current) btn.className = "on";
+                btn.addEventListener("click", function () {
+                    setWeather(btn.getAttribute("data-mode"));
+                    for (var m = 0; m < btns.length; m++) {
+                        btns[m].className = (btns[m] === btn ? "on" : "");
+                    }
+                });
+            })(btns[i]);
+        }
+    }
+
+    // ---------- 事件 ----------
+    window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", function (e) {
+        var nx = e.clientX, ny = e.clientY;
+        mouse.vx = nx - mouse.x;
+        mouse.vy = ny - mouse.y;
+        mouse.x = nx;
+        mouse.y = ny;
+        mouse.moved = true;
+        if (current === "sunny") {
+            puffs.push({
+                x: nx + rand(-12, 12),
+                y: ny + rand(-12, 12),
+                vx: mouse.vx * 0.06,
+                vy: mouse.vy * 0.06,
+                r: rand(6, 12),
+                gr: rand(14, 26),
+                a: 1
+            });
+            if (puffs.length > 40) puffs.shift();
+        }
+    });
+
     resize();
+    bindSwitch();
     requestAnimationFrame(frame);
 })();

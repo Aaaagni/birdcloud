@@ -12,6 +12,46 @@ body {
     line-height: 1.6;
 }
 
+/* 天气背景切换栏（置顶胶囊） */
+.weather-switch {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(135, 206, 235, 0.5);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: 0 4px 14px rgba(70, 130, 180, 0.2);
+}
+
+.weather-switch button {
+    border: none;
+    background: transparent;
+    color: #4a6b86;
+    font-size: 13.5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.25s, color 0.25s;
+}
+
+.weather-switch button:hover {
+    background: rgba(135, 206, 235, 0.2);
+}
+
+.weather-switch button.on {
+    background: linear-gradient(135deg, #4682b4, #5ba8d9);
+    color: #fff;
+    font-weight: 600;
+}
+
 /* 导航栏 */
 header {
     background: rgba(255, 255, 255, 0.86);
