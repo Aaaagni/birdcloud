@@ -391,153 +391,6 @@
             pointer-events: none;
         }
 
-        /* ---- 潮汐表 ---- */
-        .tide-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .tide-loc {
-            font-size: 14px;
-            color: #2c5f8a;
-            font-weight: 600;
-            line-height: 1.4;
-        }
-
-        .tide-reload {
-            background: #4682b4;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 7px 14px;
-            font-size: 13px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: background .15s;
-        }
-
-        .tide-reload:hover {
-            background: #2c5f8a;
-        }
-
-        .tide-status {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-
-        .tide-day {
-            margin-bottom: 10px;
-        }
-
-        .tide-day h4 {
-            margin: 0 0 6px;
-            font-size: 15px;
-            color: #2c5f8a;
-        }
-
-        .tide-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #f4fafd;
-            border: 1px solid #dceef6;
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-
-        .tide-row .t-emoji {
-            font-size: 17px;
-        }
-
-        .tide-row .t-time {
-            font-weight: 700;
-            color: #333;
-            min-width: 52px;
-        }
-
-        .tide-row .t-type {
-            color: #555;
-            min-width: 42px;
-        }
-
-        .tide-row .t-height {
-            margin-left: auto;
-            color: #4682b4;
-            font-weight: 600;
-        }
-
-        .tide-stations {
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            border: 1px solid #dceef6;
-            border-radius: 8px;
-            background: #fff;
-        }
-
-        .tide-station {
-            padding: 7px 12px;
-            font-size: 13px;
-            color: #2c5f8a;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .tide-station:hover {
-            background: #eef7fb;
-        }
-
-        /* 中国潮汐查询入口 */
-        .tide-cn {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px dashed #dceef6;
-        }
-
-        .tide-cn-title {
-            margin: 0 0 4px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #b3541e;
-        }
-
-        .tide-cn-desc {
-            margin: 0 0 8px;
-            font-size: 13px;
-            color: #888;
-            line-height: 1.5;
-        }
-
-        .tide-cn-links {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .tide-cn-links a {
-            display: block;
-            font-size: 13px;
-            color: #2c5f8a;
-            background: #fdf6ec;
-            border: 1px solid #f0dcc0;
-            border-radius: 8px;
-            padding: 8px 12px;
-            text-decoration: none;
-            line-height: 1.5;
-            transition: background .15s;
-        }
-
-        .tide-cn-links a:hover {
-            background: #f9ecd7;
-        }
-
     </style>
 </head>
 <body>
@@ -605,27 +458,6 @@
                 <h2>🤖 AI 识鸟</h2>
                 <p class="tool-desc">拍照识别鸟种，识别结果一键存入观鸟记录本</p>
                 <a href="ai.html" class="btn">开始 AI 识鸟 →</a>
-            </section>
-
-            <!-- 工具五：潮汐表查询 -->
-            <section class="tool-card">
-                <h2>🌊 潮汐表查询</h2>
-                <p class="tool-desc">自动定位最近潮汐站，高低潮一目了然（数据来源 NOAA，覆盖美国海岸与太平洋领地；中国海域暂不支持，敬请期待）</p>
-                <div class="tide-head">
-                    <div class="tide-loc" id="tideLoc">📍 正在定位…</div>
-                    <button class="tide-reload" id="tideReload" type="button">🔄 重新定位</button>
-                </div>
-                <div class="tide-status" id="tideStatus">⏳ 定位中…</div>
-                <div class="tide-list" id="tideList"></div>
-                <input type="text" id="tideSearch" placeholder="定位失败？手动搜索潮汐站，如 San Francisco / Honolulu">
-                <div class="tide-stations" id="tideStations"></div>
-                <div class="tide-cn">
-                    <p class="tide-cn-title">🇨🇳 中国沿海潮汐查询入口</p>
-                    <p class="tide-cn-desc">页面内直连的 NOAA 数据仅覆盖美国海岸与太平洋领地；中国海域可前往官方站点查询：</p>
-                    <div class="tide-cn-links">
-                        <a href="http://www.nmdis.org.cn" target="_blank" rel="noopener">中国海洋预报网（官方）—— 登录后进入"专题预报"→"天文潮预报"，地图选点可查询未来 30 天潮汐表</a>
-                    </div>
-                </div>
             </section>
 
         </div>
@@ -1083,7 +915,6 @@
     })();
     </script>
 <script src="vendor/keepalive.js"></script>
-    <script src="tide.js"></script>
     <script src="bg-clouds.js"></script>
 </body>
 </html>
