@@ -98,24 +98,26 @@
         ctx.globalAlpha = 1;
     }
 
-    // ---------- 雨滴 ----------
+    // ---------- 雨滴（分层透视：近粗亮快、远细淡慢） ----------
     function makeDrop() {
+        var z = Math.random();   // 0 = 远景雨，1 = 近景雨
         return {
-            x: Math.random() * (W + 200) - 100,
-            y: Math.random() * H * 0.9,
-            len: rand(22, 38),
-            sp: rand(620, 900),
-            slant: rand(-1, 1)
+            x: Math.random() * (W + 300) - 150,
+            y: Math.random() * H * 0.95,
+            z: z,
+            len: 10 + z * 32,
+            sp: 380 + z * 560,
+            slant: rand(-0.8, 0.8),
+            alpha: 0.22 + z * 0.62
         };
     }
 
     function drawDrop(d, k) {
-        // 亮白雨丝，在灰暗天空下清晰可见
-        ctx.strokeStyle = "rgba(255, 255, 255, " + (0.8 * k).toFixed(3) + ")";
-        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = "rgba(215, 232, 250, " + (d.alpha * k).toFixed(3) + ")";
+        ctx.lineWidth = 0.8 + d.z * 1.9;
         ctx.beginPath();
         ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d.x - d.slant * d.len * 0.4, d.y + d.len);
+        ctx.lineTo(d.x - d.slant * d.len * 0.45, d.y + d.len);
         ctx.stroke();
     }
 
@@ -263,6 +265,9 @@
             }
             puffs = puffs.filter(function (p) { return p.a > 0; });
         }
+
+        // 持续动画：每一帧再次调度（缺失会导致背景静止不动）
+        requestAnimationFrame(frame);
     }
 
     // 切换天气：点击后约 1 秒多自然渐变完成（同模式点击也重建，保证有反馈）
