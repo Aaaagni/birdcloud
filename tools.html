@@ -494,6 +494,50 @@
             background: #eef7fb;
         }
 
+        /* 中国潮汐查询入口 */
+        .tide-cn {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed #dceef6;
+        }
+
+        .tide-cn-title {
+            margin: 0 0 4px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #b3541e;
+        }
+
+        .tide-cn-desc {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        .tide-cn-links {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tide-cn-links a {
+            display: block;
+            font-size: 13px;
+            color: #2c5f8a;
+            background: #fdf6ec;
+            border: 1px solid #f0dcc0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-decoration: none;
+            line-height: 1.5;
+            transition: background .15s;
+        }
+
+        .tide-cn-links a:hover {
+            background: #f9ecd7;
+        }
+
     </style>
 </head>
 <body>
@@ -575,6 +619,15 @@
                 <div class="tide-list" id="tideList"></div>
                 <input type="text" id="tideSearch" placeholder="定位失败？手动搜索潮汐站，如 San Francisco / Honolulu">
                 <div class="tide-stations" id="tideStations"></div>
+                <div class="tide-cn">
+                    <p class="tide-cn-title">🇨🇳 中国沿海潮汐查询入口</p>
+                    <p class="tide-cn-desc">页面内直连的 NOAA 数据仅覆盖美国海岸与太平洋领地；中国海域可前往以下专业站点查询：</p>
+                    <div class="tide-cn-links">
+                        <a href="https://www.aichaoxi.com" target="_blank" rel="noopener">爱潮汐表 —— 数据来源于国家海洋信息中心，覆盖全国 202 个港口，支持查询未来 60 天（有网页和微信小程序）</a>
+                        <a href="https://www.tidetimes.org.uk" target="_blank" rel="noopener">TideTimes Global —— 覆盖中国沿海 197 个站点，提供未来 10 天预报及赶海日历，无需注册</a>
+                        <a href="http://www.nmdis.org.cn" target="_blank" rel="noopener">中国海洋预报网（官方）—— 登录后进入"专题预报"→"天文潮预报"，地图选点可查询未来 30 天潮汐表</a>
+                    </div>
+                </div>
             </section>
 
         </div>
