@@ -146,23 +146,6 @@
         ctx.fill();
     }
 
-    // ---------- 月亮（夜晚） ----------
-    function drawMoon(k) {
-        var x = W - 130, y = 92, r = 34;
-        var glow = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
-        glow.addColorStop(0, "rgba(245,242,220," + (0.28 * k).toFixed(3) + ")");
-        glow.addColorStop(1, "rgba(245,242,220,0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(x, y, r * 3.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "rgba(245,242,220," + k.toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.arc(x + r * 0.42, y - r * 0.26, r * 0.88, 0, Math.PI * 2);
-        ctx.fill("evenodd");
-    }
-
     // ---------- 构建当前模式的场景 ----------
     function buildSky() {
         var cfg = CLOUDS[current];
@@ -256,10 +239,9 @@
             }
         }
 
-        // 星星与月亮
+        // 星星（夜晚）
         if (current === "night") {
             for (i = 0; i < stars.length; i++) drawStar(stars[i], t / 1000, k);
-            drawMoon(k);
         }
 
         // 晴天独有的气流涟漪
