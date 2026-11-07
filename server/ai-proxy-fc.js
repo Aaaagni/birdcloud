@@ -1,62 +1,92 @@
 /**
- * BirdCloud AI 识鸟 · 服务端代理（阿里云函数计算 FC 版）
+ * BirdCloud AI 识鸟 · 服务端代理（阿里云函数计算 FC 版 · 双格式兼容）
  * ============================================================
- * 用途：国内可直接访问的 AI 代理。
- *   Cloudflare workers.dev 子域在国内被 DNS 污染（解析到投毒 IP），无法直连；
- *   阿里云函数计算生成的 *.cn-hangzhou.fc.aliyuncs.com 公网 URL 国内可直连。
- *
- * 环境：阿里云函数计算 FC · Web 函数 · 运行时 Node.js 18/20
+ * 用途：国内可直接访问的 AI 代理（workers.dev 子域在国内被 DNS 污染，无法直连）。
+ * 环境：阿里云函数计算 FC · Node.js 18/20
+ *   - 兼容「Web 函数」入口：exports.handler = function(req, resp)（Node http 风格）
+ *   - 兼容「事件函数 + HTTP 触发器」入口：exports.handler = function(event, context)
+ *     自动按第一个参数形态识别，两种部署方式都能跑。
  * 环境变量：DASHSCOPE_KEY = 你的阿里云百炼 API-Key（sk-ws-...）
  *
- * 部署（约 5 分钟）：
- *   1) 用你的阿里云账号登录 https://fcnext.console.aliyun.com/
- *   2) 首次使用按提示开通函数计算（有免费额度）
- *   3) 创建函数 → 选「Web 函数」→ 运行时选 Node.js 20（或 18）
- *   4) 把下方 exports.handler 代码粘贴进 index.js（覆盖默认代码）→ 部署
- *   5) 函数详情 → 配置 → 环境变量：添加 DASHSCOPE_KEY = 你的百炼 Key
- *   6) 配置 → 触发器：创建 HTTP 触发器，认证方式必须选「匿名」（否则网页无法直接调用）
- *   7) 复制触发器公网 URL（形如 https://xxx.cn-hangzhou.fc.aliyuncs.com/...）
- *   8) 把该 URL 替换到 ai.html 顶部 PROXY_URL 常量并推送
+ * 部署：
+ *   1) 登录 https://fcnext.console.aliyun.com/ → 函数计算
+ *   2) 创建函数（Web 函数或事件函数均可，运行时选 Node.js 18/20）
+ *   3) 把本文件代码粘贴进 index.js（覆盖默认代码）→ 部署
+ *   4) 配置 → 环境变量：DASHSCOPE_KEY = 你的百炼 Key
+ *   5) 触发器：创建 HTTP 触发器，认证方式必须选「匿名」
+ *   6) 复制公网 URL，替换到 ai.html 顶部 PROXY_URL 常量并推送
  *
- * 请求 / 响应与 Cloudflare Worker 版一致：
+ * 请求 / 响应：
  *   POST { "image": "data:image/jpeg;base64,..." } → { "ok": true, "content": "..." }
  */
 
 const UPSTREAM = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
-exports.handler = (req, resp) => {
-  // CORS 预检：直接放行
-  if (req.method === "OPTIONS") {
-    return send(resp, 200, { ok: true });
+// ---- 统一入口：自动识别 Web 函数 / 事件函数 ----
+exports.handler = function () {
+  const a0 = arguments[0];
+  // Web 函数：第一个参数是 http.IncomingMessage（有 .on 方法）
+  if (a0 && typeof a0 === "object" && typeof a0.on === "function") {
+    return webHandle(a0, arguments[1]);
   }
+  // 事件函数：第一个参数是 event（字符串或对象）
+  return eventHandle(a0);
+};
+
+// ---- Web 函数入口（Node http 风格）----
+function webHandle(req, resp) {
+  if (req.method === "OPTIONS") return send(resp, 200, { ok: true }); // CORS 预检
   let raw = "";
   req.on("data", (c) => {
     raw += c;
-    if (raw.length > 13 * 1024 * 1024) req.destroy(); // 防止超大请求
+    if (raw.length > 13 * 1024 * 1024) req.destroy();
   });
   req.on("error", () => send(resp, 400, { ok: false, error: "请求读取失败" }));
-  req.on("end", () => { handle(raw, resp); });
-};
+  req.on("end", async () => {
+    const r = await process(raw);
+    send(resp, r.status, r.obj);
+  });
+}
 
-async function handle(raw, resp) {
+// ---- 事件函数入口（HTTP 触发器封装的事件）----
+async function eventHandle(event) {
+  let e = {};
+  if (typeof event === "string") {
+    try { e = JSON.parse(event); } catch (_) { e = { body: event }; }
+  } else if (event && typeof event === "object") {
+    e = event;
+  }
+  const method = String(e.method || "GET").toUpperCase();
+  if (method === "OPTIONS") return evResp(200, { ok: true }); // CORS 预检
+  let raw = e.body || "";
+  if (e.isBase64Encoded) {
+    try { raw = Buffer.from(raw, "base64").toString("utf8"); } catch (_) {}
+  }
+  if (!raw) raw = "{}"; // GET 等无 body 请求
+  const r = await process(raw);
+  return evResp(r.status, r.obj);
+}
+
+// ---- 核心业务：图片 → 百炼视觉模型 → 识别结果 ----
+async function process(raw) {
   let input;
   try {
     input = JSON.parse(raw);
   } catch (e) {
-    return send(resp, 400, { ok: false, error: "请求体不是 JSON" });
+    return { status: 400, obj: { ok: false, error: "请求体不是 JSON" } };
   }
   const image = input.image;
-  const model = input.model || "qwen3-vl-plus"; // 百炼新版视觉模型（qwen-vl-plus 旧名已下线）
+  const model = input.model || "qwen3-vl-plus"; // 百炼新版视觉模型（旧名 qwen-vl-plus 已下线）
   if (!image) {
-    return send(resp, 400, { ok: false, error: "缺少 image 字段" });
+    return { status: 400, obj: { ok: false, error: "缺少 image 字段" } };
   }
   if (image.length > 12 * 1024 * 1024) {
-    return send(resp, 413, { ok: false, error: "图片过大（超过 12MB）" });
+    return { status: 413, obj: { ok: false, error: "图片过大（超过 12MB）" } };
   }
 
   const key = process.env.DASHSCOPE_KEY;
   if (!key) {
-    return send(resp, 500, { ok: false, error: "服务端未配置 DASHSCOPE_KEY 环境变量" });
+    return { status: 500, obj: { ok: false, error: "服务端未配置 DASHSCOPE_KEY 环境变量" } };
   }
 
   const sysPrompt = [
@@ -94,23 +124,24 @@ async function handle(raw, resp) {
     try {
       data = await r.json();
     } catch (e) {
-      return send(resp, 502, { ok: false, error: "上游返回无法解析（HTTP " + r.status + "）" });
+      return { status: 502, obj: { ok: false, error: "上游返回无法解析（HTTP " + r.status + "）" } };
     }
     if (!r.ok) {
       const msg = (data && data.error && data.error.message) || ("HTTP " + r.status);
-      return send(resp, 502, { ok: false, error: String(msg).slice(0, 300) });
+      return { status: 502, obj: { ok: false, error: String(msg).slice(0, 300) } };
     }
     const content = data && data.choices && data.choices[0] && data.choices[0].message
       ? data.choices[0].message.content : "";
     if (!content) {
-      return send(resp, 502, { ok: false, error: "模型返回为空" });
+      return { status: 502, obj: { ok: false, error: "模型返回为空" } };
     }
-    return send(resp, 200, { ok: true, content: content });
+    return { status: 200, obj: { ok: true, content: content } };
   } catch (e) {
-    return send(resp, 502, { ok: false, error: "上游调用失败：" + String(e.message || e).slice(0, 300) });
+    return { status: 502, obj: { ok: false, error: "上游调用失败：" + String(e.message || e).slice(0, 300) } };
   }
 }
 
+// ---- Web 函数响应 ----
 function send(resp, status, obj) {
   resp.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -119,4 +150,19 @@ function send(resp, status, obj) {
     "Access-Control-Allow-Methods": "POST, OPTIONS"
   });
   resp.end(JSON.stringify(obj));
+}
+
+// ---- 事件函数响应 ----
+function evResp(status, obj) {
+  return {
+    statusCode: status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Methods": "POST, OPTIONS"
+    },
+    body: JSON.stringify(obj),
+    isBase64Encoded: false
+  };
 }
