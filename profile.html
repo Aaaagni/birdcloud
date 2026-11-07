@@ -558,6 +558,10 @@ button {
             🤖 AI识鸟
         </a>
 
+        <a class="shortcut" href="fun.html">
+            🕹️ 随便玩玩
+        </a>
+
     </div>
 
 
@@ -688,7 +692,7 @@ async function loadStats(user) {
 }
 
 
-/* 本地进度：观鸟清单 + 冷知识（与实用工具页共用 localStorage） */
+/* 本地进度：观鸟清单（实用工具页）+ 冷知识（随便玩玩页），共用 localStorage */
 
 function loadLocalProgress() {
 
@@ -720,7 +724,7 @@ function loadLocalProgress() {
         (checkDone * 100 / checkTotal) + "%";
 
 
-    /* 冷知识：30 条（与 tools.html 冷知识同步） */
+    /* 冷知识：30 条（与 fun.html 随便玩玩页同步，localStorage key 不变） */
     let tips = {};
     try {
         tips = JSON.parse(

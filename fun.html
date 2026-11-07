@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随便玩玩 - BirdCloud</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 覆盖 style.css 的 .container 网格布局，改为整行流式布局 */
+        main.container {
+            width: 92%;
+            max-width: 1100px;
+            display: block;
+            margin-bottom: 60px;
+        }
+
+        .page-title {
+            color: #4682b4;
+            font-size: 26px;
+            margin: 24px 0 6px;
+        }
+
+        .page-sub {
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .tool-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(173, 216, 230, 0.25);
+        }
+
+        .tool-card h2 {
+            color: #4682b4;
+            margin-bottom: 6px;
+            font-size: 20px;
+        }
+
+        .tool-card .tool-desc {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .tool-card input[type="text"],
+        .tool-card input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border: 1px solid #cfe3ee;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .tool-card input:focus {
+            border-color: #4682b4;
+        }
+
+        /* ---- 鸟类图鉴 ---- */
+        .bird-list {
+            max-height: 480px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .bird-item {
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: box-shadow .15s;
+        }
+
+        .bird-item:hover {
+            box-shadow: 0 2px 8px rgba(70, 130, 180, .25);
+        }
+
+        .bird-item .bird-photo {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #eaf3f8;
+            display: block;
+        }
+
+        /* 多图轮播：图片尺寸与单图一致（占满整行），左右按钮切换 */
+        .bird-carousel {
+            position: relative;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #eaf3f8;
+        }
+
+        .bird-carousel .bird-photo {
+            display: none;
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 0;
+            margin-bottom: 0;
+        }
+
+        .bird-carousel .bird-photo.active {
+            display: block;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(70, 130, 180, 0.65);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            z-index: 2;
+            transition: background .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(70, 130, 180, 0.92);
+        }
+
+        .carousel-btn.prev { left: 8px; }
+        .carousel-btn.next { right: 8px; }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            z-index: 2;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .carousel-dot.active {
+            background: #4682b4;
+        }
+
+        .bird-photo-empty {
+            width: 100%;
+            min-height: 140px;
+            border-radius: 8px;
+            background: #f2f6f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 10px;
+            border: 1px dashed #d5e0e8;
+        }
+
+        .bird-item h3 {
+            margin: 0 0 2px;
+            font-size: 16px;
+            color: #2c5f8a;
+        }
+
+        .bird-item .sci {
+            font-style: italic;
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .bird-item .feat {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .bird-item .extra {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #cfe3ee;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .bird-item.open .extra {
+            display: block;
+        }
+
+        .empty-hint {
+            color: #999;
+            font-size: 14px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ---- 今日推荐 ---- */
+        .pick-result {
+            margin-top: 12px;
+            background: #f4fafd;
+            border: 1px solid #dceef6;
+            border-radius: 10px;
+            padding: 16px;
+            display: none;
+        }
+
+        .pick-result.show {
+            display: block;
+        }
+
+        .pick-result .pick-photo {
+            width: 100%;
+            height: auto;
+            max-height: 360px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #eaf3f8;
+        }
+
+        .pick-result h3 {
+            margin: 0 0 2px;
+            font-size: 18px;
+            color: #2c5f8a;
+        }
+
+        .pick-result .sci {
+            font-style: italic;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .pick-result p {
+            margin: 8px 0 0;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        /* ---- 观鸟清单 ---- */
+        .check-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .check-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .check-toggle {
+            background: none;
+            border: none;
+            color: #2c5f8a;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .check-prog {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .check-reset {
+            background: none;
+            border: none;
+            color: #d1493f;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .prog-wrap {
+            height: 10px;
+            background: #eaf0f5;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0 14px;
+        }
+
+        .prog-bar {
+            height: 100%;
+            background: #2c9e6b;
+            width: 0%;
+            border-radius: 6px;
+            transition: width 0.3s;
+        }
+
+        .check-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 6px;
+            overscroll-behavior: contain;
+        }
+
+        .check-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .check-grid::-webkit-scrollbar-thumb {
+            background: #c6d8e8;
+            border-radius: 4px;
+        }
+
+        .check-item {
+            background: #f7fbfd;
+            border: 1px solid #dceef6;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-item:hover {
+            background: #eef7fb;
+        }
+
+        .check-item .ck {
+            color: #bbb;
+        }
+
+        .check-item.done {
+            background: #e9f7f0;
+            border-color: #bfe6d0;
+            color: #1e6b4a;
+        }
+
+        .check-item.done .ck {
+            color: #2c9e6b;
+        }
+
+        /* ---- 看图猜鸟 ---- */
+        .quiz-img {
+            width: 100%;
+            height: auto;
+            max-height: 260px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #eaf3f8;
+            margin-bottom: 12px;
+        }
+
+        .quiz-score {
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 8px;
+        }
+
+        .quiz-opt {
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #dceef6;
+            background: #f7fbfd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #2c5f8a;
+        }
+
+        .quiz-opt:hover {
+            background: #eef7fb;
+        }
+
+        .quiz-opt.correct {
+            background: #e9f7f0;
+            border-color: #bfe6d0;
+            color: #1e6b4a;
+        }
+
+        .quiz-opt.wrong {
+            background: #fdecea;
+            border-color: #f3b7af;
+            color: #a33;
+        }
+
+        .quiz-opt:disabled {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .quiz-status {
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .quiz-actions {
+            margin-top: 10px;
+        }
+
+        /* ---- 冷知识 ---- */
+        .tip-box {
+            background: #fff8e6;
+            border: 1px solid #f0dfa8;
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #6b5716;
+            min-height: 84px;
+        }
+
+        .tip-cat {
+            display: inline-block;
+            background: #f0dfa8;
+            color: #7a5d00;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+
+        .tip-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #6b5716;
+        }
+
+        .tip-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tip-count {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 收集满 30 条的礼花特效层 */
+        #fireworks {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .btn {
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ---- 工具六：鸟型测试（MBTI 版） ---- */
+        .ttype-intro { text-align: center; padding: 6px 0 2px; }
+        .ttype-intro p { margin: 0 0 12px; color: #555; }
+        .ttype-dims { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .ttype-dims span { background: #eef5fc; border: 1px solid #cfe3f5; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: #4a7ba8; }
+        .ttype-prog { font-size: 13px; color: #8898a8; margin-bottom: 8px; }
+        .ttype-q { font-size: 1.06rem; font-weight: 600; margin: 6px 0 14px; }
+        .ttype-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 8px 0; border: 1px solid #c4ddf3; border-radius: 10px; background: #fff; color: #333; font-size: 15px; cursor: pointer; }
+        .ttype-opt:hover { background: #eef6ff; border-color: #7fb3e0; }
+        .ttype-tag { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; background: #4682b4; color: #fff; border-radius: 50%; font-size: 12px; margin-right: 10px; }
+        .ttype-result { text-align: center; padding: 6px 0 2px; }
+        .ttype-img { max-width: 160px; border-radius: 12px; box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25); margin-bottom: 12px; }
+        .ttype-rname { font-size: 1.25rem; font-weight: 700; margin: 4px 0 2px; }
+        .ttype-rtitle { color: #4682b4; font-weight: 600; margin-bottom: 10px; }
+        .ttype-rdesc { color: #555; line-height: 1.7; text-align: left; margin: 0 0 10px; }
+        .ttype-rfeat { background: #eef5fc; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #4a7ba8; text-align: left; margin-bottom: 14px; }
+        .ttype-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .ttype-chip { background: #4682b4; color: #fff; border-radius: 999px; padding: 3px 12px; font-size: 13px; }
+        .ttype-actions { display: flex; gap: 10px; justify-content: center; }
+        .ttype-actions .btn { flex: 0 0 auto; }
+
+        /* ---- 免费鸟站推荐 ---- */
+        .site-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+        .site-item { display: block; border: 1px solid #c4ddf3; border-radius: 10px; padding: 10px 12px; background: #fff; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+        .site-item:hover { background: #eef6ff; border-color: #7fb3e0; }
+        .site-name { display: block; font-weight: 600; color: #4682b4; font-size: 15px; margin-bottom: 4px; }
+        .site-desc { display: block; font-size: 13px; color: #666; line-height: 1.5; }
+        .site-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .site-tab { padding: 8px 18px; border: 1px solid #c4ddf3; border-radius: 999px; background: #fff; color: #4a7ba8; font-size: 14px; cursor: pointer; }
+        .site-tab.active { background: #4682b4; border-color: #4682b4; color: #fff; }
+        .site-tab:hover { background: #eef6ff; }
+        .site-tab.active:hover { background: #4682b4; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🐦 BirdCloud 观鸟笔记</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="records.html">观鸟记录本</a>
+            <a href="forum.html">观鸟地点</a>
+            <a href="gallery.html">观鸟相册</a>
+            <a href="tools.html">实用工具</a>
+            <a href="fun.html" class="active">随便玩玩</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
+            <a href="thanks.html">感谢名单</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h1 class="page-title">🕹️ 随便玩玩</h1>
+        <p class="page-sub">看图猜鸟、观鸟冷知识、鸟型测试，休息一下换换脑子</p>
+
+        <div class="tools-grid">
+            <!-- 工具一：看图猜鸟 -->
+            <section class="tool-card">
+                <h2>🎯 看图猜鸟</h2>
+                <p class="tool-desc">看照片猜鸟名，测测你的识鸟功力</p>
+                <div class="quiz-score" id="quizScore">得分 0 · 已答 0</div>
+                <img class="quiz-img" id="quizImg" alt="猜猜这是哪种鸟">
+                <div class="quiz-options" id="quizOpts"></div>
+                <div class="quiz-status" id="quizStatus"></div>
+                <div class="quiz-actions">
+                    <button class="btn" id="quizNext">下一题</button>
+                </div>
+            </section>
+
+            <!-- 工具二：观鸟冷知识 -->
+            <section class="tool-card">
+                <h2>💡 观鸟冷知识</h2>
+                <p class="tool-desc">一分钟了解一个鸟类小秘密</p>
+                <div class="tip-box" id="tipBox"></div>
+                <div class="tip-actions">
+                    <span class="tip-count" id="tipCount">已探索 0 / 30 条</span>
+                    <button class="btn" id="tipBtn">换一条</button>
+                </div>
+            </section>
+
+            <!-- 工具三：鸟型测试（MBTI 版） -->
+            <section class="tool-card">
+                <h2>🦉 鸟型测试 · MBTI 版</h2>
+                <p class="tool-desc">16 道四选一，测测你的鸟格是哪一种</p>
+                <div id="typeTest"></div>
+            </section>
+        </div>
+
+        <!-- 免费鸟站推荐 -->
+        <section class="tool-card">
+            <h2>🌐 免费鸟站推荐</h2>
+            <p class="tool-desc">观鸟路上好用的免费网站，收藏慢慢逛</p>
+            <div class="site-tabs">
+                <button class="site-tab active" type="button" data-tab="pro">🏛️ 专业网站</button>
+                <button class="site-tab" type="button" data-tab="fun">🎠 趣味网站</button>
+            </div>
+            <div class="site-grid" id="siteGridPro">
+                <a class="site-item" href="https://ebird.org/explore" target="_blank" rel="noopener">
+                    <span class="site-name">🌍 eBird</span>
+                    <span class="site-desc">全球最大的观鸟记录库：查鸟种分布、看附近鸟讯，康奈尔出品</span>
+                </a>
+                <a class="site-item" href="https://birdreport.cn" target="_blank" rel="noopener">
+                    <span class="site-name">🇨🇳 中国观鸟记录中心</span>
+                    <span class="site-desc">国内观鸟记录平台，提交你的观鸟记录，参加全国鸟调</span>
+                </a>
+                <a class="site-item" href="https://merlin.allaboutbirds.org" target="_blank" rel="noopener">
+                    <span class="site-name">🔍 Merlin 识鸟</span>
+                    <span class="site-desc">上传照片免费识别鸟种，康奈尔出品，和本站 AI 识鸟是同行</span>
+                </a>
+                <a class="site-item" href="https://www.allaboutbirds.org" target="_blank" rel="noopener">
+                    <span class="site-name">📖 All About Birds</span>
+                    <span class="site-desc">鸟类百科：图片、鸣叫、习性、分布全都有，康奈尔出品</span>
+                </a>
+                <a class="site-item" href="https://xeno-canto.org" target="_blank" rel="noopener">
+                    <span class="site-name">🎵 Xeno-canto</span>
+                    <span class="site-desc">全球鸟鸣录音库，免费在线听、免费下载</span>
+                </a>
+                <a class="site-item" href="https://www.macaulaylibrary.org" target="_blank" rel="noopener">
+                    <span class="site-name">🎥 Macaulay Library</span>
+                    <span class="site-desc">康奈尔多媒体档案，海量鸟类照片与视频</span>
+                </a>
+                <a class="site-item" href="https://www.birdnet.cn" target="_blank" rel="noopener">
+                    <span class="site-name">📷 鸟网</span>
+                    <span class="site-desc">国内鸟类摄影交流社区，大片和鸟讯一网打尽</span>
+                </a>
+                <a class="site-item" href="https://avibase.bsc-eoc.org" target="_blank" rel="noopener">
+                    <span class="site-name">🔤 Avibase</span>
+                    <span class="site-desc">全球鸟种数据库，查学名、分类、多语言名称</span>
+                </a>
+            </div>
+            <div class="site-grid" id="siteGridFun" style="display: none">
+                <a class="site-item" href="https://bird-song.org" target="_blank" rel="noopener">
+                    <span class="site-name">🎵 Bird Song</span>
+                    <span class="site-desc">鸟鸣白噪音网站：听鸟叫、自制自然背景音助眠专注，还有辨鸟挑战（支持中文）</span>
+                </a>
+                <a class="site-item" href="https://www.hahagames.com/game/bird-simulator" target="_blank" rel="noopener">
+                    <span class="site-name">🕊️ 鸟模拟器</span>
+                    <span class="site-desc">网页版扮演小鸟自由翱翔，无任务纯放松（PC 浏览器，W/S/A/D + Space 操控）</span>
+                </a>
+                <a class="site-item" href="https://birdcast.info" target="_blank" rel="noopener">
+                    <span class="site-name">🌦️ BirdCast</span>
+                    <span class="site-desc">实时迁徙雷达地图，看百万候鸟像天气一样过境</span>
+                </a>
+                <a class="site-item" href="https://academy.allaboutbirds.org/bird-song-hero/" target="_blank" rel="noopener">
+                    <span class="site-name">🎧 Bird Song Hero</span>
+                    <span class="site-desc">康奈尔听声辨鸟游戏，考考你的耳朵</span>
+                </a>
+                <a class="site-item" href="https://www.birdorable.com" target="_blank" rel="noopener">
+                    <span class="site-name">🥰 Birdorable</span>
+                    <span class="site-desc">把常见鸟变成卡哇伊卡通形象，DIY 你的专属小鸟</span>
+                </a>
+                <a class="site-item" href="https://cams.allaboutbirds.org" target="_blank" rel="noopener">
+                    <span class="site-name">📺 康奈尔鸟直播</span>
+                    <span class="site-desc">实时喂食器 / 巢箱直播，看小鸟干饭发呆一整天</span>
+                </a>
+                <a class="site-item" href="https://www.fws.gov/lab/featheratlas/" target="_blank" rel="noopener">
+                    <span class="site-name">🪶 Feather Atlas</span>
+                    <span class="site-desc">美国鱼类与野生动物局的羽毛图鉴，认出每一根飞羽</span>
+                </a>
+                <a class="site-item" href="https://www.sporcle.com/games/tag/birds" target="_blank" rel="noopener">
+                    <span class="site-name">🎮 Sporcle 鸟类测验</span>
+                    <span class="site-desc">趣味答题平台上的鸟题合集，测完还想测</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>BirdCloud 观鸟笔记 © 2026</p>
+    </footer>
+
+    <script src="vendor/supabase.min.js"></script>
+    <script>
+    (function () {
+
+        var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        var BUCKET = "bird-gallery";
+        var supabase = null;
+
+        try {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.log("Supabase 初始化失败：" + e.message);
+        }
+
+        // 登录态导航：已登录显示"我的鸟窝"
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                var link = document.getElementById("nest-link");
+                if (!link) return;
+                if (res.data && res.data.session) {
+                    link.href = "profile.html";
+                    link.textContent = "我的鸟窝";
+                } else {
+                    link.href = "login.html";
+                    link.textContent = "鸟窝入住";
+                }
+            });
+        }
+
+        // ============ 鸟类图鉴数据（中国常见鸟类） ============
+        var BIRDS = [
+            { name: "树麻雀", sci: "Passer montanus", feat: "头顶栗褐色，脸颊一块白底黑斑，成群叽叽喳喳", habitat: "城乡各处、屋檐树丛", food: "谷粒、草籽、昆虫", tip: "不怕人，公园长椅旁最常见" },
+            { name: "喜鹊", sci: "Pica pica", feat: "黑白配色，长尾拖曳，叫声响亮的“嘎嘎”", habitat: "城区、农田、村落", food: "杂食：昆虫、果实、垃圾", tip: "常成对活动，民间视为报喜鸟" },
+            { name: "家燕", sci: "Hirundo rustica", feat: "剪刀状长尾，背蓝黑、腹白，贴地低飞捕虫", habitat: "乡村屋檐下筑泥巢", food: "空中飞虫", tip: "春天归来筑巢，预示天气变化" },
+            { name: "白头鹎", sci: "Pycnonotus sinensis", feat: "头顶后方一块白色枕斑，叫声婉转多变", habitat: "公园、庭院、次生林", food: "果实、昆虫", tip: "清晨鸣叫最活跃，爱停在树梢" },
+            { name: "乌鸫", sci: "Turdus merula", feat: "全身乌黑，黄色嘴与黄色眼圈，鸣唱悦耳", habitat: "庭院、林地、草坪", food: "蚯蚓、昆虫、浆果", tip: "晨昏时分鸣唱，模仿力强" },
+            { name: "珠颈斑鸠", sci: "Spilopelia chinensis", feat: "颈侧黑底白点的珠状斑，叫声低沉“咕咕咕”", habitat: "城区、公园、农田", food: "谷物、种子", tip: "爱在地面慢步觅食，不怕人" },
+            { name: "白鹭", sci: "Egretta garzetta", feat: "通体雪白，黑嘴黑脚，站立时脖颈常缩成 S 形", habitat: "水田、河湖、湿地", food: "小鱼、虾、蛙", tip: "喜欢涉水静立，俗称“雪客”" },
+            { name: "苍鹭", sci: "Ardea cinerea", feat: "灰背白颈，头顶两道黑纹，体型大，爱静立等鱼", habitat: "湖泊、湿地、水库", food: "鱼、蛙、水生昆虫", tip: "能长时间纹丝不动，人称“老等”" },
+            { name: "普通翠鸟", sci: "Alcedo atthis", feat: "背羽蓝绿闪亮，腹部橙红，长嘴如刀，贴水疾飞", habitat: "河溪、池塘、水渠", food: "小鱼、小虾", tip: "停在枝头盯着水面，入水如箭" },
+            { name: "大斑啄木鸟", sci: "Dendrocopos major", feat: "黑白相间，雄鸟枕后有红斑，敲树“笃笃”有声", habitat: "阔叶林、混交林、公园", food: "树干内害虫", tip: "沿树干螺旋向上攀爬觅食" },
+            { name: "红嘴蓝鹊", sci: "Urocissa erythrorhyncha", feat: "红嘴红脚，蓝紫色长尾，飞行姿态飘逸", habitat: "山地林缘、公园", food: "昆虫、果实、小型动物", tip: "常成小群，叫声高亢响亮" },
+            { name: "戴胜", sci: "Upupa epops", feat: "头顶扇状羽冠，黄褐羽配黑白翼纹，气味特殊", habitat: "开阔林地、草坪、田野", food: "蝼蛄、金龟子等地下害虫", tip: "俗称“花蒲扇”，冠羽开合很醒目" },
+            { name: "八哥", sci: "Acridotheres cristatellus", feat: "黑色羽毛，额前竖羽簇，翅上有白斑", habitat: "城区、村落、农田", food: "杂食：昆虫、果实、谷物", tip: "聪明，善于模仿人语鸟鸣" },
+            { name: "白鹡鸰", sci: "Motacilla alba", feat: "黑白灰配色，长尾不停上下摆动，边走边点头", habitat: "水边、道路、屋顶", food: "空中飞虫", tip: "飞行呈波浪状，叫声细而清脆" },
+            { name: "领角鸮", sci: "Otus lettia", feat: "小型猫头鹰，耳羽簇明显，夜间发出“呜呜”声", habitat: "林地、城市公园（夜观）", food: "鼠类、大型昆虫", tip: "白天隐身树洞，夜间活动" },
+            { name: "夜鹭", sci: "Nycticorax nycticorax", feat: "灰蓝背黑，红色虹膜，黄昏出巢，缩颈站立", habitat: "城市公园水边、湿地", food: "鱼、虾、蛙", tip: "白天缩成“一团”站树梢，像块石头" },
+            { name: "画眉", sci: "Garrulax canorus", feat: "眼周白色眉纹醒目，鸣声婉转多变", habitat: "灌丛、竹林、林地", food: "昆虫、浆果", tip: "善鸣善斗，是著名的笼养鸣禽" },
+            { name: "黑枕黄鹂", sci: "Oriolus chinensis", feat: "通体金黄，黑色过眼纹绕到枕部，鸣声清脆", habitat: "高大乔木、果园", food: "昆虫、果实", tip: "歌声如“高音笛”，藏在叶间难发现" },
+            { name: "棕背伯劳", sci: "Lanius schach", feat: "棕背黑翅黑尾，眼周黑色“眼罩”，性情凶猛", habitat: "开阔林缘、农田树丛", food: "昆虫、小鸟、蛙", tip: "会把猎物挂在树刺上，人称“屠夫鸟”" },
+            { name: "普通鸬鹚", sci: "Phalacrocorax carbo", feat: "通体黑褐泛绿辉，嘴尖带钩，常张翅晾晒", habitat: "湖泊、水库、江河", food: "鱼类", tip: "潜水捕鱼，渔民曾驯养它捕鱼" },
+            { name: "白骨顶", sci: "Fulica atra", feat: "通体黑色，额头白色骨板，游泳时点头", habitat: "湖泊、湿地、池塘", food: "水草、小鱼、软体动物", tip: "会潜水，受惊后踏水起飞" },
+            { name: "灰喜鹊", sci: "Cyanopica cyanus", feat: "灰色身体，蓝色翅膀与长尾，黑色头巾", habitat: "城区林地、公园", food: "杂食：昆虫、果实", tip: "成群活动，机警且喧闹" },
+            { name: "北红尾鸲", sci: "Phoenicurus auroreus", feat: "雄鸟橙红腹部与尾羽，灰黑头背，白翅斑", habitat: "林缘、灌丛、庭院", food: "昆虫", tip: "尾羽不停颤动，常落在枝头张望" },
+            { name: "斑嘴鸭", sci: "Anas zonorhyncha", feat: "棕褐羽，嘴端黄斑明显，翼镜蓝绿", habitat: "湖泊、湿地、水田", food: "水草、谷物、小鱼", tip: "常在城郊水库成群游弋" },
+            { name: "红耳鹎", sci: "Pycnonotus jocosus", feat: "头顶高耸黑羽冠，眼下后方一块红斑，叫声“欢快”", habitat: "城区公园、庭院、林缘", food: "果实、昆虫", tip: "常小群活动，落在枝头上下摆尾" },
+            { name: "大山雀", sci: "Parus cinereus", feat: "头黑颊白，胸腹鲜黄、中央一条黑色纵带", habitat: "林地、公园、庭院", food: "昆虫、种子", tip: "敏捷好动，倒挂枝头找虫" },
+            { name: "暗绿绣眼鸟", sci: "Zosterops japonicus", feat: "娇小翠绿，眼周一圈醒目白环", habitat: "树林、公园、果园", food: "昆虫、花蜜、浆果", tip: "成群在树冠跳动，鸣声细碎清脆" },
+            { name: "鹊鸲", sci: "Copsychus saularis", feat: "黑白配色，白翼斑，长尾常翘起如扇", habitat: "城区庭院、公园、村落", food: "昆虫", tip: "晨昏爱站屋顶高歌，鸣声多变" },
+            { name: "灰椋鸟", sci: "Spodiopsar cineraceus", feat: "灰褐羽、脸颊白斑，嘴脚橙黄醒目", habitat: "城区、农田、旷野", food: "杂食：昆虫、果实、谷物", tip: "秋冬成大群，铺天盖地迁徙" },
+            { name: "山斑鸠", sci: "Streptopelia orientalis", feat: "灰粉褐羽，颈侧黑白条纹斑，无珠点", habitat: "林缘、农田、公园", food: "谷物、种子、浆果", tip: "与珠颈斑鸠相似，颈斑呈条纹状" },
+            { name: "小鸊鷉", sci: "Tachybaptus ruficollis", feat: "小水鸟，颈侧红棕、嘴基黄斑，善潜泳", habitat: "公园湖泊、水塘、湿地", food: "小鱼、虾、水生昆虫", tip: "遇险先潜水，只露脑袋观察" },
+            { name: "棕头鸦雀", sci: "Sinosuthora webbiana", feat: "棕褐色小圆球，尾长，喙短厚似鹦鹉嘴", habitat: "芦苇丛、灌丛、竹丛", food: "昆虫、草籽", tip: "常成群在草丛里“啾啾”窜动" },
+            { name: "牛背鹭", sci: "Bubulcus ibis", feat: "白色鹭鸟，繁殖期头、颈、背饰橙黄羽，嘴橙黄、脚深色", habitat: "草地、农田、牧场、湿地边缘", food: "昆虫（蝗虫、蚱蜢）、蛙、小鱼", tip: "爱跟随牛群啄食惊起的虫子，常站在牛背上" },
+            { name: "北灰鹟", sci: "Muscicapa dauurica", feat: "上体灰褐、下体污白，眼周有浅色眼圈，喙黑细尖", habitat: "阔叶林、公园、疏林灌丛", food: "昆虫", tip: "常从枝头飞出捕虫后飞回原枝，秋季过境常见" },
+            { name: "栗背短脚鹎", sci: "Hemixos castanonotus", feat: "头顶栗棕色，喉部纯白，胸腹灰白，翅尾黑褐", habitat: "常绿阔叶林、山地林缘", food: "果实、昆虫", tip: "华南常见，常结群活动，叫声清脆" },
+            { name: "黑水鸡", sci: "Gallinula chloropus", feat: "通体黑褐色，头颈浅灰，喙基红色（成鸟），体侧白纹，尾下覆羽两侧白色，游泳时尾羽翘起", habitat: "湖泊、池塘、水田等静水湿地，常在浮水植物间活动", food: "水生植物嫩芽、种子、昆虫、小鱼虾", tip: "脚趾细长，能在浮叶上行走；幼鸟无红色额甲，常随亲鸟觅食" },
+            { name: "灰头鹀", sci: "Emberiza spodocephala", feat: "雄鸟头颈灰绿色，雌鸟头灰褐；上体棕褐带黑纵纹，下体黄白带纵纹，尾羽外侧白色", habitat: "林地、灌丛、农田、苇塘边缘", food: "草籽、谷粒、昆虫", tip: "冬季常结小群活动；飞行时尾羽外侧白色醒目，是重要辨识点" },
+            { name: "红喉歌鸲", sci: "Calliope calliope", feat: "雄鸟喉部具鲜艳橙红色斑（红点颏），红斑外缘黑色细边；上体橄榄褐，白色眉纹，黑色贯眼纹，尾羽上翘", habitat: "灌丛、林缘、苇塘边等近水灌草丛", food: "昆虫、蜘蛛及少量植物种子", tip: "俗称红点颏，鸣声婉转多变，善模仿；雌鸟喉部无红斑" },
+            { name: "紫啸鸫", sci: "Myophonus caeruleus", feat: "通体深蓝紫色带光泽，喙橙红色醒目，栖息山溪林间", habitat: "山地溪流、密林、沟谷", food: "昆虫、蜗牛、小型无脊椎动物、浆果", tip: "受惊时发出尖厉哨音，常在溪边岩石间活动" },
+            { name: "三趾滨鹬", sci: "Calidris alba", feat: "小型滨鹬，冬羽淡灰白、肩部黑斑，黑喙粗短、黑腿，沙滩逐浪奔跑", habitat: "海滩、滩涂、沙岸", food: "海滩小型无脊椎动物", tip: "随海浪进退奔跑啄食，俗称“浪鸟”，迁徙季沿海可见" },
+            { name: "白额鹱", sci: "Calonectris leucomelas", feat: "海鸟，上体深褐、下体白，头白带褐斑，喙浅色带钩，脚粉红，贴海面滑翔", habitat: "近海海域，繁殖于海岛上", food: "鱼类、鱿鱼、浮游生物", tip: "常在低空贴海面滑翔，受惊或转弯时侧翻飞行" },
+            { name: "白顶溪鸲", sci: "Phoenicurus leucocephalus", feat: "头顶白色斑块，身体黑色，腰、腹与尾羽橙红色，尾常扇开摆动", habitat: "山溪、瀑布边、林缘溪流", food: "昆虫、水生无脊椎动物", tip: "常在山溪岩石间点头摆尾，尾羽展开露出橙红色，非常醒目" },
+            { name: "池鹭", sci: "Ardeola bacchus", feat: "繁殖期头颈栗红、背蓝灰、体白；非繁殖期与幼鸟棕褐带白色纵纹，喙黄端深，腿黄绿", habitat: "水田、池塘、河滩湿地", food: "鱼、虾、蛙、水生昆虫", tip: "常缩颈静立浅水等待猎物，受惊起飞时振翅缓慢" },
+            { name: "斑头雁", sci: "Anser indicus", feat: "头白色带两道黑色条纹，颈侧黑白纵纹，喙橙黄尖端黑色，脚橙黄，体灰褐", habitat: "高原湖泊、湿地、农田", food: "水草、谷物、植物嫩芽", tip: "世界飞得最高的鸟之一，迁徙可飞越喜马拉雅山脉" },
+            { name: "橙翅噪鹛", sci: "Trochalopteron elliotii", feat: "体羽灰褐，翅膀与尾缘具醒目橙黄色斑块，眼圈浅色", habitat: "中高山灌丛、竹林、针叶林", food: "昆虫、果实、种子", tip: "常成对或小群在林下地面活动，叫声多变悦耳" },
+            { name: "酒红朱雀", sci: "Carpodacus vinaceus", feat: "雄鸟通体酒红色，翅尾暗褐，喙短粗圆锥形；雌鸟棕褐带纵纹", habitat: "高山灌丛、林缘、竹丛", food: "种子、果实、嫩芽", tip: "雄鸟酒红羽色十分醒目，常单独或小群活动" }
+        ];
+
+        var BIRD_IMGS = [
+            "images/birds/01-treesparrow-a.jpg?v=20260924",
+            "images/birds/02-magpie.png?v=20260924",
+            "images/birds/03-barnswallow.png?v=20260924",
+            "images/birds/04-bulbul.png?v=20260924",
+            "images/birds/05-blackbird.png?v=20260924",
+            "images/birds/06-spotteddove.png?v=20260924",
+            "images/birds/07-littleegret.jpg?v=20260924",
+            "images/birds/08-greyheron.png?v=20260924",
+            "images/birds/09-kingfisher.png?v=20260924",
+            "images/birds/10-woodpecker.png?v=20260924",
+            "images/birds/11-redbilledbluemagpie.png?v=20260924",
+            "images/birds/12-hoopoe-a.jpg?v=20260924",
+            "images/birds/13-crestedmyna.png?v=20260924",
+            "images/birds/14-whitewagtail.png?v=20260924",
+            "images/birds/15-scopsowl.png?v=20260924",
+            "images/birds/16-nightheron.png?v=20260924",
+            "images/birds/17-hwamei.png?v=20260924b",
+            "images/birds/18-oriole.png?v=20260924",
+            "images/birds/19-longtailshrike.png?v=20260924",
+            "images/birds/20-cormorant.png?v=20260924",
+            "images/birds/21-coot.png?v=20260924",
+            "images/birds/22-azurewingedmagpie.png?v=20260924",
+            "images/birds/23-redstart.png?v=20260924b",
+            "images/birds/24-spotbilledduck.png?v=20260924",
+            "images/birds/25-redwhiskeredbulbul.png?v=20260924",
+            "images/birds/26-greattit.png?v=20260924",
+            "images/birds/27-japwhiteeye.png?v=20260924",
+            "images/birds/28-magpierobin-a.jpg?v=20260924",
+            "images/birds/29-whitecheekedstarling.png?v=20260924",
+            "images/birds/30-orientalturtledove.png?v=20260924",
+            "images/birds/31-littlegrebe.jpg?v=20260924",
+            "images/birds/32-parrotbill.png?v=20260924",
+            "images/birds/33-cattleegret.jpg?v=20260924",
+            "images/birds/34-asianbrownflycatcher.jpg?v=20260924",
+            "images/birds/35-chesnutbulbul.jpg?v=20260924",
+            "images/birds/36-moorhen.jpg?v=20260924",
+            "images/birds/37-blackfacedbunting.jpg?v=20260924",
+            "images/birds/38-siberianrubythroat.jpg?v=20260924",
+            "images/birds/39-bluewhistlingthrush.jpg?v=20260924",
+            "images/birds/40-sanderling.jpg?v=20260924",
+            "images/birds/41-streckershearwater.jpg?v=20260924",
+            "images/birds/42-whitecappedredstart.jpg?v=20260924",
+            "images/birds/43-chinesepondheron.jpg?v=20260924",
+            "images/birds/44-barheadedgoose.jpg?v=20260924",
+            "images/birds/45-elliottslaughingthrush.jpg?v=20260924",
+            "images/birds/46-vinaceousrosefinch.jpg?v=20260924b"
+        ];
+
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        // ============ 工具四：看图猜鸟 ============
+        var quizImg = document.getElementById("quizImg");
+        var quizOpts = document.getElementById("quizOpts");
+        var quizStatus = document.getElementById("quizStatus");
+        var quizScore = document.getElementById("quizScore");
+        var quizNext = document.getElementById("quizNext");
+        var quizData = { score: 0, answered: 0, answerIdx: -1, locked: false };
+
+        function shuffleArr(a) {
+            for (var i = a.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var t = a[i]; a[i] = a[j]; a[j] = t;
+            }
+            return a;
+        }
+
+        function newQuiz() {
+            quizData.locked = false;
+            var answer;
+            do { answer = Math.floor(Math.random() * BIRDS.length); } while (!BIRD_IMGS[answer]);
+            var distractors = [];
+            var guard = 0;
+            while (distractors.length < 3 && guard < 200) {
+                guard++;
+                var r = Math.floor(Math.random() * BIRDS.length);
+                if (r !== answer && distractors.indexOf(r) === -1) distractors.push(r);
+            }
+            var opts = shuffleArr(distractors.concat([answer]));
+            quizData.opts = opts;
+            quizData.answerIdx = opts.indexOf(answer);
+            quizImg.src = BIRD_IMGS[answer];
+            quizImg.alt = "猜猜这是哪种鸟";
+            var html = "";
+            for (var i = 0; i < opts.length; i++) {
+                html += '<button class="quiz-opt" data-i="' + i + '">' + esc(BIRDS[opts[i]].name) + '</button>';
+            }
+            quizOpts.innerHTML = html;
+            quizStatus.innerHTML = "";
+        }
+
+        quizOpts.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".quiz-opt") : null;
+            if (!btn || quizData.locked) return;
+            quizData.locked = true;
+            quizData.answered++;
+            var picked = parseInt(btn.getAttribute("data-i"), 10);
+            var optEls = quizOpts.querySelectorAll(".quiz-opt");
+            var correctName = BIRDS[quizData.opts[quizData.answerIdx]].name;
+            if (picked === quizData.answerIdx) {
+                quizData.score++;
+                btn.classList.add("correct");
+                quizStatus.innerHTML = '🎉 答对了！是「' + esc(correctName) + '」';
+                // 答对：在选项按钮位置放纸带礼花 🎉
+                var rb = btn.getBoundingClientRect();
+                launchFireworks(rb.left + rb.width / 2, rb.top + rb.height / 2);
+            } else {
+                btn.classList.add("wrong");
+                optEls[quizData.answerIdx].classList.add("correct");
+                quizStatus.innerHTML = '😅 答错啦，正确答案是「' + esc(correctName) + '」';
+            }
+            quizScore.textContent = "得分 " + quizData.score + " · 已答 " + quizData.answered;
+        });
+
+        quizNext.addEventListener("click", newQuiz);
+
+        newQuiz();
+
+        // ============ 工具五：观鸟冷知识 ============
+        var CAT_EMOJI = {
+            "行为": "🐾", "身体": "🔬", "迁徙": "🧭", "繁殖": "🐣",
+            "趣事": "🤣", "鸣唱": "🎵"
+        };
+        var TIPS = [
+            { c: "身体", t: "蜂鸟每秒能扇动翅膀 50~80 次，是世界上振翅最快的鸟之一。" },
+            { c: "身体", t: "猫头鹰的脖子可以旋转约 270 度，几乎转一整圈。" },
+            { c: "身体", t: "啄木鸟啄树时头部承受的冲击力堪比撞墙，但特殊的头骨结构能完美缓冲。" },
+            { c: "趣事", t: "鸵鸟是现存最大的鸟，跑起来时速可达 70 公里。" },
+            { c: "趣事", t: "企鹅是鸟类，虽然不会飞，却是出色的游泳健将。" },
+            { c: "行为", t: "翠鸟俯冲入水捕鱼时速度极快，几乎不溅起水花。" },
+            { c: "迁徙", t: "燕子每年迁徙距离可达上万公里，却能精准回到去年的旧巢。" },
+            { c: "鸣唱", t: "画眉鸟叫声婉转多变，一只画眉能模仿十几种鸟鸣。" },
+            { c: "行为", t: "白鹭捕食时会用脚在水中轻搅，惊出小鱼再快速啄取。" },
+            { c: "身体", t: "鸟类没有牙齿，靠胃里的砂囊磨碎食物。" },
+            { c: "行为", t: "喜鹊是少数能认出镜子里自己的鸟之一，认知能力很高。" },
+            { c: "身体", t: "啄木鸟的舌头可以伸出比嘴长 3 倍，用来钩取树干里的虫子。" },
+            { c: "繁殖", t: "黄鹂的巢像一个小吊篮，悬挂在高高的树梢上。" },
+            { c: "行为", t: "斑嘴鸭飞行时脖颈直伸，和家鸭的姿态略有不同。" },
+            { c: "行为", t: "白腰文鸟睡觉时喜欢挤成一团，几十只抱在一起过夜。" },
+            { c: "行为", t: "麻雀总在人类身边安家，巢几乎不离房屋百米范围。" },
+            { c: "繁殖", t: "家燕和金腰燕衔泥筑巢，一口口垒成半碗形，一个巢能用好几年。" },
+            { c: "趣事", t: "白头鹎头上那撮白毛像白头巾，因此得了「白头翁」的外号。" },
+            { c: "趣事", t: "珠颈斑鸠脖子上像撒了一把珍珠，名字就是这么来的。" },
+            { c: "鸣唱", t: "乌鸫模仿能力超强，能学手机铃声，甚至模仿汽车警报。" },
+            { c: "鸣唱", t: "八哥能学人说话，靠的是特别发达的鸣管结构。" },
+            { c: "行为", t: "白鹡鸰走路一颠一颠、尾巴上下摆动，俗称「点水雀」。" },
+            { c: "行为", t: "北红尾鸲常在山溪边点头摆尾，尾羽展开露出橙红色，非常醒目。" },
+            { c: "趣事", t: "大山雀智商很高，英国有记录它们会掀开牛奶瓶盖偷喝奶。" },
+            { c: "行为", t: "红嘴蓝鹊是群居鸟，会集体保卫领地，连猛禽都敢上前驱赶。" },
+            { c: "身体", t: "戴胜头顶的冠羽像一把扇子，受惊时「刷」地一下全部展开。" },
+            { c: "行为", t: "小鸊鷉是潜水高手，遇到危险整个沉入水下，只露出一个尖嘴。" },
+            { c: "繁殖", t: "凤头鸊鷉求偶时会在水面上跳「草裙舞」，互相赠送水草。" },
+            { c: "行为", t: "灰椋鸟傍晚会成千上万聚成「鸟浪」，在空中不断变换队形。" },
+            { c: "鸣唱", t: "黑脸噪鹛嗓门很大，总是一大群叽叽喳喳，人称「嘈杂鸟」。" }
+        ];
+        var TIPS_SEEN_KEY = "birdcloud-tips-seen";
+        var tipBox = document.getElementById("tipBox");
+        var tipBtn = document.getElementById("tipBtn");
+        var tipCount = document.getElementById("tipCount");
+        var lastTip = -1;
+
+        function getTipSeen() {
+            try {
+                var raw = localStorage.getItem(TIPS_SEEN_KEY);
+                var obj = raw ? JSON.parse(raw) : {};
+                return obj && typeof obj === "object" ? obj : {};
+            } catch (e) { return {}; }
+        }
+
+        function updateTipCount() {
+            var n = Object.keys(getTipSeen()).length;
+            tipCount.textContent = "已探索 " + n + " / " + TIPS.length + " 条";
+        }
+
+        // 全屏礼花特效：爆点礼花（纯 Canvas，无外部依赖）
+        // 支持可选触发位置 launchFireworks(x, y)；未传坐标时在屏幕中央爆发
+        function launchFireworks(x, y) {
+            var old = document.getElementById("fireworks");
+            if (old && old.parentNode) old.parentNode.removeChild(old);
+            var c = document.createElement("canvas");
+            c.id = "fireworks";
+            document.body.appendChild(c);
+            var ctx = c.getContext("2d");
+            var stopped = false;
+            var parts = [];
+            var colors = ["#ff5f5f", "#ffb45f", "#ffe45f", "#5fd97a", "#5fc4ff", "#b05fff", "#ff5fd0", "#ff8fb8"];
+
+            function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+            resize();
+            window.addEventListener("resize", resize);
+
+            function burst(x, y) {
+                var n = 60 + Math.floor(Math.random() * 30);
+                for (var i = 0; i < n; i++) {
+                    var a = Math.random() * Math.PI * 2;
+                    var sp = 2 + Math.random() * 5;
+                    parts.push({
+                        x: x, y: y,
+                        vx: Math.cos(a) * sp,
+                        vy: Math.sin(a) * sp - 2,
+                        life: 1,
+                        decay: 0.012 + Math.random() * 0.015,
+                        size: 2 + Math.random() * 2.5,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+
+            function stop() {
+                if (stopped) return;
+                stopped = true;
+                window.removeEventListener("resize", resize);
+                if (c.parentNode) c.parentNode.removeChild(c);
+            }
+
+            // 延迟挂载点击停止监听，避免"触发礼花的本次点击"立刻把它停掉
+            setTimeout(function () {
+                if (!stopped) window.addEventListener("click", stop, { once: true });
+            }, 500);
+
+            var t = 0;
+            function frame() {
+                if (stopped) return;
+                ctx.clearRect(0, 0, c.width, c.height);
+
+                // 礼花爆点粒子
+                for (var i = parts.length - 1; i >= 0; i--) {
+                    var p = parts[i];
+                    p.vy += 0.12;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= p.decay;
+                    if (p.life <= 0) { parts.splice(i, 1); continue; }
+                    ctx.globalAlpha = Math.max(p.life, 0);
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.globalAlpha = 1;
+                t++;
+                if (t % 45 === 0) burst(c.width * (0.2 + Math.random() * 0.6), c.height * (0.15 + Math.random() * 0.4));
+                // 只保留爆点礼花，不洒飘落纸带
+                if (t < 240 && parts.length) {
+                    requestAnimationFrame(frame);
+                } else {
+                    stop();
+                }
+            }
+
+            var bx = (typeof x === "number") ? x : c.width * 0.5;
+            var by = (typeof y === "number") ? y : c.height * 0.4;
+            burst(bx, by);
+            requestAnimationFrame(frame);
+        }
+
+        function showTip() {
+            var i = Math.floor(Math.random() * TIPS.length);
+            if (TIPS.length > 1 && i === lastTip) i = (i + 1) % TIPS.length;
+            lastTip = i;
+            var t = TIPS[i];
+            tipBox.innerHTML = '<span class="tip-cat">' + (CAT_EMOJI[t.c] || "🐦") + " " + esc(t.c) + '</span>' +
+                '<div class="tip-text">' + esc(t.t) + '</div>';
+            var seen = getTipSeen();
+            seen[String(i)] = true;
+            try { localStorage.setItem(TIPS_SEEN_KEY, JSON.stringify(seen)); } catch (e) { }
+            updateTipCount();
+        }
+
+        // 满 30 条后：每点一次「换一条」就放一次礼花特效
+        tipBtn.addEventListener("click", function () {
+            showTip();
+            if (Object.keys(getTipSeen()).length >= TIPS.length) launchFireworks();
+        });
+
+        showTip();
+
+        // ============ 工具六：鸟型测试（MBTI 版 · 4 选项） ============
+        var TYPETEST_QS = [
+            { d: "EI|SN", q: "周末准备去观鸟，你会？", opts: [
+                { d: "E", t: "约上一群鸟友，热热闹闹出发" },
+                { d: "I", t: "一个人背上望远镜，安静享受" },
+                { d: "S", t: "提前查好鸟点，把路线记在小本子上" },
+                { d: "N", t: "想象这次会遇到什么有趣的鸟故事" }] },
+            { d: "TF|JP", q: "遇到认不出的鸟，你选择？", opts: [
+                { d: "T", t: "按检索表一步步推理，锁定它" },
+                { d: "F", t: "先感叹一声真漂亮，认不出也开心" },
+                { d: "J", t: "不弄明白不罢休，非要查个水落石出" },
+                { d: "P", t: "无所谓，下次见到再认识" }] },
+            { d: "EI|SN", q: "发现一群鸟在枝头嬉闹，你会？", opts: [
+                { d: "E", t: "凑过去，和它们一起待着" },
+                { d: "I", t: "远远地看着它们就好" },
+                { d: "S", t: "数一数有几种，记住羽毛特征" },
+                { d: "N", t: "琢磨它们为什么聚在这里" }] },
+            { d: "TF|JP", q: "和朋友观点不同时，你会？", opts: [
+                { d: "T", t: "摆出证据，把道理讲清楚" },
+                { d: "F", t: "照顾情绪，别伤了和气" },
+                { d: "J", t: "约好下次一起验证个明白" },
+                { d: "P", t: "打住话题，随它去吧" }] },
+            { d: "EI|SN", q: "观鸟途中遇到陌生鸟友，你会？", opts: [
+                { d: "E", t: "主动搭话，交流鸟点收获" },
+                { d: "I", t: "点头致意，继续自己的路线" },
+                { d: "S", t: "留意他的装备和鸟种清单" },
+                { d: "N", t: "猜猜他接下来会去哪拍" }] },
+            { d: "TF|JP", q: "决定明天去哪观鸟，你靠？", opts: [
+                { d: "T", t: "分析天气、路线、鸟况再决定" },
+                { d: "F", t: "看心情，想去就去" },
+                { d: "J", t: "提前定好计划，雷打不动" },
+                { d: "P", t: "明早起来看情况再说" }] },
+            { d: "EI|SN", q: "拍鸟时你更追求？", opts: [
+                { d: "E", t: "招呼同伴，一起抢个好机位" },
+                { d: "I", t: "一个人静静守候，不被打扰" },
+                { d: "S", t: "对焦锐利，羽毛纹理清晰" },
+                { d: "N", t: "有故事感的瞬间与意境" }] },
+            { d: "TF|JP", q: "看到一只受伤的鸟，你先？", opts: [
+                { d: "T", t: "冷静评估，该怎么救助" },
+                { d: "F", t: "先心疼着急，再说别的" },
+                { d: "J", t: "立刻按步骤处理、安置好" },
+                { d: "P", t: "看现场情况，随机应变" }] },
+            { d: "EI|SN", q: "组队观鸟时，你通常是？", opts: [
+                { d: "E", t: "张罗路线、活跃气氛的那个" },
+                { d: "I", t: "默默跟在队尾观察的那个" },
+                { d: "S", t: "专心记录时间地点特征的那个" },
+                { d: "N", t: "联想这只鸟背后故事的那个" }] },
+            { d: "TF|JP", q: "出门观鸟前，你会？", opts: [
+                { d: "T", t: "盘算好装备和路线再出门" },
+                { d: "F", t: "凭心情挑想带的东西" },
+                { d: "J", t: "清单列好，一切就绪才出发" },
+                { d: "P", t: "说走就走，路上再说" }] },
+            { d: "EI|SN", q: "记观鸟笔记时，你喜欢？", opts: [
+                { d: "E", t: "和鸟友分享今天的见闻" },
+                { d: "I", t: "写给自己看，安静记录" },
+                { d: "S", t: "如实记录时间、地点、特征" },
+                { d: "N", t: "随手写下感受和联想" }] },
+            { d: "TF|JP", q: "鸟况不如预期时，你选择？", opts: [
+                { d: "T", t: "分析原因，换个策略试试" },
+                { d: "F", t: "享受当下，不追求结果" },
+                { d: "J", t: "按计划把所有鸟点走完" },
+                { d: "P", t: "随缘，哪里好看看哪里" }] },
+            { d: "EI|SN", q: "望远镜调到最清晰后，你在？", opts: [
+                { d: "E", t: "招呼同伴，快来看这只鸟" },
+                { d: "I", t: "独享这份观察的宁静" },
+                { d: "S", t: "研究羽色、嘴型、脚的颜色" },
+                { d: "N", t: "想象它下一站要飞去哪" }] },
+            { d: "TF|JP", q: "清单打卡这件事，你是？", opts: [
+                { d: "T", t: "统计清楚每种鸟的观测次数" },
+                { d: "F", t: "每只鸟都带着一段回忆" },
+                { d: "J", t: "看到一种，立刻记一笔" },
+                { d: "P", t: "攒着，想起来再补" }] },
+            { d: "EI|SN", q: "看到一只特别罕见的鸟，你会？", opts: [
+                { d: "E", t: "立刻发群，呼朋引伴来看" },
+                { d: "I", t: "自己多欣赏一会儿再说" },
+                { d: "S", t: "仔细核对细节，确认鸟种" },
+                { d: "N", t: "好奇它怎么会出现在这里" }] },
+            { d: "TF|JP", q: "听说明天有鸟浪过境，你会？", opts: [
+                { d: "T", t: "研究迁徙路线，判断值不值得去" },
+                { d: "F", t: "光想想就兴奋，太期待了" },
+                { d: "J", t: "连夜查攻略，定好完整计划" },
+                { d: "P", t: "明早到了再说" }] }
+        ];
+        var DIM_NAMES = { E: "外向", I: "内向", S: "实感", N: "直觉", T: "思考", F: "情感", J: "计划", P: "随性" };
+        var TYPE_RESULTS = {
+            "ESTJ": { i: 1, emoji: "🪶", title: "总经理", desc: "务实果断、条理分明，天生的组织者。就像喜鹊，成对结伴、把领地打理得井井有条，还自带报喜属性。" },
+            "ESFJ": { i: 0, emoji: "🐦", title: "执政官", desc: "热心肠、重视关系，社区里最暖心的一位。就像树麻雀，爱扎堆爱热闹，屋檐下都是你的朋友。" },
+            "ISTJ": { i: 9, emoji: "⚒️", title: "物流师", desc: "专注严谨、说到做到，把每件事都做到位。就像大斑啄木鸟，笃笃笃按自己的节奏把活干完。" },
+            "ISFJ": { i: 2, emoji: "✈️", title: "守卫者", desc: "忠诚细腻、默默付出，守护着在意的人和事。就像家燕，年年飞回老屋檐下，衔泥筑巢不辞辛苦。" },
+            "ESTP": { i: 8, emoji: "💙", title: "企业家", desc: "行动派、反应快，机会来了绝不错过。就像普通翠鸟，盯准目标如箭入水，从不犹豫。" },
+            "ESFP": { i: 16, emoji: "🎵", title: "表演者", desc: "热情开朗、感染力强，走到哪都是焦点。就像画眉，歌声婉转多变，最爱在枝头亮一嗓子。" },
+            "ISTP": { i: 6, emoji: "🦢", title: "鉴赏家", desc: "冷静精准、动手能力强，喜欢独自琢磨。就像白鹭，缩着脖子静静站立，出手快准狠。" },
+            "ISFP": { i: 11, emoji: "🎩", title: "探险家", desc: "温柔随性、审美在线，走自己的独特路线。就像戴胜，顶着一把花蒲扇，气质这件事拿捏得死死的。" },
+            "ENTJ": { i: 10, emoji: "🪃", title: "指挥官", desc: "果断勇敢、目标明确，天生领队气场。就像红嘴蓝鹊，长尾一甩带着小群巡视领地，猛禽来了也敢上前。" },
+            "ENFJ": { i: 17, emoji: "🥇", title: "主人公", desc: "温暖有魅力、善于激励，是身边人的光。就像黑枕黄鹂，一身金黄藏也藏不住，歌声像高音笛一样清亮。" },
+            "INTJ": { i: 14, emoji: "🦉", title: "建筑师", desc: "独立思考、长远谋划，安静却深谋远虑。就像领角鸮，白天隐身树洞，夜里俯瞰全局。" },
+            "INFJ": { i: 25, emoji: "🍋", title: "提倡者", desc: "敏锐洞察、坚定温和，理想主义的实干家。就像大山雀，机灵好动，倒挂枝头也要把问题解决掉。" },
+            "ENTP": { i: 12, emoji: "🗣️", title: "辩论家", desc: "机敏灵活、点子不断，永远有新想法。就像八哥，能学人语能模仿鸟鸣，嘴皮子功夫一流。" },
+            "INTP": { i: 38, emoji: "🏞️", title: "逻辑学家", desc: "享受思考、为谜题着迷，安静的分析狂人。就像紫啸鸫，隐在山溪深谷，一身蓝紫光泽独自琢磨。" },
+            "ENFP": { i: 26, emoji: "🟢", title: "竞选者", desc: "好奇活泼、脑洞大开，把日子过成冒险。就像暗绿绣眼鸟，娇小翠绿，整天在树冠里蹦跳个不停。" },
+            "INFP": { i: 5, emoji: "🕊️", title: "调停者", desc: "温和理想、共情力强，守护内心的宁静。就像珠颈斑鸠，不争不抢，咕咕咕慢步觅食，自带岁月静好。" }
+        };
+        var typeBox = document.getElementById("typeTest");
+        var tt = { step: "intro", q: 0, sc: {}, fired: false };
+
+        function ttResultCode() {
+            var code = "";
+            var dims = ["EI", "SN", "TF", "JP"];
+            for (var i = 0; i < dims.length; i++) {
+                var d = dims[i];
+                var front = tt.sc[d[0]] || 0;
+                var back = tt.sc[d[1]] || 0;
+                code += front >= back ? d[0] : d[1];
+            }
+            return code;
+        }
+
+        function ttRender() {
+            var h = "";
+            if (tt.step === "intro") {
+                h = '<div class="ttype-intro">' +
+                    '<p>16 道四选一，测出你的「鸟格」——是雷厉风行的翠鸟，还是岁月静好的珠颈斑鸠？</p>' +
+                    '<div class="ttype-dims">' +
+                    '<span>🌐 外向 / 内向</span><span>🔍 实感 / 直觉</span>' +
+                    '<span>⚖️ 思考 / 情感</span><span>🗓️ 计划 / 随性</span>' +
+                    '</div>' +
+                    '<button class="btn" id="ttStart">开始测试</button></div>';
+            } else if (tt.step === "quiz") {
+                var q = TYPETEST_QS[tt.q];
+                var optBtns = q.opts.map(function (o, i) {
+                    return '<button class="ttype-opt" data-side="' + i + '"><span class="ttype-tag">' + "ABCD"[i] + '</span>' + esc(o.t) + '</button>';
+                }).join("");
+                h = '<div class="ttype-prog">第 ' + (tt.q + 1) + ' / 16 题 · 四选一，选最像你的</div>' +
+                    '<div class="ttype-q">' + esc(q.q) + '</div>' + optBtns;
+            } else {
+                var code = ttResultCode();
+                var r = TYPE_RESULTS[code];
+                var bird = BIRDS[r.i];
+                var img = BIRD_IMGS[r.i] || "";
+                var chips = "";
+                for (var c = 0; c < code.length; c++) {
+                    chips += '<span class="ttype-chip">' + code[c] + ' ' + esc(DIM_NAMES[code[c]]) + '</span>';
+                }
+                h = '<div class="ttype-result">' +
+                    (img ? '<img class="ttype-img" src="' + esc(img) + '" alt="' + esc(bird.name) + '">' : "") +
+                    '<div class="ttype-rname">' + r.emoji + ' 你是一只「' + esc(bird.name) + '」</div>' +
+                    '<div class="ttype-rtitle">' + esc(code) + ' · ' + esc(r.title) + ' 型鸟格</div>' +
+                    '<div class="ttype-chips">' + chips + '</div>' +
+                    '<p class="ttype-rdesc">' + esc(r.desc) + '</p>' +
+                    '<div class="ttype-rfeat">🔎 它长这样：' + esc(bird.feat) + '</div>' +
+                    '<div class="ttype-actions">' +
+                    '<button class="btn" id="ttAgain">再测一次</button>' +
+                    '<button class="btn" id="ttCopy">📋 复制结果</button>' +
+                    '</div></div>';
+            }
+            typeBox.innerHTML = h;
+        }
+
+        typeBox.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".ttype-opt") : null;
+            if (btn && tt.step === "quiz") {
+                var q = TYPETEST_QS[tt.q];
+                var side = parseInt(btn.getAttribute("data-side"), 10);
+                tt.sc[q.opts[side].d] = (tt.sc[q.opts[side].d] || 0) + 1;
+                tt.q++;
+                tt.fired = false;
+                if (tt.q >= TYPETEST_QS.length) tt.step = "result";
+                ttRender();
+                if (tt.step === "result" && !tt.fired) {
+                    tt.fired = true;
+                    launchFireworks();
+                }
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttStart")) {
+                tt.step = "quiz"; tt.q = 0; tt.sc = {}; tt.fired = false;
+                ttRender();
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttAgain")) {
+                tt.step = "intro"; tt.q = 0; tt.sc = {}; tt.fired = false;
+                ttRender();
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttCopy")) {
+                try {
+                    var code2 = ttResultCode();
+                    var r2 = TYPE_RESULTS[code2];
+                    var bird2 = BIRDS[r2.i];
+                    navigator.clipboard.writeText("我测出了鸟格：" + code2 +
+                        " · " + r2.title + " 型——我是「" + bird2.name + "」" + r2.emoji + " 快来测测你是哪种鸟！🦉");
+                    e.target.textContent = "✅ 已复制";
+                } catch (err) { }
+                return;
+            }
+        });
+
+        ttRender();
+
+        /* 免费鸟站：专业 / 趣味 切换 */
+        var siteTabs = document.querySelectorAll(".site-tab");
+        var siteGridPro = document.getElementById("siteGridPro");
+        var siteGridFun = document.getElementById("siteGridFun");
+        for (var t = 0; t < siteTabs.length; t++) {
+            siteTabs[t].addEventListener("click", function () {
+                var name = this.getAttribute("data-tab");
+                for (var k = 0; k < siteTabs.length; k++) {
+                    if (siteTabs[k] === this) {
+                        siteTabs[k].classList.add("active");
+                    } else {
+                        siteTabs[k].classList.remove("active");
+                    }
+                }
+                siteGridPro.style.display = name === "pro" ? "" : "none";
+                siteGridFun.style.display = name === "fun" ? "" : "none";
+            });
+        }
+
+    })();
+    </script>
+<script src="vendor/keepalive.js"></script>
+</body>
+</html>

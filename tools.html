@@ -377,114 +377,13 @@
             color: #2c9e6b;
         }
 
-        /* ---- 看图猜鸟 ---- */
-        .quiz-img {
-            width: 100%;
-            height: auto;
-            max-height: 260px;
-            object-fit: contain;
-            border-radius: 8px;
-            background: #eaf3f8;
-            margin-bottom: 12px;
-        }
 
-        .quiz-score {
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: #555;
-        }
-
-        .quiz-options {
-            display: grid;
-            gap: 8px;
-        }
-
-        .quiz-opt {
-            text-align: left;
-            padding: 10px 12px;
-            border: 1px solid #dceef6;
-            background: #f7fbfd;
-            border-radius: 8px;
+        .btn {
             cursor: pointer;
-            font-size: 14px;
-            color: #2c5f8a;
+            border: none;
         }
 
-        .quiz-opt:hover {
-            background: #eef7fb;
-        }
-
-        .quiz-opt.correct {
-            background: #e9f7f0;
-            border-color: #bfe6d0;
-            color: #1e6b4a;
-        }
-
-        .quiz-opt.wrong {
-            background: #fdecea;
-            border-color: #f3b7af;
-            color: #a33;
-        }
-
-        .quiz-opt:disabled {
-            cursor: default;
-            opacity: 0.9;
-        }
-
-        .quiz-status {
-            margin-top: 10px;
-            font-size: 14px;
-            min-height: 20px;
-        }
-
-        .quiz-actions {
-            margin-top: 10px;
-        }
-
-        /* ---- 冷知识 ---- */
-        .tip-box {
-            background: #fff8e6;
-            border: 1px solid #f0dfa8;
-            border-radius: 10px;
-            padding: 14px 16px;
-            font-size: 14px;
-            line-height: 1.8;
-            color: #6b5716;
-            min-height: 84px;
-        }
-
-        .tip-cat {
-            display: inline-block;
-            background: #f0dfa8;
-            color: #7a5d00;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 10px;
-            margin-bottom: 6px;
-        }
-
-        .tip-text {
-            font-size: 14px;
-            line-height: 1.8;
-            color: #6b5716;
-        }
-
-        .tip-actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .tip-count {
-            font-size: 12px;
-            color: #999;
-        }
-
-        /* 收集满 30 条的礼花特效层 */
+        /* 清单打卡礼花特效层 */
         #fireworks {
             position: fixed;
             inset: 0;
@@ -492,31 +391,6 @@
             pointer-events: none;
         }
 
-        .btn {
-            cursor: pointer;
-            border: none;
-        }
-
-        /* ---- 工具六：鸟型测试（MBTI 版） ---- */
-        .ttype-intro { text-align: center; padding: 6px 0 2px; }
-        .ttype-intro p { margin: 0 0 12px; color: #555; }
-        .ttype-dims { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
-        .ttype-dims span { background: #eef5fc; border: 1px solid #cfe3f5; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: #4a7ba8; }
-        .ttype-prog { font-size: 13px; color: #8898a8; margin-bottom: 8px; }
-        .ttype-q { font-size: 1.06rem; font-weight: 600; margin: 6px 0 14px; }
-        .ttype-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 8px 0; border: 1px solid #c4ddf3; border-radius: 10px; background: #fff; color: #333; font-size: 15px; cursor: pointer; }
-        .ttype-opt:hover { background: #eef6ff; border-color: #7fb3e0; }
-        .ttype-tag { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; background: #4682b4; color: #fff; border-radius: 50%; font-size: 12px; margin-right: 10px; }
-        .ttype-result { text-align: center; padding: 6px 0 2px; }
-        .ttype-img { max-width: 160px; border-radius: 12px; box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25); margin-bottom: 12px; }
-        .ttype-rname { font-size: 1.25rem; font-weight: 700; margin: 4px 0 2px; }
-        .ttype-rtitle { color: #4682b4; font-weight: 600; margin-bottom: 10px; }
-        .ttype-rdesc { color: #555; line-height: 1.7; text-align: left; margin: 0 0 10px; }
-        .ttype-rfeat { background: #eef5fc; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #4a7ba8; text-align: left; margin-bottom: 14px; }
-        .ttype-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
-        .ttype-chip { background: #4682b4; color: #fff; border-radius: 999px; padding: 3px 12px; font-size: 13px; }
-        .ttype-actions { display: flex; gap: 10px; justify-content: center; }
-        .ttype-actions .btn { flex: 0 0 auto; }
     </style>
 </head>
 <body>
@@ -528,7 +402,7 @@
             <a href="forum.html">观鸟地点</a>
             <a href="gallery.html">观鸟相册</a>
             <a href="tools.html" class="active">实用工具</a>
-            <a href="ai.html">AI识鸟</a>
+            <a href="fun.html">随便玩玩</a>
             <a href="login.html" id="nest-link">鸟窝入住</a>
             <a href="thanks.html">感谢名单</a>
         </nav>
@@ -536,7 +410,7 @@
 
     <main class="container">
         <h1 class="page-title">🛠️ 观鸟实用工具</h1>
-        <p class="page-sub">图鉴查询、每日推荐、清单打卡、猜鸟游戏，一页玩转</p>
+        <p class="page-sub">图鉴查询、每日推荐、清单打卡、AI 识鸟，野外观鸟好帮手</p>
 
         <div class="tools-grid">
             <!-- 工具一：鸟类图鉴 -->
@@ -570,36 +444,13 @@
                 <div class="check-grid" id="checkGrid"></div>
             </section>
 
-            <!-- 工具四：看图猜鸟 -->
+            <!-- 工具四：AI 识鸟 -->
             <section class="tool-card">
-                <h2>🎯 看图猜鸟</h2>
-                <p class="tool-desc">看照片猜鸟名，测测你的识鸟功力</p>
-                <div class="quiz-score" id="quizScore">得分 0 · 已答 0</div>
-                <img class="quiz-img" id="quizImg" alt="猜猜这是哪种鸟">
-                <div class="quiz-options" id="quizOpts"></div>
-                <div class="quiz-status" id="quizStatus"></div>
-                <div class="quiz-actions">
-                    <button class="btn" id="quizNext">下一题</button>
-                </div>
+                <h2>🤖 AI 识鸟</h2>
+                <p class="tool-desc">拍照识别鸟种，识别结果一键存入观鸟记录本</p>
+                <a href="ai.html" class="btn">开始 AI 识鸟 →</a>
             </section>
 
-            <!-- 工具五：观鸟冷知识 -->
-            <section class="tool-card">
-                <h2>💡 观鸟冷知识</h2>
-                <p class="tool-desc">一分钟了解一个鸟类小秘密</p>
-                <div class="tip-box" id="tipBox"></div>
-                <div class="tip-actions">
-                    <span class="tip-count" id="tipCount">已探索 0 / 30 条</span>
-                    <button class="btn" id="tipBtn">换一条</button>
-                </div>
-            </section>
-
-            <!-- 工具六：鸟型测试（MBTI 版） -->
-            <section class="tool-card">
-                <h2>🦉 鸟型测试 · MBTI 版</h2>
-                <p class="tool-desc">16 道二选一，测测你的鸟格是哪一种</p>
-                <div id="typeTest"></div>
-            </section>
         </div>
     </main>
 
@@ -968,129 +819,6 @@
         applyCheckCollapsed();
         renderChecklist();
 
-        // ============ 工具四：看图猜鸟 ============
-        var quizImg = document.getElementById("quizImg");
-        var quizOpts = document.getElementById("quizOpts");
-        var quizStatus = document.getElementById("quizStatus");
-        var quizScore = document.getElementById("quizScore");
-        var quizNext = document.getElementById("quizNext");
-        var quizData = { score: 0, answered: 0, answerIdx: -1, locked: false };
-
-        function shuffleArr(a) {
-            for (var i = a.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var t = a[i]; a[i] = a[j]; a[j] = t;
-            }
-            return a;
-        }
-
-        function newQuiz() {
-            quizData.locked = false;
-            var answer;
-            do { answer = Math.floor(Math.random() * BIRDS.length); } while (!BIRD_IMGS[answer]);
-            var distractors = [];
-            var guard = 0;
-            while (distractors.length < 3 && guard < 200) {
-                guard++;
-                var r = Math.floor(Math.random() * BIRDS.length);
-                if (r !== answer && distractors.indexOf(r) === -1) distractors.push(r);
-            }
-            var opts = shuffleArr(distractors.concat([answer]));
-            quizData.opts = opts;
-            quizData.answerIdx = opts.indexOf(answer);
-            quizImg.src = BIRD_IMGS[answer];
-            quizImg.alt = "猜猜这是哪种鸟";
-            var html = "";
-            for (var i = 0; i < opts.length; i++) {
-                html += '<button class="quiz-opt" data-i="' + i + '">' + esc(BIRDS[opts[i]].name) + '</button>';
-            }
-            quizOpts.innerHTML = html;
-            quizStatus.innerHTML = "";
-        }
-
-        quizOpts.addEventListener("click", function (e) {
-            var btn = e.target.closest ? e.target.closest(".quiz-opt") : null;
-            if (!btn || quizData.locked) return;
-            quizData.locked = true;
-            quizData.answered++;
-            var picked = parseInt(btn.getAttribute("data-i"), 10);
-            var optEls = quizOpts.querySelectorAll(".quiz-opt");
-            var correctName = BIRDS[quizData.opts[quizData.answerIdx]].name;
-            if (picked === quizData.answerIdx) {
-                quizData.score++;
-                btn.classList.add("correct");
-                quizStatus.innerHTML = '🎉 答对了！是「' + esc(correctName) + '」';
-                // 答对：在选项按钮位置放纸带礼花 🎉
-                var rb = btn.getBoundingClientRect();
-                launchFireworks(rb.left + rb.width / 2, rb.top + rb.height / 2);
-            } else {
-                btn.classList.add("wrong");
-                optEls[quizData.answerIdx].classList.add("correct");
-                quizStatus.innerHTML = '😅 答错啦，正确答案是「' + esc(correctName) + '」';
-            }
-            quizScore.textContent = "得分 " + quizData.score + " · 已答 " + quizData.answered;
-        });
-
-        quizNext.addEventListener("click", newQuiz);
-
-        newQuiz();
-
-        // ============ 工具五：观鸟冷知识 ============
-        var CAT_EMOJI = {
-            "行为": "🐾", "身体": "🔬", "迁徙": "🧭", "繁殖": "🐣",
-            "趣事": "🤣", "鸣唱": "🎵"
-        };
-        var TIPS = [
-            { c: "身体", t: "蜂鸟每秒能扇动翅膀 50~80 次，是世界上振翅最快的鸟之一。" },
-            { c: "身体", t: "猫头鹰的脖子可以旋转约 270 度，几乎转一整圈。" },
-            { c: "身体", t: "啄木鸟啄树时头部承受的冲击力堪比撞墙，但特殊的头骨结构能完美缓冲。" },
-            { c: "趣事", t: "鸵鸟是现存最大的鸟，跑起来时速可达 70 公里。" },
-            { c: "趣事", t: "企鹅是鸟类，虽然不会飞，却是出色的游泳健将。" },
-            { c: "行为", t: "翠鸟俯冲入水捕鱼时速度极快，几乎不溅起水花。" },
-            { c: "迁徙", t: "燕子每年迁徙距离可达上万公里，却能精准回到去年的旧巢。" },
-            { c: "鸣唱", t: "画眉鸟叫声婉转多变，一只画眉能模仿十几种鸟鸣。" },
-            { c: "行为", t: "白鹭捕食时会用脚在水中轻搅，惊出小鱼再快速啄取。" },
-            { c: "身体", t: "鸟类没有牙齿，靠胃里的砂囊磨碎食物。" },
-            { c: "行为", t: "喜鹊是少数能认出镜子里自己的鸟之一，认知能力很高。" },
-            { c: "身体", t: "啄木鸟的舌头可以伸出比嘴长 3 倍，用来钩取树干里的虫子。" },
-            { c: "繁殖", t: "黄鹂的巢像一个小吊篮，悬挂在高高的树梢上。" },
-            { c: "行为", t: "斑嘴鸭飞行时脖颈直伸，和家鸭的姿态略有不同。" },
-            { c: "行为", t: "白腰文鸟睡觉时喜欢挤成一团，几十只抱在一起过夜。" },
-            { c: "行为", t: "麻雀总在人类身边安家，巢几乎不离房屋百米范围。" },
-            { c: "繁殖", t: "家燕和金腰燕衔泥筑巢，一口口垒成半碗形，一个巢能用好几年。" },
-            { c: "趣事", t: "白头鹎头上那撮白毛像白头巾，因此得了「白头翁」的外号。" },
-            { c: "趣事", t: "珠颈斑鸠脖子上像撒了一把珍珠，名字就是这么来的。" },
-            { c: "鸣唱", t: "乌鸫模仿能力超强，能学手机铃声，甚至模仿汽车警报。" },
-            { c: "鸣唱", t: "八哥能学人说话，靠的是特别发达的鸣管结构。" },
-            { c: "行为", t: "白鹡鸰走路一颠一颠、尾巴上下摆动，俗称「点水雀」。" },
-            { c: "行为", t: "北红尾鸲常在山溪边点头摆尾，尾羽展开露出橙红色，非常醒目。" },
-            { c: "趣事", t: "大山雀智商很高，英国有记录它们会掀开牛奶瓶盖偷喝奶。" },
-            { c: "行为", t: "红嘴蓝鹊是群居鸟，会集体保卫领地，连猛禽都敢上前驱赶。" },
-            { c: "身体", t: "戴胜头顶的冠羽像一把扇子，受惊时「刷」地一下全部展开。" },
-            { c: "行为", t: "小鸊鷉是潜水高手，遇到危险整个沉入水下，只露出一个尖嘴。" },
-            { c: "繁殖", t: "凤头鸊鷉求偶时会在水面上跳「草裙舞」，互相赠送水草。" },
-            { c: "行为", t: "灰椋鸟傍晚会成千上万聚成「鸟浪」，在空中不断变换队形。" },
-            { c: "鸣唱", t: "黑脸噪鹛嗓门很大，总是一大群叽叽喳喳，人称「嘈杂鸟」。" }
-        ];
-        var TIPS_SEEN_KEY = "birdcloud-tips-seen";
-        var tipBox = document.getElementById("tipBox");
-        var tipBtn = document.getElementById("tipBtn");
-        var tipCount = document.getElementById("tipCount");
-        var lastTip = -1;
-
-        function getTipSeen() {
-            try {
-                var raw = localStorage.getItem(TIPS_SEEN_KEY);
-                var obj = raw ? JSON.parse(raw) : {};
-                return obj && typeof obj === "object" ? obj : {};
-            } catch (e) { return {}; }
-        }
-
-        function updateTipCount() {
-            var n = Object.keys(getTipSeen()).length;
-            tipCount.textContent = "已探索 " + n + " / " + TIPS.length + " 条";
-        }
-
         // 全屏礼花特效：爆点礼花（纯 Canvas，无外部依赖）
         // 支持可选触发位置 launchFireworks(x, y)；未传坐标时在屏幕中央爆发
         function launchFireworks(x, y) {
@@ -1174,161 +902,6 @@
             requestAnimationFrame(frame);
         }
 
-        function showTip() {
-            var i = Math.floor(Math.random() * TIPS.length);
-            if (TIPS.length > 1 && i === lastTip) i = (i + 1) % TIPS.length;
-            lastTip = i;
-            var t = TIPS[i];
-            tipBox.innerHTML = '<span class="tip-cat">' + (CAT_EMOJI[t.c] || "🐦") + " " + esc(t.c) + '</span>' +
-                '<div class="tip-text">' + esc(t.t) + '</div>';
-            var seen = getTipSeen();
-            seen[String(i)] = true;
-            try { localStorage.setItem(TIPS_SEEN_KEY, JSON.stringify(seen)); } catch (e) { }
-            updateTipCount();
-        }
-
-        // 满 30 条后：每点一次「换一条」就放一次礼花特效
-        tipBtn.addEventListener("click", function () {
-            showTip();
-            if (Object.keys(getTipSeen()).length >= TIPS.length) launchFireworks();
-        });
-
-        showTip();
-
-        // ============ 工具六：鸟型测试（MBTI 版） ============
-        var TYPETEST_QS = [
-            { d: "EI", q: "周末准备去观鸟，你会？", a: "约上一群鸟友，热热闹闹出发", b: "一个人背上望远镜，安静享受" },
-            { d: "EI", q: "发现一群鸟在枝头嬉闹，你会？", a: "混进去和大家待在一起", b: "远远看着它们就好" },
-            { d: "EI", q: "观鸟途中遇到陌生鸟友，你会？", a: "主动搭话，交流鸟点收获", b: "点头致意，继续自己的路线" },
-            { d: "EI", q: "组队观鸟时，你通常是？", a: "张罗路线、活跃气氛的那个", b: "默默跟在队尾观察的那个" },
-            { d: "SN", q: "观察一只鸟时，你先注意到？", a: "羽毛纹理、体型这些细节", b: "它在做什么、背后有什么故事" },
-            { d: "SN", q: "拍鸟时你更追求？", a: "对焦锐利、细节清晰", b: "有画面感的瞬间与意境" },
-            { d: "SN", q: "记观鸟笔记时，你喜欢？", a: "如实记录时间地点特征", b: "随手写下感受和联想" },
-            { d: "SN", q: "把望远镜调到最清晰后，你在？", a: "研究羽色、嘴型、脚的颜色", b: "想象它下一站要飞去哪" },
-            { d: "TF", q: "遇到认不出的鸟，你选择？", a: "按检索表一步步推理锁定", b: "凭第一感觉猜个大概" },
-            { d: "TF", q: "和朋友观点不同时，你会？", a: "摆出证据，把道理讲清楚", b: "照顾情绪，别伤了和气" },
-            { d: "TF", q: "决定明天去哪观鸟，你靠？", a: "分析天气、路线、鸟况", b: "看心情，想去就去" },
-            { d: "TF", q: "看到一只受伤的鸟，你先？", a: "冷静评估该怎么救助", b: "先着急心疼再说" },
-            { d: "JP", q: "出门观鸟前，你会？", a: "装备清单、路线全部规划好", b: "说走就走，随机应变" },
-            { d: "JP", q: "鸟况不如预期时，你选择？", a: "按计划把所有鸟点走完", b: "随缘，哪里好看看哪里" },
-            { d: "JP", q: "清单打卡这件事，你是？", a: "看到一种立刻记一笔", b: "攒着，想起来再补" },
-            { d: "JP", q: "听说明天有鸟浪过境，你会？", a: "连夜查攻略定好计划", b: "明早到了再说" }
-        ];
-        var DIM_NAMES = { E: "外向", I: "内向", S: "实感", N: "直觉", T: "思考", F: "情感", J: "计划", P: "随性" };
-        var TYPE_RESULTS = {
-            "ESTJ": { i: 1, emoji: "🪶", title: "总经理", desc: "务实果断、条理分明，天生的组织者。就像喜鹊，成对结伴、把领地打理得井井有条，还自带报喜属性。" },
-            "ESFJ": { i: 0, emoji: "🐦", title: "执政官", desc: "热心肠、重视关系，社区里最暖心的一位。就像树麻雀，爱扎堆爱热闹，屋檐下都是你的朋友。" },
-            "ISTJ": { i: 9, emoji: "⚒️", title: "物流师", desc: "专注严谨、说到做到，把每件事都做到位。就像大斑啄木鸟，笃笃笃按自己的节奏把活干完。" },
-            "ISFJ": { i: 2, emoji: "✈️", title: "守卫者", desc: "忠诚细腻、默默付出，守护着在意的人和事。就像家燕，年年飞回老屋檐下，衔泥筑巢不辞辛苦。" },
-            "ESTP": { i: 8, emoji: "💙", title: "企业家", desc: "行动派、反应快，机会来了绝不错过。就像普通翠鸟，盯准目标如箭入水，从不犹豫。" },
-            "ESFP": { i: 16, emoji: "🎵", title: "表演者", desc: "热情开朗、感染力强，走到哪都是焦点。就像画眉，歌声婉转多变，最爱在枝头亮一嗓子。" },
-            "ISTP": { i: 6, emoji: "🦢", title: "鉴赏家", desc: "冷静精准、动手能力强，喜欢独自琢磨。就像白鹭，缩着脖子静静站立，出手快准狠。" },
-            "ISFP": { i: 11, emoji: "🎩", title: "探险家", desc: "温柔随性、审美在线，走自己的独特路线。就像戴胜，顶着一把花蒲扇，气质这件事拿捏得死死的。" },
-            "ENTJ": { i: 10, emoji: "🪃", title: "指挥官", desc: "果断勇敢、目标明确，天生领队气场。就像红嘴蓝鹊，长尾一甩带着小群巡视领地，猛禽来了也敢上前。" },
-            "ENFJ": { i: 17, emoji: "🥇", title: "主人公", desc: "温暖有魅力、善于激励，是身边人的光。就像黑枕黄鹂，一身金黄藏也藏不住，歌声像高音笛一样清亮。" },
-            "INTJ": { i: 14, emoji: "🦉", title: "建筑师", desc: "独立思考、长远谋划，安静却深谋远虑。就像领角鸮，白天隐身树洞，夜里俯瞰全局。" },
-            "INFJ": { i: 25, emoji: "🍋", title: "提倡者", desc: "敏锐洞察、坚定温和，理想主义的实干家。就像大山雀，机灵好动，倒挂枝头也要把问题解决掉。" },
-            "ENTP": { i: 12, emoji: "🗣️", title: "辩论家", desc: "机敏灵活、点子不断，永远有新想法。就像八哥，能学人语能模仿鸟鸣，嘴皮子功夫一流。" },
-            "INTP": { i: 38, emoji: "🏞️", title: "逻辑学家", desc: "享受思考、为谜题着迷，安静的分析狂人。就像紫啸鸫，隐在山溪深谷，一身蓝紫光泽独自琢磨。" },
-            "ENFP": { i: 26, emoji: "🟢", title: "竞选者", desc: "好奇活泼、脑洞大开，把日子过成冒险。就像暗绿绣眼鸟，娇小翠绿，整天在树冠里蹦跳个不停。" },
-            "INFP": { i: 5, emoji: "🕊️", title: "调停者", desc: "温和理想、共情力强，守护内心的宁静。就像珠颈斑鸠，不争不抢，咕咕咕慢步觅食，自带岁月静好。" }
-        };
-        var typeBox = document.getElementById("typeTest");
-        var tt = { step: "intro", q: 0, sc: {}, fired: false };
-
-        function ttResultCode() {
-            var code = "";
-            var dims = ["EI", "SN", "TF", "JP"];
-            for (var i = 0; i < dims.length; i++) {
-                var d = dims[i];
-                var front = tt.sc[d[0]] || 0;
-                var back = tt.sc[d[1]] || 0;
-                code += front >= back ? d[0] : d[1];
-            }
-            return code;
-        }
-
-        function ttRender() {
-            var h = "";
-            if (tt.step === "intro") {
-                h = '<div class="ttype-intro">' +
-                    '<p>16 道二选一，测出你的「鸟格」——是雷厉风行的翠鸟，还是岁月静好的珠颈斑鸠？</p>' +
-                    '<div class="ttype-dims">' +
-                    '<span>🌐 外向 / 内向</span><span>🔍 实感 / 直觉</span>' +
-                    '<span>⚖️ 思考 / 情感</span><span>🗓️ 计划 / 随性</span>' +
-                    '</div>' +
-                    '<button class="btn" id="ttStart">开始测试</button></div>';
-            } else if (tt.step === "quiz") {
-                var q = TYPETEST_QS[tt.q];
-                h = '<div class="ttype-prog">第 ' + (tt.q + 1) + ' / 16 题 · ' +
-                    esc(DIM_NAMES[q.d[0]] + " / " + DIM_NAMES[q.d[1]]) + '</div>' +
-                    '<div class="ttype-q">' + esc(q.q) + '</div>' +
-                    '<button class="ttype-opt" data-side="0"><span class="ttype-tag">A</span>' + esc(q.a) + '</button>' +
-                    '<button class="ttype-opt" data-side="1"><span class="ttype-tag">B</span>' + esc(q.b) + '</button>';
-            } else {
-                var code = ttResultCode();
-                var r = TYPE_RESULTS[code];
-                var bird = BIRDS[r.i];
-                var img = BIRD_IMGS[r.i] || "";
-                var chips = "";
-                for (var c = 0; c < code.length; c++) {
-                    chips += '<span class="ttype-chip">' + code[c] + ' ' + esc(DIM_NAMES[code[c]]) + '</span>';
-                }
-                h = '<div class="ttype-result">' +
-                    (img ? '<img class="ttype-img" src="' + esc(img) + '" alt="' + esc(bird.name) + '">' : "") +
-                    '<div class="ttype-rname">' + r.emoji + ' 你是一只「' + esc(bird.name) + '」</div>' +
-                    '<div class="ttype-rtitle">' + esc(code) + ' · ' + esc(r.title) + ' 型鸟格</div>' +
-                    '<div class="ttype-chips">' + chips + '</div>' +
-                    '<p class="ttype-rdesc">' + esc(r.desc) + '</p>' +
-                    '<div class="ttype-rfeat">🔎 它长这样：' + esc(bird.feat) + '</div>' +
-                    '<div class="ttype-actions">' +
-                    '<button class="btn" id="ttAgain">再测一次</button>' +
-                    '<button class="btn" id="ttCopy">📋 复制结果</button>' +
-                    '</div></div>';
-            }
-            typeBox.innerHTML = h;
-        }
-
-        typeBox.addEventListener("click", function (e) {
-            var btn = e.target.closest ? e.target.closest(".ttype-opt") : null;
-            if (btn && tt.step === "quiz") {
-                var q = TYPETEST_QS[tt.q];
-                var side = parseInt(btn.getAttribute("data-side"), 10);
-                tt.sc[q.d[side]] = (tt.sc[q.d[side]] || 0) + 1;
-                tt.q++;
-                tt.fired = false;
-                if (tt.q >= TYPETEST_QS.length) tt.step = "result";
-                ttRender();
-                if (tt.step === "result" && !tt.fired) {
-                    tt.fired = true;
-                    launchFireworks();
-                }
-                return;
-            }
-            if (e.target.closest && e.target.closest("#ttStart")) {
-                tt.step = "quiz"; tt.q = 0; tt.sc = {}; tt.fired = false;
-                ttRender();
-                return;
-            }
-            if (e.target.closest && e.target.closest("#ttAgain")) {
-                tt.step = "intro"; tt.q = 0; tt.sc = {}; tt.fired = false;
-                ttRender();
-                return;
-            }
-            if (e.target.closest && e.target.closest("#ttCopy")) {
-                try {
-                    var code2 = ttResultCode();
-                    var r2 = TYPE_RESULTS[code2];
-                    var bird2 = BIRDS[r2.i];
-                    navigator.clipboard.writeText("我测出了鸟格：" + code2 +
-                        " · " + r2.title + " 型——我是「" + bird2.name + "」" + r2.emoji + " 快来测测你是哪种鸟！🦉");
-                    e.target.textContent = "✅ 已复制";
-                } catch (err) { }
-                return;
-            }
-        });
-
-        ttRender();
 
     })();
     </script>
