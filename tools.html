@@ -496,6 +496,27 @@
             cursor: pointer;
             border: none;
         }
+
+        /* ---- 工具六：鸟型测试（MBTI 版） ---- */
+        .ttype-intro { text-align: center; padding: 6px 0 2px; }
+        .ttype-intro p { margin: 0 0 12px; color: #555; }
+        .ttype-dims { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+        .ttype-dims span { background: #eef5fc; border: 1px solid #cfe3f5; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: #4a7ba8; }
+        .ttype-prog { font-size: 13px; color: #8898a8; margin-bottom: 8px; }
+        .ttype-q { font-size: 1.06rem; font-weight: 600; margin: 6px 0 14px; }
+        .ttype-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 8px 0; border: 1px solid #c4ddf3; border-radius: 10px; background: #fff; color: #333; font-size: 15px; cursor: pointer; }
+        .ttype-opt:hover { background: #eef6ff; border-color: #7fb3e0; }
+        .ttype-tag { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; background: #4682b4; color: #fff; border-radius: 50%; font-size: 12px; margin-right: 10px; }
+        .ttype-result { text-align: center; padding: 6px 0 2px; }
+        .ttype-img { max-width: 160px; border-radius: 12px; box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25); margin-bottom: 12px; }
+        .ttype-rname { font-size: 1.25rem; font-weight: 700; margin: 4px 0 2px; }
+        .ttype-rtitle { color: #4682b4; font-weight: 600; margin-bottom: 10px; }
+        .ttype-rdesc { color: #555; line-height: 1.7; text-align: left; margin: 0 0 10px; }
+        .ttype-rfeat { background: #eef5fc; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #4a7ba8; text-align: left; margin-bottom: 14px; }
+        .ttype-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .ttype-chip { background: #4682b4; color: #fff; border-radius: 999px; padding: 3px 12px; font-size: 13px; }
+        .ttype-actions { display: flex; gap: 10px; justify-content: center; }
+        .ttype-actions .btn { flex: 0 0 auto; }
     </style>
 </head>
 <body>
@@ -507,6 +528,7 @@
             <a href="forum.html">观鸟地点</a>
             <a href="gallery.html">观鸟相册</a>
             <a href="tools.html" class="active">实用工具</a>
+            <a href="ai.html">AI识鸟</a>
             <a href="login.html" id="nest-link">鸟窝入住</a>
             <a href="thanks.html">感谢名单</a>
         </nav>
@@ -570,6 +592,13 @@
                     <span class="tip-count" id="tipCount">已探索 0 / 30 条</span>
                     <button class="btn" id="tipBtn">换一条</button>
                 </div>
+            </section>
+
+            <!-- 工具六：鸟型测试（MBTI 版） -->
+            <section class="tool-card">
+                <h2>🦉 鸟型测试 · MBTI 版</h2>
+                <p class="tool-desc">16 道二选一，测测你的鸟格是哪一种</p>
+                <div id="typeTest"></div>
             </section>
         </div>
     </main>
@@ -894,13 +923,19 @@
             if (!item) return;
             var obj = getChecklist();
             var name = item.getAttribute("data-name");
-            if (obj[name]) {
+            var was = !!obj[name];
+            if (was) {
                 delete obj[name];
             } else {
                 obj[name] = true;
             }
             saveChecklist(obj);
             renderChecklist();
+            // 打卡成功：在条目位置放纸带礼花 🎉
+            if (!was) {
+                var rc = item.getBoundingClientRect();
+                launchFireworks(rc.left + rc.width / 2, rc.top + rc.height / 2);
+            }
         });
 
         checkReset.addEventListener("click", function () {
@@ -985,6 +1020,9 @@
                 quizData.score++;
                 btn.classList.add("correct");
                 quizStatus.innerHTML = '🎉 答对了！是「' + esc(correctName) + '」';
+                // 答对：在选项按钮位置放纸带礼花 🎉
+                var rb = btn.getBoundingClientRect();
+                launchFireworks(rb.left + rb.width / 2, rb.top + rb.height / 2);
             } else {
                 btn.classList.add("wrong");
                 optEls[quizData.answerIdx].classList.add("correct");
@@ -1053,15 +1091,17 @@
             tipCount.textContent = "已探索 " + n + " / " + TIPS.length + " 条";
         }
 
-        // 全屏礼花特效：爆点礼花 + 彩色小飘带飘落（纯 Canvas，无外部依赖）
-        function launchFireworks() {
+        // 全屏礼花特效：爆点礼花（纯 Canvas，无外部依赖）
+        // 支持可选触发位置 launchFireworks(x, y)；未传坐标时在屏幕中央爆发
+        function launchFireworks(x, y) {
+            var old = document.getElementById("fireworks");
+            if (old && old.parentNode) old.parentNode.removeChild(old);
             var c = document.createElement("canvas");
             c.id = "fireworks";
             document.body.appendChild(c);
             var ctx = c.getContext("2d");
             var stopped = false;
             var parts = [];
-            var confetti = [];
             var colors = ["#ff5f5f", "#ffb45f", "#ffe45f", "#5fd97a", "#5fc4ff", "#b05fff", "#ff5fd0", "#ff8fb8"];
 
             function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
@@ -1083,44 +1123,6 @@
                         color: colors[Math.floor(Math.random() * colors.length)]
                     });
                 }
-                // 爆点同时洒出一小簇飘带
-                for (var j = 0; j < 12; j++) {
-                    confetti.push({
-                        x: x + (Math.random() - 0.5) * 20,
-                        y: y + (Math.random() - 0.5) * 20,
-                        vx: (Math.random() - 0.5) * 2.5,
-                        vy: 1.5 + Math.random() * 2.5,
-                        w: 6 + Math.random() * 5,
-                        h: 3 + Math.random() * 3,
-                        rot: Math.random() * Math.PI,
-                        vrot: (Math.random() - 0.5) * 0.18,
-                        sway: 6 + Math.random() * 14,
-                        swaySpeed: 0.04 + Math.random() * 0.06,
-                        phase: Math.random() * Math.PI * 2,
-                        color: colors[Math.floor(Math.random() * colors.length)]
-                    });
-                }
-            }
-
-            // 顶部持续飘落的小飘带雨
-            function spawnTop() {
-                var n = 2 + Math.floor(Math.random() * 3);
-                for (var i = 0; i < n; i++) {
-                    confetti.push({
-                        x: Math.random() * c.width,
-                        y: -20 - Math.random() * 40,
-                        vx: (Math.random() - 0.5) * 1.2,
-                        vy: 1.2 + Math.random() * 1.8,
-                        w: 7 + Math.random() * 7,
-                        h: 3 + Math.random() * 3,
-                        rot: Math.random() * Math.PI,
-                        vrot: (Math.random() - 0.5) * 0.22,
-                        sway: 8 + Math.random() * 16,
-                        swaySpeed: 0.05 + Math.random() * 0.07,
-                        phase: Math.random() * Math.PI * 2,
-                        color: colors[Math.floor(Math.random() * colors.length)]
-                    });
-                }
             }
 
             function stop() {
@@ -1130,7 +1132,10 @@
                 if (c.parentNode) c.parentNode.removeChild(c);
             }
 
-            window.addEventListener("click", stop, { once: true });
+            // 延迟挂载点击停止监听，避免"触发礼花的本次点击"立刻把它停掉
+            setTimeout(function () {
+                if (!stopped) window.addEventListener("click", stop, { once: true });
+            }, 500);
 
             var t = 0;
             function frame() {
@@ -1152,37 +1157,20 @@
                     ctx.fill();
                 }
 
-                // 小飘带：摇摆 + 旋转 + 下落
-                for (var k = confetti.length - 1; k >= 0; k--) {
-                    var q = confetti[k];
-                    q.phase += q.swaySpeed;
-                    q.x += q.vx + Math.sin(q.phase) * q.sway * 0.05;
-                    q.y += q.vy;
-                    q.vy += 0.02;
-                    q.rot += q.vrot;
-                    if (q.y > c.height + 30) { confetti.splice(k, 1); continue; }
-                    ctx.globalAlpha = 1;
-                    ctx.fillStyle = q.color;
-                    ctx.save();
-                    ctx.translate(q.x, q.y);
-                    ctx.rotate(q.rot);
-                    ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h);
-                    ctx.restore();
-                }
-
                 ctx.globalAlpha = 1;
                 t++;
                 if (t % 45 === 0) burst(c.width * (0.2 + Math.random() * 0.6), c.height * (0.15 + Math.random() * 0.4));
-                if (t < 160 && Math.random() < 0.55) spawnTop();
-                // 等飘带全部落完再清理
-                if (t < 240 && (parts.length || confetti.length)) {
+                // 只保留爆点礼花，不洒飘落纸带
+                if (t < 240 && parts.length) {
                     requestAnimationFrame(frame);
                 } else {
                     stop();
                 }
             }
 
-            burst(c.width * 0.5, c.height * 0.4);
+            var bx = (typeof x === "number") ? x : c.width * 0.5;
+            var by = (typeof y === "number") ? y : c.height * 0.4;
+            burst(bx, by);
             requestAnimationFrame(frame);
         }
 
@@ -1207,7 +1195,143 @@
 
         showTip();
 
+        // ============ 工具六：鸟型测试（MBTI 版） ============
+        var TYPETEST_QS = [
+            { d: "EI", q: "周末准备去观鸟，你会？", a: "约上一群鸟友，热热闹闹出发", b: "一个人背上望远镜，安静享受" },
+            { d: "EI", q: "发现一群鸟在枝头嬉闹，你会？", a: "混进去和大家待在一起", b: "远远看着它们就好" },
+            { d: "EI", q: "观鸟途中遇到陌生鸟友，你会？", a: "主动搭话，交流鸟点收获", b: "点头致意，继续自己的路线" },
+            { d: "EI", q: "组队观鸟时，你通常是？", a: "张罗路线、活跃气氛的那个", b: "默默跟在队尾观察的那个" },
+            { d: "SN", q: "观察一只鸟时，你先注意到？", a: "羽毛纹理、体型这些细节", b: "它在做什么、背后有什么故事" },
+            { d: "SN", q: "拍鸟时你更追求？", a: "对焦锐利、细节清晰", b: "有画面感的瞬间与意境" },
+            { d: "SN", q: "记观鸟笔记时，你喜欢？", a: "如实记录时间地点特征", b: "随手写下感受和联想" },
+            { d: "SN", q: "把望远镜调到最清晰后，你在？", a: "研究羽色、嘴型、脚的颜色", b: "想象它下一站要飞去哪" },
+            { d: "TF", q: "遇到认不出的鸟，你选择？", a: "按检索表一步步推理锁定", b: "凭第一感觉猜个大概" },
+            { d: "TF", q: "和朋友观点不同时，你会？", a: "摆出证据，把道理讲清楚", b: "照顾情绪，别伤了和气" },
+            { d: "TF", q: "决定明天去哪观鸟，你靠？", a: "分析天气、路线、鸟况", b: "看心情，想去就去" },
+            { d: "TF", q: "看到一只受伤的鸟，你先？", a: "冷静评估该怎么救助", b: "先着急心疼再说" },
+            { d: "JP", q: "出门观鸟前，你会？", a: "装备清单、路线全部规划好", b: "说走就走，随机应变" },
+            { d: "JP", q: "鸟况不如预期时，你选择？", a: "按计划把所有鸟点走完", b: "随缘，哪里好看看哪里" },
+            { d: "JP", q: "清单打卡这件事，你是？", a: "看到一种立刻记一笔", b: "攒着，想起来再补" },
+            { d: "JP", q: "听说明天有鸟浪过境，你会？", a: "连夜查攻略定好计划", b: "明早到了再说" }
+        ];
+        var DIM_NAMES = { E: "外向", I: "内向", S: "实感", N: "直觉", T: "思考", F: "情感", J: "计划", P: "随性" };
+        var TYPE_RESULTS = {
+            "ESTJ": { i: 1, emoji: "🪶", title: "总经理", desc: "务实果断、条理分明，天生的组织者。就像喜鹊，成对结伴、把领地打理得井井有条，还自带报喜属性。" },
+            "ESFJ": { i: 0, emoji: "🐦", title: "执政官", desc: "热心肠、重视关系，社区里最暖心的一位。就像树麻雀，爱扎堆爱热闹，屋檐下都是你的朋友。" },
+            "ISTJ": { i: 9, emoji: "⚒️", title: "物流师", desc: "专注严谨、说到做到，把每件事都做到位。就像大斑啄木鸟，笃笃笃按自己的节奏把活干完。" },
+            "ISFJ": { i: 2, emoji: "✈️", title: "守卫者", desc: "忠诚细腻、默默付出，守护着在意的人和事。就像家燕，年年飞回老屋檐下，衔泥筑巢不辞辛苦。" },
+            "ESTP": { i: 8, emoji: "💙", title: "企业家", desc: "行动派、反应快，机会来了绝不错过。就像普通翠鸟，盯准目标如箭入水，从不犹豫。" },
+            "ESFP": { i: 16, emoji: "🎵", title: "表演者", desc: "热情开朗、感染力强，走到哪都是焦点。就像画眉，歌声婉转多变，最爱在枝头亮一嗓子。" },
+            "ISTP": { i: 6, emoji: "🦢", title: "鉴赏家", desc: "冷静精准、动手能力强，喜欢独自琢磨。就像白鹭，缩着脖子静静站立，出手快准狠。" },
+            "ISFP": { i: 11, emoji: "🎩", title: "探险家", desc: "温柔随性、审美在线，走自己的独特路线。就像戴胜，顶着一把花蒲扇，气质这件事拿捏得死死的。" },
+            "ENTJ": { i: 10, emoji: "🪃", title: "指挥官", desc: "果断勇敢、目标明确，天生领队气场。就像红嘴蓝鹊，长尾一甩带着小群巡视领地，猛禽来了也敢上前。" },
+            "ENFJ": { i: 17, emoji: "🥇", title: "主人公", desc: "温暖有魅力、善于激励，是身边人的光。就像黑枕黄鹂，一身金黄藏也藏不住，歌声像高音笛一样清亮。" },
+            "INTJ": { i: 14, emoji: "🦉", title: "建筑师", desc: "独立思考、长远谋划，安静却深谋远虑。就像领角鸮，白天隐身树洞，夜里俯瞰全局。" },
+            "INFJ": { i: 25, emoji: "🍋", title: "提倡者", desc: "敏锐洞察、坚定温和，理想主义的实干家。就像大山雀，机灵好动，倒挂枝头也要把问题解决掉。" },
+            "ENTP": { i: 12, emoji: "🗣️", title: "辩论家", desc: "机敏灵活、点子不断，永远有新想法。就像八哥，能学人语能模仿鸟鸣，嘴皮子功夫一流。" },
+            "INTP": { i: 38, emoji: "🏞️", title: "逻辑学家", desc: "享受思考、为谜题着迷，安静的分析狂人。就像紫啸鸫，隐在山溪深谷，一身蓝紫光泽独自琢磨。" },
+            "ENFP": { i: 26, emoji: "🟢", title: "竞选者", desc: "好奇活泼、脑洞大开，把日子过成冒险。就像暗绿绣眼鸟，娇小翠绿，整天在树冠里蹦跳个不停。" },
+            "INFP": { i: 5, emoji: "🕊️", title: "调停者", desc: "温和理想、共情力强，守护内心的宁静。就像珠颈斑鸠，不争不抢，咕咕咕慢步觅食，自带岁月静好。" }
+        };
+        var typeBox = document.getElementById("typeTest");
+        var tt = { step: "intro", q: 0, sc: {}, fired: false };
+
+        function ttResultCode() {
+            var code = "";
+            var dims = ["EI", "SN", "TF", "JP"];
+            for (var i = 0; i < dims.length; i++) {
+                var d = dims[i];
+                var front = tt.sc[d[0]] || 0;
+                var back = tt.sc[d[1]] || 0;
+                code += front >= back ? d[0] : d[1];
+            }
+            return code;
+        }
+
+        function ttRender() {
+            var h = "";
+            if (tt.step === "intro") {
+                h = '<div class="ttype-intro">' +
+                    '<p>16 道二选一，测出你的「鸟格」——是雷厉风行的翠鸟，还是岁月静好的珠颈斑鸠？</p>' +
+                    '<div class="ttype-dims">' +
+                    '<span>🌐 外向 / 内向</span><span>🔍 实感 / 直觉</span>' +
+                    '<span>⚖️ 思考 / 情感</span><span>🗓️ 计划 / 随性</span>' +
+                    '</div>' +
+                    '<button class="btn" id="ttStart">开始测试</button></div>';
+            } else if (tt.step === "quiz") {
+                var q = TYPETEST_QS[tt.q];
+                h = '<div class="ttype-prog">第 ' + (tt.q + 1) + ' / 16 题 · ' +
+                    esc(DIM_NAMES[q.d[0]] + " / " + DIM_NAMES[q.d[1]]) + '</div>' +
+                    '<div class="ttype-q">' + esc(q.q) + '</div>' +
+                    '<button class="ttype-opt" data-side="0"><span class="ttype-tag">A</span>' + esc(q.a) + '</button>' +
+                    '<button class="ttype-opt" data-side="1"><span class="ttype-tag">B</span>' + esc(q.b) + '</button>';
+            } else {
+                var code = ttResultCode();
+                var r = TYPE_RESULTS[code];
+                var bird = BIRDS[r.i];
+                var img = BIRD_IMGS[r.i] || "";
+                var chips = "";
+                for (var c = 0; c < code.length; c++) {
+                    chips += '<span class="ttype-chip">' + code[c] + ' ' + esc(DIM_NAMES[code[c]]) + '</span>';
+                }
+                h = '<div class="ttype-result">' +
+                    (img ? '<img class="ttype-img" src="' + esc(img) + '" alt="' + esc(bird.name) + '">' : "") +
+                    '<div class="ttype-rname">' + r.emoji + ' 你是一只「' + esc(bird.name) + '」</div>' +
+                    '<div class="ttype-rtitle">' + esc(code) + ' · ' + esc(r.title) + ' 型鸟格</div>' +
+                    '<div class="ttype-chips">' + chips + '</div>' +
+                    '<p class="ttype-rdesc">' + esc(r.desc) + '</p>' +
+                    '<div class="ttype-rfeat">🔎 它长这样：' + esc(bird.feat) + '</div>' +
+                    '<div class="ttype-actions">' +
+                    '<button class="btn" id="ttAgain">再测一次</button>' +
+                    '<button class="btn" id="ttCopy">📋 复制结果</button>' +
+                    '</div></div>';
+            }
+            typeBox.innerHTML = h;
+        }
+
+        typeBox.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".ttype-opt") : null;
+            if (btn && tt.step === "quiz") {
+                var q = TYPETEST_QS[tt.q];
+                var side = parseInt(btn.getAttribute("data-side"), 10);
+                tt.sc[q.d[side]] = (tt.sc[q.d[side]] || 0) + 1;
+                tt.q++;
+                tt.fired = false;
+                if (tt.q >= TYPETEST_QS.length) tt.step = "result";
+                ttRender();
+                if (tt.step === "result" && !tt.fired) {
+                    tt.fired = true;
+                    launchFireworks();
+                }
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttStart")) {
+                tt.step = "quiz"; tt.q = 0; tt.sc = {}; tt.fired = false;
+                ttRender();
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttAgain")) {
+                tt.step = "intro"; tt.q = 0; tt.sc = {}; tt.fired = false;
+                ttRender();
+                return;
+            }
+            if (e.target.closest && e.target.closest("#ttCopy")) {
+                try {
+                    var code2 = ttResultCode();
+                    var r2 = TYPE_RESULTS[code2];
+                    var bird2 = BIRDS[r2.i];
+                    navigator.clipboard.writeText("我测出了鸟格：" + code2 +
+                        " · " + r2.title + " 型——我是「" + bird2.name + "」" + r2.emoji + " 快来测测你是哪种鸟！🦉");
+                    e.target.textContent = "✅ 已复制";
+                } catch (err) { }
+                return;
+            }
+        });
+
+        ttRender();
+
     })();
     </script>
+<script src="vendor/keepalive.js"></script>
 </body>
 </html>

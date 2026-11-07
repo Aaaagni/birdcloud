@@ -254,6 +254,7 @@
             <a href="forum.html">观鸟地点</a>
             <a href="gallery.html" class="active">观鸟相册</a>
             <a href="tools.html">实用工具</a>
+            <a href="ai.html">AI识鸟</a>
             <a href="login.html" id="nest-link">鸟窝入住</a>
             <a href="thanks.html">感谢名单</a>
         </nav>
@@ -577,7 +578,7 @@
             });
         });
 
-        // 分享到公共相册：私有桶文件复制到公共桶 → 记录改公开并补发布者名字 → 删私有副本
+        // 分享到公共相册：复制一份到公共桶并新增公开记录（私有副本保留不动）
         function shareToPublic(btn) {
             var id = btn.getAttribute("data-id");
             var path = btn.getAttribute("data-path");
@@ -588,43 +589,60 @@
 
             setStatus("正在分享到公共相册……");
 
-            // 1) 私有桶生成临时签名 URL，拉取图片数据
-            supabase.storage.from(BUCKET_PRIVATE).createSignedUrl(path, 300).then(function (r) {
-                if (r.error || !r.data || !r.data.signedUrl) {
-                    setStatus("分享失败：无法读取私有照片（" + ((r.error && r.error.message) || "未知错误") + "）", true);
+            // 0) 防重复：同一张照片已在公共相册则提示，避免重复分享
+            supabase.from("photos").select("id").eq("path", path).eq("bucket", "public").then(function (dup) {
+                if (dup.error) {
+                    setStatus("分享失败：" + dup.error.message, true);
                     return;
                 }
-                fetch(r.data.signedUrl).then(function (resp) {
-                    if (!resp.ok) throw new Error("下载失败 HTTP " + resp.status);
-                    return resp.blob();
-                }).then(function (blob) {
-                    // 2) 按扩展名推断 MIME，避免 octet-stream 被公共桶白名单拒绝
-                    var ext = path.split(".").pop().toLowerCase();
-                    var mimeMap = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", heic: "image/heic", heif: "image/heic" };
-                    var mime = mimeMap[ext] || blob.type || "image/jpeg";
-                    return supabase.storage.from(BUCKET_PUBLIC).upload(path, blob, { contentType: mime, upsert: false }).then(function (up) {
-                        if (up.error) throw new Error("复制到公共桶失败：" + up.error.message);
-                        // 3) 元数据记录改为公开，补上发布者名字
-                        return supabase.from("photos").update({ bucket: "public", author_name: name }).eq("id", id).then(function (ins) {
-                            if (ins.error) throw new Error("更新记录失败：" + ins.error.message);
-                            // 4) 删除私有桶副本
-                            return supabase.storage.from(BUCKET_PRIVATE).remove([path]).then(function (rm) {
-                                if (rm.error) {
-                                    setStatus("已公开，但私有副本清理失败：" + rm.error.message, true);
-                                } else {
+                if (dup.data && dup.data.length > 0) {
+                    setStatus("这张照片已经在公共相册中", true);
+                    return;
+                }
+                // 1) 读取原私有记录，复制地点、日期、作者
+                supabase.from("photos").select("place,taken_at,user_id").eq("id", id).single().then(function (rec) {
+                    if (rec.error || !rec.data) {
+                        setStatus("分享失败：无法读取照片信息（" + ((rec.error && rec.error.message) || "未知错误") + "）", true);
+                        return;
+                    }
+                    // 2) 私有桶生成临时签名 URL，拉取图片数据
+                    supabase.storage.from(BUCKET_PRIVATE).createSignedUrl(path, 300).then(function (r) {
+                        if (r.error || !r.data || !r.data.signedUrl) {
+                            setStatus("分享失败：无法读取私有照片（" + ((r.error && r.error.message) || "未知错误") + "）", true);
+                            return;
+                        }
+                        fetch(r.data.signedUrl).then(function (resp) {
+                            if (!resp.ok) throw new Error("下载失败 HTTP " + resp.status);
+                            return resp.blob();
+                        }).then(function (blob) {
+                            // 3) 按扩展名推断 MIME，避免 octet-stream 被公共桶白名单拒绝
+                            var ext = path.split(".").pop().toLowerCase();
+                            var mimeMap = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", heic: "image/heic", heif: "image/heic" };
+                            var mime = mimeMap[ext] || blob.type || "image/jpeg";
+                            // 4) 上传副本到公共桶（私有桶原文件保留不动）
+                            return supabase.storage.from(BUCKET_PUBLIC).upload(path, blob, { contentType: mime, upsert: false }).then(function (up) {
+                                if (up.error) throw new Error("复制到公共桶失败：" + up.error.message);
+                                // 5) 新增一条公开记录，私有记录原样保留
+                                return supabase.from("photos").insert({
+                                    bucket: "public",
+                                    path: path,
+                                    user_id: rec.data.user_id,
+                                    author_name: name,
+                                    place: rec.data.place,
+                                    taken_at: rec.data.taken_at
+                                }).then(function (ins) {
+                                    if (ins.error) throw new Error("新增公共记录失败：" + ins.error.message);
                                     setStatus("已分享到公共相册！");
-                                }
-                                loadGallery();
+                                    loadGallery();
+                                });
                             });
                         }).catch(function (err) {
-                            // 记录更新失败：清理刚复制到公共桶的文件，保持原状
+                            // 出错时清理刚复制到公共桶的文件，保持原状
                             supabase.storage.from(BUCKET_PUBLIC).remove([path]).then(function () {
                                 setStatus("分享失败：" + err.message, true);
                             });
                         });
                     });
-                }).catch(function (err) {
-                    setStatus("分享失败：" + err.message, true);
                 });
             });
         }
@@ -754,5 +772,6 @@
     })();
     </script>
 
+<script src="vendor/keepalive.js"></script>
 </body>
 </html>

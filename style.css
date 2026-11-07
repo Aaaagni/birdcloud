@@ -6,7 +6,8 @@
 }
 
 body {
-    background-color: #f0f8ff;
+    background: linear-gradient(160deg, #bcdcf8 0%, #eef7fe 45%, #d6eafa 100%);
+    background-attachment: fixed;
     color: #333;
     line-height: 1.6;
 }
@@ -77,6 +78,10 @@ nav a.active, nav a:hover {
     padding: 30px;
     box-shadow: 0 4px 12px rgba(173, 216, 230, 0.2);
     text-align: center;
+}
+
+.card.library-card {
+    grid-column: 1 / -1;
 }
 
 .card h2 {

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI识鸟-BIRDCLOUD 观鸟笔记</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============ AI 识鸟页专用样式 ============ */
+        .ai-wrap {
+            width: 90%;
+            max-width: 820px;
+            margin: 0 auto 60px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 26px 28px;
+            box-shadow: 0 4px 12px rgba(173, 216, 230, 0.2);
+            margin-bottom: 22px;
+        }
+
+        .panel h2 {
+            color: #4682b4;
+            margin-bottom: 14px;
+            font-size: 20px;
+        }
+
+        .pick-btns {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .pick-btns button {
+            flex: 1;
+            min-width: 180px;
+            padding: 16px 10px;
+            font-size: 17px;
+            border: 2px dashed #87ceeb;
+            border-radius: 10px;
+            background: #f3fbff;
+            color: #4682b4;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .pick-btns button:hover {
+            background: #e3f4fd;
+            border-color: #4682b4;
+        }
+
+        #preview-box {
+            margin-top: 18px;
+            position: relative;
+            display: inline-block;
+        }
+
+        #preview-img {
+            display: block;
+            max-width: 100%;
+            max-height: 320px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        #btn-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.7;
+        }
+
+        .key-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .key-row input {
+            flex: 1;
+            min-width: 260px;
+            padding: 10px 12px;
+            border: 1px solid #c9dcef;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .key-row input:focus {
+            border-color: #4682b4;
+        }
+
+        .key-row button {
+            padding: 10px 20px;
+            background: #87ceeb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .key-row button:hover {
+            background: #4682b4;
+        }
+
+        .model-row {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .model-row select {
+            padding: 6px 10px;
+            border: 1px solid #c9dcef;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            color: #333;
+        }
+
+        .action-row {
+            text-align: center;
+            margin: 8px 0 26px;
+        }
+
+        .identify-btn {
+            font-size: 18px;
+            padding: 14px 44px;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            background-color: #4682b4;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .identify-btn:hover {
+            background-color: #2f5f8a;
+        }
+
+        .identify-btn:disabled {
+            background-color: #aac7e0;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #777;
+            min-height: 20px;
+        }
+
+        .status.err {
+            color: #d9534f;
+        }
+
+        /* 结果卡片 */
+        #result-panel .bird-name {
+            font-size: 26px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #result-panel .bird-sci {
+            color: #888;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .conf-row {
+            margin: 14px 0 6px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .conf-bar {
+            height: 10px;
+            background: #eef3f8;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .conf-bar i {
+            display: block;
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #87ceeb, #4682b4);
+            transition: width 0.6s;
+        }
+
+        .feat-list {
+            margin: 14px 0 0;
+            padding-left: 20px;
+            color: #555;
+            line-height: 1.9;
+            font-size: 14.5px;
+        }
+
+        .meta-line {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.9;
+        }
+
+        .alt-line {
+            margin-top: 8px;
+            font-size: 13.5px;
+            color: #999;
+        }
+
+        .guide-hit {
+            margin-top: 16px;
+            padding: 12px 14px;
+            background: #eef9ff;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2f6f9f;
+        }
+
+        .guide-hit a {
+            color: #4682b4;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .guide-hit a:hover {
+            text-decoration: underline;
+        }
+
+        .not-bird {
+            text-align: center;
+            color: #888;
+            padding: 18px 0;
+            font-size: 15px;
+        }
+
+        .not-bird .big {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .loading-bird {
+            text-align: center;
+            padding: 14px 0;
+            color: #4682b4;
+            font-size: 15px;
+        }
+
+        .loading-bird span {
+            animation: pulse 1.2s infinite;
+        }
+
+        /* 内置「记一笔」面板 */
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .form-row label {
+            width: 48px;
+            color: #4682b4;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .form-row input, .form-row textarea {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #c9dcef;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-row input:focus, .form-row textarea:focus {
+            border-color: #4682b4;
+        }
+
+        .check-row {
+            display: block;
+            margin: 10px 0 4px;
+            font-size: 13.5px;
+            color: #555;
+        }
+
+        .check-row input {
+            margin-right: 6px;
+            vertical-align: -1px;
+        }
+
+        .save-row {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header>
+        <div class="logo">🐦 BirdCloud 观鸟笔记</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="records.html">观鸟记录本</a>
+            <a href="forum.html">观鸟地点</a>
+            <a href="gallery.html">观鸟相册</a>
+            <a href="tools.html">实用工具</a>
+            <a href="ai.html" class="active">AI识鸟</a>
+            <a href="../birdcloud-library/index.html">鸟云图书馆</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
+        </nav>
+    </header>
+
+    <!-- 主横幅 -->
+    <section class="banner">
+        <h1>🤖 AI 识鸟 · 拍一张，认出它是谁</h1>
+        <p>基于阿里云百炼 Qwen-VL 视觉大模型，支持拍照 / 上传图片实时识别鸟类</p>
+    </section>
+
+    <!-- 内容 -->
+    <main class="ai-wrap">
+
+        <!-- 第一步：选图 -->
+        <section class="panel">
+            <h2>① 选择一张鸟的照片</h2>
+            <div class="pick-btns">
+                <button id="btn-camera">📷 拍照识别</button>
+                <button id="btn-upload">🖼️ 选择图片</button>
+            </div>
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <div id="preview-box" hidden>
+                <img id="preview-img" alt="照片预览">
+                <button id="btn-remove">✕ 移除</button>
+            </div>
+            <p class="hint">支持 JPG / PNG / HEIC，图片会自动压缩。鸟尽量占画面主体、光线充足时识别最准。</p>
+        </section>
+
+        <!-- 第二步：识别服务配置 -->
+        <section class="panel">
+            <h2>② 识别服务（阿里云百炼 Qwen-VL）</h2>
+            <div class="key-row">
+                <input type="password" id="api-key" placeholder="粘贴你的 DashScope API-Key（sk-…）" autocomplete="off">
+                <button id="btn-save-key">保存 Key</button>
+                <button id="btn-clear-key" hidden>清除</button>
+            </div>
+            <p class="hint">
+                Key 只保存在<b>当前浏览器</b>的本地存储中，不会随网站发布或上传。<br>
+                获取方法：点击打开 <a href="https://bailian.console.aliyun.com" target="_blank" rel="noopener" style="color:#4682b4;font-weight:bold;">阿里云百炼控制台</a>
+                （bailian.console.aliyun.com）→ 左侧菜单「API-KEY」→「创建我的 API-KEY」→ 复制以 sk- 开头的 Key。<br>
+                💡 建议在百炼控制台为该 Key 设置<b>消费限额</b>，防止被他人盗用产生费用。
+            </p>
+            <div class="model-row">
+                识别模型：
+                <select id="model-select">
+                    <option value="qwen-vl-plus">qwen-vl-plus（快 · 便宜）</option>
+                    <option value="qwen-vl-max">qwen-vl-max（更准 · 略贵）</option>
+                </select>
+                <span class="hint" style="display:inline; margin-left:8px;">约 1～3 分钱 / 次</span>
+            </div>
+        </section>
+
+        <!-- 第三步：识别 -->
+        <div class="action-row">
+            <button id="btn-identify" class="identify-btn" disabled>🔍 开始识别</button>
+            <div id="status" class="status"></div>
+        </div>
+
+        <!-- 结果 -->
+        <section class="panel" id="result-panel" hidden>
+            <h2>✨ 识别结果</h2>
+            <div id="result-body"></div>
+        </section>
+
+        <!-- 内置「记一笔」：常驻面板，识别成功后自动填入鸟种 -->
+        <section class="panel" id="record-panel" style="border: 2px dashed #87ceeb;">
+            <h2>✍️ 记一笔 · 保存到云端观鸟记录本</h2>
+            <p class="hint">AI 识别出鸟种后会自动填入下方表单，确认后即可存入你的记录本；也可以手动记录任何一次观鸟。</p>
+            <div id="record-login-hint" hidden>
+                <p class="hint">登录后保存的记录<b>按账号隔离</b>，只有你自己能看到。</p>
+                <a href="login.html" class="btn">去登录 / 入住鸟窝</a>
+            </div>
+            <div id="record-form">
+                <div class="form-row">
+                    <label>鸟种</label>
+                    <input type="text" id="rec-species" placeholder="识别到的鸟种（可修改）">
+                </div>
+                <div class="form-row">
+                    <label>地点</label>
+                    <input type="text" id="rec-place" placeholder="观测地点（如：小区公园）">
+                </div>
+                <div class="form-row">
+                    <label>日期</label>
+                    <input type="date" id="rec-date">
+                </div>
+                <div class="form-row">
+                    <label>备注</label>
+                    <textarea id="rec-note" rows="2" placeholder="想补充的话（可选）"></textarea>
+                </div>
+                <label class="check-row">
+                    <input type="checkbox" id="rec-photo-check" checked> 把这张照片一起存入云端相册
+                </label>
+                <div class="save-row">
+                    <button id="btn-save-record" class="btn" style="margin-top:6px;">💾 保存到观鸟记录本</button>
+                    <span id="record-status" class="status"></span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>BirdCloud 观鸟笔记 © 2026 · AI 识鸟由阿里云百炼 Qwen-VL 提供支持</p>
+    </footer>
+
+<script>
+(function () {
+
+    // ============ 常量与状态 ============
+    var ENDPOINT = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+    var KEY_STORE = "birdcloud-dashscope-key";
+    var key = null;
+
+    // Supabase：与 records.html 一致（云端观鸟记录本）
+    var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+    var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+    var TABLE = "records";
+    var BUCKET = "bird-gallery";
+    var supabase = null;
+    var isLoggedIn = false;
+    var currentUserId = "";
+
+    // 与实用工具页图鉴一致的中国常见鸟类名单（用于提示图鉴收录）
+    var BIRD_NAMES = [
+        "树麻雀","喜鹊","家燕","白头鹎","乌鸫","珠颈斑鸠","白鹭","苍鹭","普通翠鸟",
+        "大斑啄木鸟","红嘴蓝鹊","戴胜","八哥","白鹡鸰","领角鸮","夜鹭","画眉",
+        "黑枕黄鹂","棕背伯劳","普通鸬鹚","白骨顶","灰喜鹊","北红尾鸲","斑嘴鸭",
+        "红耳鹎","大山雀","暗绿绣眼鸟","鹊鸲","灰椋鸟","山斑鸠","小鸊鷉","棕头鸦雀",
+        "牛背鹭","北灰鹟","栗背短脚鹎","黑水鸡","灰头鹀","红喉歌鸲","紫啸鸫",
+        "三趾滨鹬","白额鹱","白顶溪鸲","池鹭","斑头雁","橙翅噪鹛","酒红朱雀"
+    ];
+
+    // ============ DOM ============
+    var fileInput = document.getElementById("file-input");
+    var previewBox = document.getElementById("preview-box");
+    var previewImg = document.getElementById("preview-img");
+    var btnRemove = document.getElementById("btn-remove");
+    var apiKeyInput = document.getElementById("api-key");
+    var btnSaveKey = document.getElementById("btn-save-key");
+    var btnClearKey = document.getElementById("btn-clear-key");
+    var modelSelect = document.getElementById("model-select");
+    var btnIdentify = document.getElementById("btn-identify");
+    var statusEl = document.getElementById("status");
+    var resultPanel = document.getElementById("result-panel");
+    var resultBody = document.getElementById("result-body");
+
+    // 内置「记一笔」表单
+    var recordPanel = document.getElementById("record-panel");
+    var recordLoginHint = document.getElementById("record-login-hint");
+    var recordForm = document.getElementById("record-form");
+    var recSpecies = document.getElementById("rec-species");
+    var recPlace = document.getElementById("rec-place");
+    var recDate = document.getElementById("rec-date");
+    var recNote = document.getElementById("rec-note");
+    var recPhotoCheck = document.getElementById("rec-photo-check");
+    var btnSaveRecord = document.getElementById("btn-save-record");
+    var recordStatus = document.getElementById("record-status");
+
+    var currentDataUrl = null; // 当前待识别的图片 dataURL
+
+    // ============ Key 存取 ============
+    try {
+        key = localStorage.getItem(KEY_STORE) || "";
+        if (key) {
+            apiKeyInput.value = key;
+            btnClearKey.hidden = false;
+        }
+    } catch (e) { key = ""; }
+
+    btnSaveKey.addEventListener("click", function () {
+        var v = apiKeyInput.value.trim();
+        if (!v) { setStatus("请先粘贴 API-Key", true); return; }
+        try {
+            localStorage.setItem(KEY_STORE, v);
+            key = v;
+            btnClearKey.hidden = false;
+            setStatus("✓ Key 已保存到本地浏览器（仅本机可见）");
+        } catch (e) {
+            setStatus("保存失败：" + e.message, true);
+        }
+    });
+
+    btnClearKey.addEventListener("click", function () {
+        try { localStorage.removeItem(KEY_STORE); } catch (e) {}
+        key = "";
+        apiKeyInput.value = "";
+        btnClearKey.hidden = true;
+        setStatus("已清除本地 Key");
+    });
+
+    apiKeyInput.addEventListener("input", function () {
+        btnClearKey.hidden = !apiKeyInput.value.trim();
+    });
+
+    // ============ Supabase：登录态 + 云端记录本 ============
+    try {
+        if (window.supabase && typeof window.supabase.createClient === "function") {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+    } catch (e) {
+        console.log("Supabase 初始化失败：" + e.message);
+    }
+
+    if (supabase) {
+        supabase.auth.getSession().then(function (res) {
+            var session = res.data && res.data.session;
+            isLoggedIn = !!session;
+            if (session && session.user) currentUserId = session.user.id;
+            var link = document.getElementById("nest-link");
+            if (link) {
+                link.href = isLoggedIn ? "profile.html" : "login.html";
+                link.textContent = isLoggedIn ? "我的鸟窝" : "鸟窝入住";
+            }
+            if (!recDate.value) recDate.value = new Date().toISOString().slice(0, 10);
+            refreshRecordAuth();
+        });
+    } else {
+        refreshRecordAuth();
+    }
+
+    // 根据登录态切换「记录面板」的登录提示 / 表单
+    function refreshRecordAuth() {
+        if (!recordPanel) return;
+        recordLoginHint.hidden = isLoggedIn;
+        recordForm.hidden = !isLoggedIn;
+    }
+
+    // ============ 图片选择与压缩 ============
+    document.getElementById("btn-camera").addEventListener("click", function () {
+        fileInput.setAttribute("capture", "environment");
+        fileInput.accept = "image/*";
+        fileInput.value = "";
+        fileInput.click();
+    });
+
+    document.getElementById("btn-upload").addEventListener("click", function () {
+        fileInput.removeAttribute("capture");
+        fileInput.accept = "image/*";
+        fileInput.value = "";
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", function () {
+        var files = fileInput.files;
+        if (!files || files.length === 0) return;
+        hideRecordPanel();
+        setStatus("正在压缩图片……");
+        readAsJPEG(files[0], function (out) {
+            var fr = new FileReader();
+            fr.onload = function () {
+                currentDataUrl = fr.result;
+                previewImg.src = currentDataUrl;
+                previewBox.hidden = false;
+                updateIdentifyState();
+                setStatus("✓ 图片就绪，可以开始识别了");
+            };
+            fr.onerror = function () {
+                setStatus("图片读取失败，请换一张试试", true);
+            };
+            fr.readAsDataURL(out);
+        });
+    });
+
+    btnRemove.addEventListener("click", function () {
+        currentDataUrl = null;
+        previewBox.hidden = true;
+        fileInput.value = "";
+        hideRecordPanel();
+        updateIdentifyState();
+        setStatus("");
+    });
+
+    // 把图片统一转成 JPEG（压缩最长边 1568px）：兼容 HEIC，同时控制识别成本；
+    // 浏览器无法解码时回退原文件
+    function readAsJPEG(file, cb) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            try {
+                var maxDim = 1568;
+                var w = img.naturalWidth || 0;
+                var h = img.naturalHeight || 0;
+                if (!w || !h) { URL.revokeObjectURL(url); cb(file); return; }
+                var scale = Math.min(1, maxDim / Math.max(w, h));
+                var canvas = document.createElement("canvas");
+                canvas.width = Math.round(w * scale);
+                canvas.height = Math.round(h * scale);
+                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(function (blob) {
+                    cb(blob || file);
+                }, "image/jpeg", 0.85);
+            } catch (e) {
+                URL.revokeObjectURL(url);
+                cb(file);
+            }
+        };
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            cb(file);
+        };
+        img.src = url;
+    }
+
+    // ============ 识别 ============
+    function updateIdentifyState() {
+        btnIdentify.disabled = !currentDataUrl;
+    }
+    updateIdentifyState();
+
+    btnIdentify.addEventListener("click", identify);
+
+    function identify() {
+        if (!key) {
+            setStatus("请先在「② 识别服务」中粘贴并保存 API-Key", true);
+            apiKeyInput.focus();
+            return;
+        }
+        if (!currentDataUrl) { setStatus("请先选择一张照片", true); return; }
+
+        btnIdentify.disabled = true;
+        resultPanel.hidden = true;
+        setStatus("🔍 正在识别，请稍候（约 3~10 秒）……");
+        setStatusHTML('<div class="loading-bird"><span>🐦🔍</span> 正在识别，请稍候（约 3~10 秒）……</div>');
+
+        var sysPrompt = [
+            "你是一位专业的中国鸟类识别专家。仔细观察用户提供的照片，识别画面中的鸟类。",
+            "只输出一个 JSON 对象，不要输出任何其他文字、解释或 Markdown 代码块。",
+            "JSON 格式必须为：",
+            '{"is_bird": true或false, "species": "最可能的鸟种中文名，如不确定可写近似描述", "sci": "拉丁学名，不知道则填空字符串", "confidence": 0到100的整数，表示判断把握", "features": ["3到5个识别特征，按明显程度排序"], "habitat": "一句话描述其典型生境", "fun_fact": "一句趣味知识", "alternatives": ["其他可能候选鸟种名，最多2个，没有则空数组"]}',
+            "如果画面中没有鸟、主体不是鸟或根本无法判断，则 is_bird 为 false，species 填空字符串，其余字段可为空。"
+        ].join("\n");
+
+        var body = {
+            model: modelSelect.value,
+            temperature: 0.2,
+            max_tokens: 600,
+            messages: [
+                { role: "system", content: sysPrompt },
+                { role: "user", content: [
+                    { type: "image_url", image_url: { url: currentDataUrl } },
+                    { type: "text", text: "请识别这张照片里的鸟，并严格按照要求输出 JSON。" }
+                ] }
+            ]
+        };
+
+        fetch(ENDPOINT, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + key
+            },
+            body: JSON.stringify(body)
+        }).then(function (res) {
+            return res.json().then(function (data) {
+                return { ok: res.ok, data: data };
+            });
+        }).then(function (r) {
+            if (!r.ok) {
+                var msg = (r.data && r.data.error && r.data.error.message) || ("HTTP " + (r.status || "错误"));
+                throw new Error(msg);
+            }
+            var content = r.data.choices && r.data.choices[0] && r.data.choices[0].message
+                ? r.data.choices[0].message.content : "";
+            if (!content) throw new Error("模型返回为空，请重试");
+            var parsed = parseJSON(content);
+            if (!parsed) throw new Error("无法解析模型返回结果：" + content.slice(0, 120));
+            renderResult(parsed);
+        }).catch(function (err) {
+            setStatus("识别失败：" + err.message + "（请检查 Key 是否正确、是否欠费）", true);
+        }).finally(function () {
+            btnIdentify.disabled = !currentDataUrl;
+        });
+    }
+
+    // 容错解析：模型可能包裹 markdown 代码块或带多余文本
+    function parseJSON(text) {
+        var t = text.trim();
+        try { return JSON.parse(t); } catch (e) {}
+        var m = t.match(/\{[\s\S]*\}/);
+        if (m) {
+            try { return JSON.parse(m[0]); } catch (e2) {}
+        }
+        return null;
+    }
+
+    // ============ 结果渲染 ============
+    function esc(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function renderResult(r) {
+        resultPanel.hidden = false;
+
+        var isBird = r.is_bird !== false && r.species;
+        if (!isBird) {
+            resultBody.innerHTML =
+                '<div class="not-bird"><span class="big">🦉</span>画面里没有识别出鸟类。<br>' +
+                '可能原因：鸟太小 / 距离太远 / 模糊 / 画面主体不是鸟。<br>' +
+                '<span class="hint">试试放大画面、等鸟靠近一些再拍。</span></div>';
+            hideRecordPanel();
+            setStatus("");
+            return;
+        }
+
+        var conf = Math.max(0, Math.min(100, parseInt(r.confidence, 10) || 0));
+        var confColor = conf >= 75 ? "#4682b4" : (conf >= 45 ? "#e6a23c" : "#d9534f");
+
+        var html = "";
+        html += '<div class="bird-name">🐦 ' + esc(r.species) + '</div>';
+        if (r.sci) html += '<div class="bird-sci">' + esc(r.sci) + '</div>';
+
+        html += '<div class="conf-row">识别置信度：' + conf + '%</div>';
+        html += '<div class="conf-bar"><i style="width:' + conf + '%; background:' + confColor + '"></i></div>';
+
+        if (r.features && r.features.length) {
+            html += '<ul class="feat-list">';
+            r.features.forEach(function (f) { html += '<li>' + esc(f) + '</li>'; });
+            html += '</ul>';
+        }
+
+        if (r.habitat) html += '<div class="meta-line">🌿 生境：' + esc(r.habitat) + '</div>';
+        if (r.fun_fact) html += '<div class="meta-line">💡 小知识：' + esc(r.fun_fact) + '</div>';
+
+        if (r.alternatives && r.alternatives.length) {
+            html += '<div class="alt-line">🤔 其他候选：' +
+                r.alternatives.map(esc).join("、") + '</div>';
+        }
+
+        // 匹配本地图鉴
+        var hit = matchGuide(r.species);
+        if (hit) {
+            html += '<div class="guide-hit">📖 鸟云图鉴已收录「' + esc(hit) + '」，' +
+                '<a href="tools.html">去实用工具查看详细资料 →</a></div>';
+        } else if (r.species) {
+            html += '<div class="guide-hit">📖 想了解更多？可到 <a href="tools.html">实用工具 · 鸟类图鉴</a> 搜索「' +
+                esc(r.species) + '」看看有没有收录。</div>';
+        }
+
+        resultBody.innerHTML = html;
+        showRecordPanel(r.species || "");
+        setStatus("");
+    }
+
+    // 宽松匹配图鉴名单：全名包含或去掉常见前后缀后命中
+    function matchGuide(species) {
+        if (!species) return null;
+        var s = species.trim();
+        for (var i = 0; i < BIRD_NAMES.length; i++) {
+            var n = BIRD_NAMES[i];
+            if (s === n || s.indexOf(n) === 0 || n.indexOf(s) === 0) return n;
+        }
+        return null;
+    }
+
+    // ============ 内置「记一笔」：识别结果 → 云端观鸟记录本 ============
+    function showRecordPanel(species) {
+        if (!recordPanel) return;
+        if (recSpecies) recSpecies.value = species || "";
+        setRecordStatus("✓ 已自动填入识别结果，确认后可保存");
+        refreshRecordAuth();
+    }
+
+    function hideRecordPanel() {
+        // 面板常驻：仅清空识别自动填入的内容与状态提示
+        if (recSpecies) recSpecies.value = "";
+        setRecordStatus("");
+    }
+
+    function setRecordStatus(msg, isErr) {
+        if (!recordStatus) return;
+        recordStatus.className = "status" + (isErr ? " err" : "");
+        recordStatus.textContent = msg || "";
+    }
+
+    // dataURL → Blob（用于把当前识别图存入云端相册）
+    function dataURLToBlob(dataUrl) {
+        var parts = dataUrl.split(",");
+        var mime = (parts[0].match(/:(.*?);/) || [])[1] || "image/jpeg";
+        var bin = atob(parts[1]);
+        var u8 = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        return new Blob([u8], { type: mime });
+    }
+
+    // 上传当前识别图片到私有桶（路径 {userId}/xxx，与记录本/相册同桶），返回路径；未勾选则返回 null
+    function uploadCurrentPhoto() {
+        return new Promise(function (resolve, reject) {
+            if (!recPhotoCheck.checked || !currentDataUrl) { resolve(null); return; }
+            if (!supabase) { reject("云端服务未初始化"); return; }
+            if (!isLoggedIn) { reject("未登录"); return; }
+            var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + ".jpg";
+            var path = currentUserId + "/" + name;
+            supabase.storage.from(BUCKET).upload(path, dataURLToBlob(currentDataUrl), {
+                contentType: "image/jpeg",
+                upsert: false
+            }).then(function (up) {
+                if (up.error) { reject(up.error.message); return; }
+                resolve(path);
+            });
+        });
+    }
+
+    btnSaveRecord.addEventListener("click", function () {
+        if (!isLoggedIn) {
+            setRecordStatus("请先登录（入住鸟窝）再保存", true);
+            return;
+        }
+        var name = (recSpecies.value || "").trim();
+        if (!name) { setRecordStatus("请填写鸟种名称", true); return; }
+        var date = recDate.value || new Date().toISOString().slice(0, 10);
+
+        btnSaveRecord.disabled = true;
+        setRecordStatus("正在保存……");
+
+        uploadCurrentPhoto().then(function (photoPath) {
+            return supabase.from(TABLE).insert({
+                user_id: currentUserId,
+                name: name,
+                place: recPlace.value.trim() || "未填写",
+                date: date,
+                note: recNote.value.trim(),
+                photo: photoPath || ""
+            }).then(function (res) {
+                if (res.error) throw new Error(res.error.message);
+                return photoPath;
+            });
+        }).then(function () {
+            setRecordStatus("✓ 已保存到你的云端观鸟记录本");
+            recPlace.value = "";
+            recNote.value = "";
+        }).catch(function (err) {
+            var msg = err.message || String(err);
+            if (msg.indexOf("PGRST205") > -1 || msg.indexOf("does not exist") > -1) {
+                msg = "云端记录表尚未创建：需在 Supabase 控制台执行建表 SQL（见项目 schema.sql）";
+            }
+            setRecordStatus("保存失败：" + msg, true);
+        }).finally(function () {
+            btnSaveRecord.disabled = false;
+        });
+    });
+
+    // ============ 状态提示 ============
+    function setStatus(msg, isErr) {
+        statusEl.className = "status" + (isErr ? " err" : "");
+        statusEl.textContent = msg || "";
+    }
+    function setStatusHTML(html) {
+        statusEl.className = "status";
+        statusEl.innerHTML = html;
+    }
+
+})();
+</script>
+<script src="vendor/supabase.min.js"></script>
+<script src="vendor/keepalive.js"></script>
+<script src="bg-clouds.js"></script>
+</body>
+</html>
