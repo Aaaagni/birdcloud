@@ -108,6 +108,62 @@ nav a.active {
     grid-column: 1 / -1;
 }
 
+/* 首页板块：笔记大卡片独占一行，其余六板块统一样式 */
+.home-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 60px;
+}
+
+.home-grid .card {
+    text-align: center;
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.home-grid .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(135, 206, 235, 0.3);
+}
+
+.home-grid .library-card {
+    grid-column: auto;
+}
+
+.note-card {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    text-align: left;
+    background: linear-gradient(135deg, #f0faff, #ffffff);
+    border: 1px solid #cfe7f7;
+    padding: 34px 38px;
+    box-shadow: 0 6px 18px rgba(135, 206, 235, 0.18);
+}
+
+.note-card h2 {
+    font-size: 26px;
+    margin-bottom: 8px;
+    color: #4682b4;
+}
+
+.note-card p {
+    max-width: 640px;
+    line-height: 1.7;
+    color: #556;
+    font-size: 15px;
+    margin: 0;
+}
+
+.note-card .btn {
+    margin-top: 0;
+    padding: 12px 28px;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
 .card h2 {
     color: #4682b4;
     margin-bottom: 16px;
