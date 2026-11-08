@@ -66,8 +66,12 @@ create table if not exists public.photos (
     author_name text not null default '',   -- 发布者名字
     place text not null default '',         -- 观测地点
     taken_at text not null default '',      -- 观测日期（YYYY-MM-DD）
+    note text not null default '',          -- 图片备注（选填，300 字以内）
     created_at timestamptz not null default now()
 );
+
+-- 老库升级：给已存在的 photos 表补备注字段（幂等）
+alter table public.photos add column if not exists note text not null default '';
 
 create index if not exists photos_bucket_created_idx
     on public.photos (bucket, created_at desc);

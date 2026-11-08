@@ -91,6 +91,40 @@
             border-color: #72bcd4;
         }
 
+        .upload-form textarea {
+            width: 100%;
+            max-width: 560px;
+            padding: 10px 12px;
+            border: 1px solid #cfe3ee;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            background: #fbfdff;
+            resize: vertical;
+            min-height: 54px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+
+        .upload-form textarea:focus {
+            border-color: #72bcd4;
+        }
+
+        .note-count {
+            font-size: 12px;
+            color: #99a;
+            text-align: right;
+            width: 100%;
+            max-width: 560px;
+            margin: -4px 0 0;
+            padding: 0 2px;
+        }
+
+        .note-count.over {
+            color: #d1493f;
+        }
+
         .btn-add {
             display: inline-block;
             padding: 12px 28px;
@@ -235,6 +269,18 @@
             line-height: 1.5;
         }
 
+        .caption .cap-note {
+            font-size: 13px;
+            color: #567;
+            margin-top: 6px;
+            line-height: 1.5;
+            background: #f3f9fc;
+            border-left: 3px solid #72bcd4;
+            padding: 5px 8px;
+            border-radius: 0 6px 6px 0;
+            word-break: break-word;
+        }
+
         .empty {
             color: #99a;
             padding: 60px 20px;
@@ -283,6 +329,9 @@
                 <input type="text" id="photoPlace" placeholder="📍 观测地点（必填），如：杭州西溪湿地">
                 <input type="date" id="photoDate" title="观测日期">
                 <input type="text" id="photoAuthor" placeholder="🐦 发布者名字（必填）">
+                <textarea id="photoNote" maxlength="300" rows="2"
+                    placeholder="📝 备注（选填，300 字以内），如：今天在芦苇丛里看到它俯冲捕鱼"></textarea>
+                <div class="note-count" id="noteCount">0/300</div>
                 <button id="addBtn" class="btn-add">＋ 添加图片</button>
             </div>
             <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
@@ -326,6 +375,8 @@
         var photoPlace = document.getElementById("photoPlace");
         var photoDate = document.getElementById("photoDate");
         var photoAuthor = document.getElementById("photoAuthor");
+        var photoNote = document.getElementById("photoNote");
+        var noteCount = document.getElementById("noteCount");
         var tabBtns = document.querySelectorAll(".tab");
 
         function setStatus(text, isError) {
@@ -374,6 +425,17 @@
                     ? "🔒 我的私有相册 · 仅自己可见；悬停照片可点 📤 分享到公共相册"
                     : "🔒 我的私有相册 · 请先登录，才能查看和上传";
             }
+        }
+
+        // 备注字数实时计数（上限 300 字，超长自动截断）
+        if (photoNote && noteCount) {
+            photoNote.addEventListener("input", function () {
+                if (photoNote.value.length > 300) {
+                    photoNote.value = photoNote.value.slice(0, 300);
+                }
+                noteCount.textContent = photoNote.value.length + "/300";
+                noteCount.classList.toggle("over", photoNote.value.length >= 300);
+            });
         }
 
         // 登录状态 + 导航"我的鸟窝"逻辑
@@ -520,8 +582,12 @@
                 var author = row.author_name || "匿名鸟友";
                 var place = row.place || "未填写";
                 var date = row.taken_at || "未知日期";
+                var note = row.note || "";
                 // 私有相册只有自己可见，不显示发布者名字
                 var authorRow = currentTab === "private" ? "" : '<div class="cap-author">🐦 ' + esc(author) + '</div>';
+                var noteHtml = note
+                    ? '<div class="cap-note">📝 ' + esc(note) + '</div>'
+                    : "";
                 var altText = currentTab === "private" ? "我的观鸟照片" : esc(author) + " 拍摄";
                 html += '<div class="gallery-item">' + shareBtn + delBtn +
                     '<img src="' + esc(items[i].url) + '" alt="' + altText + '" loading="lazy" ' +
@@ -529,6 +595,7 @@
                     '<div class="caption">' +
                         authorRow +
                         '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) + '</div>' +
+                        noteHtml +
                     '</div></div>';
             }
             grid.innerHTML = html;
@@ -608,8 +675,8 @@
                     setStatus("这张照片已经在公共相册中", true);
                     return;
                 }
-                // 1) 读取原私有记录，复制地点、日期、作者
-                supabase.from("photos").select("place,taken_at,user_id").eq("id", id).single().then(function (rec) {
+                // 1) 读取原私有记录，复制地点、日期、作者、备注
+                supabase.from("photos").select("place,taken_at,user_id,note").eq("id", id).single().then(function (rec) {
                     if (rec.error || !rec.data) {
                         setStatus("分享失败：无法读取照片信息（" + ((rec.error && rec.error.message) || "未知错误") + "）", true);
                         return;
@@ -638,7 +705,8 @@
                                     user_id: rec.data.user_id,
                                     author_name: name,
                                     place: rec.data.place,
-                                    taken_at: rec.data.taken_at
+                                    taken_at: rec.data.taken_at,
+                                    note: rec.data.note || ""
                                 }).then(function (ins) {
                                     if (ins.error) throw new Error("新增公共记录失败：" + ins.error.message);
                                     setStatus("已分享到公共相册！");
@@ -718,6 +786,7 @@
             // 私有相册无需发布者名字；公共相册必填（默认昵称/邮箱前缀）
             var author = currentTab === "private" ? "" : (photoAuthor.value.trim() || "匿名鸟友");
             var date = photoDate.value || todayStr();
+            var note = photoNote ? photoNote.value.trim().slice(0, 300) : "";
             var bucket = currentTab === "public" ? BUCKET_PUBLIC : BUCKET_PRIVATE;
 
             var total = files.length;
@@ -748,14 +817,15 @@
                                 finish();
                                 return;
                             }
-                            // 写入备注：地点 / 日期 / 发布者名字
+                            // 写入备注：地点 / 日期 / 发布者名字 / 备注
                             supabase.from("photos").insert({
                                 bucket: currentTab,
                                 path: path,
                                 user_id: currentUserId,
                                 author_name: author,
                                 place: place,
-                                taken_at: date
+                                taken_at: date,
+                                note: note
                             }).then(function (ins) {
                                 done++;
                                 if (ins.error) {
