@@ -433,8 +433,8 @@
     // ============ 常量与状态 ============
     // 识别服务走“服务端代理”：服务商、模型与 API-Key 全部在代理端，
     // 页面只发送图片、只调用代理地址，源码与网络请求中不出现任何 Key 与配置信息。
-    // ★ 部署 Worker 后，把下面地址替换为你的 Worker 地址（形如 https://birdid.xxx.workers.dev）
-    var PROXY_URL = "https://birdid.your-subdomain.workers.dev";
+    // ★ 代理部署在阿里云函数计算（自定义运行时 Node.js），替换为你的函数公网地址
+    var PROXY_URL = "https://bc-ai-kanbhkceie.cn-hangzhou.fcapp.run/";
 
     // 清理旧版“页面直连”模式残留在本机的 API-Key（不再使用，避免留在浏览器里）
     try {
