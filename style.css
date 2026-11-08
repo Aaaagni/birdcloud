@@ -231,3 +231,97 @@ footer {
     color: #777;
     background: white;
 }
+
+/* ============================================================
+   手机端适配（≤ 900px）
+   导航栏改为横向可滑动胶囊条，不再全部堆在顶部换行
+   ============================================================ */
+@media (max-width: 900px) {
+
+    header {
+        padding: 8px 0 10px;
+    }
+
+    /* Logo 居中，导航条独立一行 */
+    .logo {
+        float: none;
+        display: block;
+        text-align: center;
+        padding: 0 12px 8px;
+        font-size: 19px;
+    }
+
+    /* 导航：横向一行可左右滑动，点击切换 */
+    nav {
+        float: none;
+        padding: 0 14px;
+        display: flex;
+        flex-wrap: nowrap;            /* 禁止换行 */
+        align-items: center;
+        gap: 6px;
+        overflow-x: auto;             /* 横向滑动 */
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;        /* Firefox 隐藏滚动条 */
+        padding-bottom: 2px;
+    }
+
+    nav::-webkit-scrollbar {
+        display: none;                /* Chrome/Safari 隐藏滚动条 */
+    }
+
+    nav a {
+        flex: 0 0 auto;               /* 不压缩不换行，保持胶囊形状 */
+        margin: 0;
+        font-size: 14.5px;
+        padding: 6px 14px;
+    }
+
+    nav a:hover {
+        transform: none;
+    }
+
+    /* 通用布局：单列、收紧间距 */
+    .container,
+    .home-grid {
+        grid-template-columns: 1fr;
+        width: 92%;
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+
+    .note-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 14px;
+        padding: 22px 18px;
+    }
+
+    .note-card .btn {
+        padding: 10px 24px;
+        font-size: 15px;
+    }
+
+    .card {
+        padding: 22px 18px;
+    }
+
+    .banner {
+        padding: 36px 16px;
+        margin-bottom: 22px;
+    }
+
+    .banner h1 {
+        font-size: 26px;
+    }
+
+    .weather-switch {
+        right: 10px;
+        bottom: 10px;
+        padding: 3px;
+    }
+
+    .weather-switch button {
+        padding: 5px 11px;
+        font-size: 12.5px;
+    }
+}
