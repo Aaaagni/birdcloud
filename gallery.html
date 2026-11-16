@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -220,6 +220,93 @@
             background: #eef4f8;
         }
 
+        /* ---- 多图轮播（一篇帖子多张图） ---- */
+        .photo-slider {
+            position: relative;
+            height: 150px;
+            overflow: hidden;
+            background: #eef4f8;
+        }
+
+        .photo-slider .slider-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.25s;
+            cursor: zoom-in;
+        }
+
+        .photo-slider .slider-img.active {
+            opacity: 1;
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            padding: 0 0 2px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.42);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-nav:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .slider-nav.prev { left: 8px; }
+        .slider-nav.next { right: 8px; }
+
+        .slider-count {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            z-index: 3;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .slider-dots {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 9px;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            pointer-events: none;
+        }
+
+        .slider-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        .slider-dot.on {
+            background: #fff;
+        }
+
         .del-btn {
             position: absolute;
             top: 8px;
@@ -364,6 +451,16 @@
             .gallery-item img {
                 height: 170px;
             }
+
+            .photo-slider {
+                height: 170px;
+            }
+
+            .slider-nav {
+                width: 32px;
+                height: 32px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
@@ -409,7 +506,7 @@
                 <textarea id="photoNote" maxlength="300" rows="2"
                     placeholder="📝 备注（选填，300 字以内），如：今天在芦苇丛里看到它俯冲捕鱼"></textarea>
                 <div class="note-count" id="noteCount">0/300</div>
-                <button id="addBtn" class="btn-add">＋ 添加图片</button>
+                <button id="addBtn" class="btn-add">＋ 发布照片（可多选）</button>
             </div>
             <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
             <div id="status"></div>
@@ -444,6 +541,10 @@
         var supabase = null;
         var isLoggedIn = false;
         var currentUserId = "";
+        var currentEmail = "";
+        var isAdmin = false;
+        // 管理员：可删除公共相册里任意照片（数据库侧需配合 admin-delete-policy.sql）
+        var ADMIN_EMAIL = "1878646255@qq.com";
         var currentTab = "public"; // public（公共相册）| private（我的相册）
 
         var grid = document.getElementById("grid");
@@ -528,6 +629,8 @@
                 isLoggedIn = !!(res.data && res.data.session);
                 if (isLoggedIn && res.data.session.user) {
                     currentUserId = res.data.session.user.id;
+                    currentEmail = (res.data.session.user.email || "").toLowerCase();
+                    isAdmin = currentEmail === ADMIN_EMAIL;
                     // 登录后自动填入发布者名字（取资料昵称，否则取邮箱前缀）
                     var u = res.data.session.user;
                     var nm = (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name))
@@ -607,20 +710,33 @@
                 }
 
                 var rows = res.data || [];
-                var totalRows = rows.length;
-                if (currentTab === "public" && rows.length > PUBLIC_PREVIEW) {
-                    rows = rows.slice(0, PUBLIC_PREVIEW);
-                }
+                var totalPhotos = rows.length;
                 if (rows.length === 0) {
                     if (currentTab === "public") {
-                        grid.innerHTML = '<div class="empty">🐦 公共相册还是空的<br>登录后点击上方「＋ 添加图片」，发布第一张观鸟照片吧</div>';
+                        grid.innerHTML = '<div class="empty">🐦 公共相册还是空的<br>登录后点击上方「＋ 发布照片」，发布第一篇观鸟笔记吧</div>';
                     } else {
-                        grid.innerHTML = '<div class="empty">🐦 你的相册还是空的<br>点击上方「＋ 添加图片」上传第一张观鸟照片吧</div>';
+                        grid.innerHTML = '<div class="empty">🐦 你的相册还是空的<br>点击上方「＋ 发布照片」上传第一张观鸟照片吧</div>';
                     }
                     updateMore(0);
                     setStatus("", false);
                     return;
                 }
+
+                var afterItems = function (items) {
+                    // 同一篇帖子的多张图合并成一个卡片
+                    var posts = groupPosts(items);
+                    if (posts.length === 0) {
+                        grid.innerHTML = '<div class="empty">图片加载失败，请刷新重试</div>';
+                        setStatus("", true);
+                        updateMore(0);
+                        return;
+                    }
+                    var shown = posts;
+                    if (currentTab === "public" && posts.length > PUBLIC_PREVIEW) {
+                        shown = posts.slice(0, PUBLIC_PREVIEW);
+                    }
+                    renderGrid(shown, posts.length, totalPhotos);
+                };
 
                 if (currentTab === "public") {
                     // 公共桶：公开 URL 直接读取
@@ -631,7 +747,7 @@
                             url: SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_PUBLIC + "/" + encodeURI(rows[i].path)
                         });
                     }
-                    renderGrid(items, totalRows);
+                    afterItems(items);
                 } else {
                     // 私有桶：逐张生成临时签名 URL（1 小时有效）
                     var items = [];
@@ -644,7 +760,7 @@
                                     items.push({ row: row, url: r.data.signedUrl });
                                 }
                                 if (pending === 0) {
-                                    renderGrid(items);
+                                    afterItems(items);
                                 }
                             });
                         })(rows[i]);
@@ -653,59 +769,152 @@
             });
         }
 
-        // 渲染照片网格（备注：发布者 · 地点 · 日期）
-        function renderGrid(items, totalCount) {
-            if (items.length === 0) {
+        // ---- 多图帖子：按文件名里的 group 标识聚合 ----
+        // 上传时同一次选择的多张图共用 groupKey，路径形如 uid/p<groupKey>-<序号>.jpg
+        var GROUP_RE = /(?:^|\/)p([a-z0-9]{4,})-(\d+)\./;
+
+        function groupKeyOf(row) {
+            var m = GROUP_RE.exec(row.path || "");
+            return m ? "g:" + m[1] : "s:" + row.id;
+        }
+
+        function groupIndex(row) {
+            var m = GROUP_RE.exec(row.path || "");
+            return m ? parseInt(m[2], 10) : 0;
+        }
+
+        function groupPosts(items) {
+            var map = {}, order = [];
+            for (var i = 0; i < items.length; i++) {
+                var k = groupKeyOf(items[i].row);
+                if (!map[k]) {
+                    map[k] = { key: k, items: [] };
+                    order.push(k);
+                }
+                map[k].items.push(items[i]);
+            }
+            var posts = [];
+            for (var j = 0; j < order.length; j++) {
+                var p = map[order[j]];
+                p.items.sort(function (a, b) { return groupIndex(a.row) - groupIndex(b.row); });
+                posts.push(p);
+            }
+            return posts;
+        }
+
+        // 切到下一篇/上一篇图（dir = 1 / -1）
+        function slideStep(wrap, dir) {
+            var imgs = wrap.querySelectorAll(".slider-img");
+            if (imgs.length < 2) return;
+            var cur = 0;
+            for (var i = 0; i < imgs.length; i++) {
+                if (imgs[i].classList.contains("active")) { cur = i; break; }
+            }
+            var next = (cur + dir + imgs.length) % imgs.length;
+            imgs[cur].classList.remove("active");
+            imgs[next].classList.add("active");
+            var c = wrap.querySelector(".slider-count");
+            if (c) c.textContent = (next + 1) + " / " + imgs.length;
+            var dots = wrap.querySelectorAll(".slider-dot");
+            for (var d = 0; d < dots.length; d++) {
+                dots[d].classList.toggle("on", d === next);
+            }
+        }
+
+        // 渲染一个帖子的卡片（多图时带左右切换）
+        function buildPost(post) {
+            var first = post.items[0].row;
+            var multi = post.items.length > 1;
+            var isOwner = isLoggedIn && first.user_id === currentUserId;
+            // 管理员可在公共相册删除任何人的照片；其他人只能删自己的
+            var canDelete = isOwner || (isAdmin && currentTab === "public");
+
+            var ids = [], paths = [];
+            for (var k = 0; k < post.items.length; k++) {
+                ids.push(post.items[k].row.id);
+                paths.push(post.items[k].row.path);
+            }
+            var idsJson = esc(JSON.stringify(ids));
+            var pathsJson = esc(JSON.stringify(paths));
+
+            var delBtn = canDelete
+                ? '<button class="del-btn" data-ids="' + idsJson + '" data-paths="' + pathsJson +
+                  '" title="删除这篇照片">✕</button>'
+                : "";
+            var shareBtn = (currentTab === "private" && isOwner)
+                ? '<button class="share-btn" data-ids="' + idsJson + '" data-paths="' + pathsJson +
+                  '" title="把当前这张分享到公共相册">📤 分享</button>'
+                : "";
+
+            var author = first.author_name || "匿名鸟友";
+            var place = first.place || "未填写";
+            var date = first.taken_at || "未知日期";
+            var note = first.note || "";
+            var authorRow = currentTab === "private" ? "" : '<div class="cap-author">🐦 ' + esc(author) + '</div>';
+            var noteHtml = note ? '<div class="cap-note">📝 ' + esc(note) + '</div>' : "";
+            var altText = currentTab === "private" ? "我的观鸟照片" : esc(author) + " 拍摄";
+
+            var imgs = "";
+            for (var j = 0; j < post.items.length; j++) {
+                var it = post.items[j];
+                imgs += '<img class="slider-img' + (j === 0 ? " active" : "") + '" src="' + esc(it.url) + '"' +
+                    ' data-url="' + esc(it.url) + '" data-path="' + esc(it.row.path) + '"' +
+                    ' data-id="' + it.row.id + '" alt="' + altText + '" loading="lazy">';
+            }
+
+            var nav = "";
+            if (multi) {
+                var dots = "";
+                for (var d = 0; d < post.items.length; d++) {
+                    dots += '<i class="slider-dot' + (d === 0 ? " on" : "") + '"></i>';
+                }
+                nav = '<button class="slider-nav prev" type="button" aria-label="上一张">‹</button>' +
+                      '<button class="slider-nav next" type="button" aria-label="下一张">›</button>' +
+                      '<span class="slider-count">1 / ' + post.items.length + '</span>' +
+                      '<div class="slider-dots">' + dots + '</div>';
+            }
+
+            return '<div class="gallery-item">' + shareBtn + delBtn +
+                '<div class="photo-slider" data-total="' + post.items.length + '">' + imgs + nav + '</div>' +
+                '<div class="caption">' +
+                    authorRow +
+                    '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) +
+                        (multi ? ' · 🖼️ ' + post.items.length + ' 张' : '') + '</div>' +
+                    noteHtml +
+                '</div></div>';
+        }
+
+        // 渲染照片网格（一篇帖子一个卡片）
+        function renderGrid(posts, totalPosts, totalPhotos) {
+            if (!posts || posts.length === 0) {
                 grid.innerHTML = '<div class="empty">图片加载失败，请刷新重试</div>';
                 setStatus("", true);
                 return;
             }
             var html = "";
-            for (var i = 0; i < items.length; i++) {
-                var row = items[i].row;
-                var mine = isLoggedIn && row.user_id === currentUserId;
-                var delBtn = mine
-                    ? '<button class="del-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="删除这张照片">✕</button>'
-                    : "";
-                var shareBtn = (currentTab === "private" && mine)
-                    ? '<button class="share-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="分享到公共相册">📤 分享</button>'
-                    : "";
-                var author = row.author_name || "匿名鸟友";
-                var place = row.place || "未填写";
-                var date = row.taken_at || "未知日期";
-                var note = row.note || "";
-                // 私有相册只有自己可见，不显示发布者名字
-                var authorRow = currentTab === "private" ? "" : '<div class="cap-author">🐦 ' + esc(author) + '</div>';
-                var noteHtml = note
-                    ? '<div class="cap-note">📝 ' + esc(note) + '</div>'
-                    : "";
-                var altText = currentTab === "private" ? "我的观鸟照片" : esc(author) + " 拍摄";
-                html += '<div class="gallery-item">' + shareBtn + delBtn +
-                    '<img src="' + esc(items[i].url) + '" alt="' + altText + '" loading="lazy" ' +
-                    'onclick="window.open(\'' + esc(items[i].url) + '\',\'_blank\')">' +
-                    '<div class="caption">' +
-                        authorRow +
-                        '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) + '</div>' +
-                        noteHtml +
-                    '</div></div>';
+            for (var i = 0; i < posts.length; i++) {
+                html += buildPost(posts[i]);
             }
             grid.innerHTML = html;
-            var total = typeof totalCount === "number" ? totalCount : items.length;
-            var moreText = total > items.length ? " · 这里显示最新 " + items.length + " 张" : "";
-            setStatus("共 " + total + " 张照片" + moreText, false);
-            updateMore(total);
+
+            var photos = typeof totalPhotos === "number" ? totalPhotos : posts.length;
+            var truncated = typeof totalPosts === "number" && totalPosts > posts.length;
+            var moreText = truncated ? " · 这里显示最新 " + posts.length + " 篇" : "";
+            setStatus("共 " + photos + " 张照片" + moreText, false);
+            updateMore(typeof totalPosts === "number" ? totalPosts : posts.length, photos);
         }
 
         // 「全部图片」入口：公共相册下常显，文案随数量变化
-        function updateMore(total) {
+        function updateMore(total, photos) {
             if (!moreWrap || !moreBtn) return;
             var show = currentTab === "public";
             moreWrap.hidden = !show;
             if (!show) return;
+            var n = typeof photos === "number" ? photos : total;
             if (total > PUBLIC_PREVIEW) {
-                moreBtn.textContent = "🖼️ 查看更多图片（共 " + total + " 张）→";
+                moreBtn.textContent = "🖼️ 查看更多图片（共 " + n + " 张）→";
             } else if (total > 0) {
-                moreBtn.textContent = "🖼️ 查看全部图片（共 " + total + " 张）→";
+                moreBtn.textContent = "🖼️ 查看全部图片（共 " + n + " 张）→";
             } else {
                 moreBtn.textContent = "🖼️ 打开全部图片页 →";
             }
@@ -713,27 +922,71 @@
 
         // 删除图片（事件委托 + 两段式确认，仅自己的照片显示删除按钮）
         var pendingDelete = null;
+        var suppressClick = false;
+        var touchStartX = 0, touchStartY = 0;
+        var touchWrap = null;
+
+        // 手机端左右滑动切图
+        grid.addEventListener("touchstart", function (e) {
+            if (e.touches.length !== 1) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchWrap = e.target.closest ? e.target.closest(".photo-slider") : null;
+        }, { passive: true });
+
+        grid.addEventListener("touchend", function (e) {
+            if (!touchWrap || e.changedTouches.length !== 1) return;
+            var dx = e.changedTouches[0].clientX - touchStartX;
+            var dy = e.changedTouches[0].clientY - touchStartY;
+            var wrap = touchWrap;
+            touchWrap = null;
+            if (+wrap.getAttribute("data-total") < 2) return;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+            slideStep(wrap, dx < 0 ? 1 : -1);
+            suppressClick = true;
+        }, { passive: true });
 
         grid.addEventListener("click", function (e) {
+            if (suppressClick) {
+                suppressClick = false;
+                return;
+            }
+
+            // 左右切换
+            var navEl = e.target.closest ? e.target.closest(".slider-nav") : null;
+            if (navEl) {
+                slideStep(navEl.parentNode, navEl.classList.contains("next") ? 1 : -1);
+                return;
+            }
+
+            // 点图片看原图
+            var imgEl = e.target.closest ? e.target.closest(".slider-img") : null;
+            if (imgEl) {
+                window.open(imgEl.getAttribute("data-url") || imgEl.src, "_blank");
+                return;
+            }
+
+            // 分享当前显示的那张
             var shareBtnEl = e.target.closest ? e.target.closest(".share-btn") : null;
             if (shareBtnEl) {
-                shareToPublic(shareBtnEl);
+                var actImg = shareBtnEl.parentNode.querySelector(".slider-img.active");
+                if (actImg) shareToPublic(actImg);
                 return;
             }
 
             var btn = e.target.closest ? e.target.closest(".del-btn") : null;
             if (!btn) return;
 
-            var id = btn.getAttribute("data-id");
+            var idsStr = btn.getAttribute("data-ids") || "";
 
             // 第一次点击：进入"确认删除？"待确认状态
-            if (pendingDelete !== id) {
+            if (pendingDelete !== idsStr) {
                 var prev = grid.querySelector('.del-btn[data-pending="1"]');
                 if (prev) {
                     prev.textContent = "✕";
                     prev.removeAttribute("data-pending");
                 }
-                pendingDelete = id;
+                pendingDelete = idsStr;
                 btn.textContent = "确认?";
                 btn.setAttribute("data-pending", "1");
                 return;
@@ -743,16 +996,41 @@
             pendingDelete = null;
             btn.textContent = "✕";
             btn.removeAttribute("data-pending");
+
+            var ids = [], paths = [];
+            try { ids = JSON.parse(idsStr); } catch (e1) {}
+            try { paths = JSON.parse(btn.getAttribute("data-paths") || "[]"); } catch (e2) {}
+            if (!ids.length) return;
+
             setStatus("正在删除……");
 
             var bucket = currentTab === "public" ? BUCKET_PUBLIC : BUCKET_PRIVATE;
 
-            supabase.from("photos").delete().eq("id", id).then(function (res) {
+            supabase.from("photos").delete().in("id", ids).select().then(function (res) {
                 if (res.error) {
                     setStatus("删除记录失败：" + res.error.message, true);
                     return;
                 }
-                return supabase.storage.from(bucket).remove([btn.getAttribute("data-path")]).then(function (up) {
+                var deleted = res.data || [];
+                if (deleted.length === 0) {
+                    setStatus("没有权限删除：只有照片发布者或管理员可以删除", true);
+                    loadGallery();
+                    return;
+                }
+                // 只清理真正删掉的记录对应的文件（被 RLS 拦下的行不会动）
+                var goneIds = {};
+                for (var di = 0; di < deleted.length; di++) goneIds[deleted[di].id] = true;
+                var gonePaths = [];
+                for (var pi = 0; pi < ids.length; pi++) {
+                    if (goneIds[ids[pi]]) gonePaths.push(paths[pi]);
+                }
+                return supabase.storage.from(bucket).remove(gonePaths).then(function (up) {
+                    if (deleted.length < ids.length) {
+                        setStatus("已删除 " + deleted.length + " 张，另有 " +
+                            (ids.length - deleted.length) + " 张没有权限", true);
+                        loadGallery();
+                        return;
+                    }
                     if (up.error) {
                         setStatus("已从相册列表移除，但文件删除失败：" + up.error.message, true);
                         return;
@@ -764,9 +1042,9 @@
         });
 
         // 分享到公共相册：复制一份到公共桶并新增公开记录（私有副本保留不动）
-        function shareToPublic(btn) {
-            var id = btn.getAttribute("data-id");
-            var path = btn.getAttribute("data-path");
+        function shareToPublic(imgEl) {
+            var id = imgEl.getAttribute("data-id");
+            var path = imgEl.getAttribute("data-path");
             var defaultName = (photoAuthor.value.trim() || "匿名鸟友");
             var name = prompt("在公共相册展示这张照片，发布者名字：", defaultName);
             if (name === null) return; // 用户取消
@@ -887,6 +1165,9 @@
         }
 
         // 选择文件后上传：图片 → 对应桶（公共/私有）→ 写入备注元数据
+        // 同一次选择的多张图共用一个 group 标识，页面上合并成一"篇"帖子
+        var MAX_PER_POST = 9;
+
         fileInput.addEventListener("change", function () {
             var files = fileInput.files;
             if (!files || files.length === 0) return;
@@ -898,21 +1179,29 @@
             var note = photoNote ? photoNote.value.trim().slice(0, 300) : "";
             var bucket = currentTab === "public" ? BUCKET_PUBLIC : BUCKET_PRIVATE;
 
-            var total = files.length;
+            var list = [];
+            for (var f = 0; f < files.length && f < MAX_PER_POST; f++) {
+                list.push(files[f]);
+            }
+            var skipped = files.length - list.length;
+            fileInput.value = ""; // 允许再次选择同一批文件
+
+            var groupKey = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            var total = list.length;
             var done = 0;
             var failed = 0;
             var firstErr = null;
 
-            setStatus("正在处理 0/" + total + " ……");
+            setStatus("正在处理 0/" + total + " ……" + (skipped > 0 ? "（一次最多 " + MAX_PER_POST + " 张，多余的 " + skipped + " 张未上传）" : ""));
 
-            for (var i = 0; i < files.length; i++) {
-                (function (file) {
+            for (var i = 0; i < list.length; i++) {
+                (function (file, seq) {
                     readAsJPEG(file, function (out) {
                         // 转码成功的统一为 .jpg；回退的原文件保留原扩展名（如 .heic）
                         var ext = out.type === "image/jpeg" ? "jpg"
                             : (file.name.split(".").pop() || "jpg").toLowerCase();
-                        var name = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-                        var path = currentUserId + "/" + name;
+                        // 路径里带 group 标识和序号，渲染时据此把多张图合并成一篇
+                        var path = currentUserId + "/p" + groupKey + "-" + seq + "." + ext;
 
                         supabase.storage.from(bucket).upload(path, out, {
                             contentType: out.type || undefined,
@@ -946,12 +1235,13 @@
                             });
                         });
                     });
-                })(files[i]);
+                })(list[i], i + 1);
             }
 
             function finish() {
                 if (done < total) return;
-                setStatus(failed === 0 ? "上传完成！"
+                setStatus(failed === 0
+                    ? (total > 1 ? "上传完成！" + total + " 张已合并为一篇帖子" : "上传完成！")
                     : "上传失败：" + firstErr, failed > 0);
                 loadGallery();
             }

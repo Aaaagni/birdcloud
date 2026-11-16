@@ -98,6 +98,93 @@
             background: #eef4f8;
         }
 
+        /* ---- 多图轮播（一篇帖子多张图） ---- */
+        .photo-slider {
+            position: relative;
+            height: 160px;
+            overflow: hidden;
+            background: #eef4f8;
+        }
+
+        .photo-slider .slider-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.25s;
+            cursor: zoom-in;
+        }
+
+        .photo-slider .slider-img.active {
+            opacity: 1;
+        }
+
+        .slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 26px;
+            padding: 0 0 2px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.42);
+            color: #fff;
+            font-size: 17px;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-nav:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .slider-nav.prev { left: 6px; }
+        .slider-nav.next { right: 6px; }
+
+        .slider-count {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            z-index: 3;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .slider-dots {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 8px;
+            z-index: 3;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            pointer-events: none;
+        }
+
+        .slider-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        .slider-dot.on {
+            background: #fff;
+        }
+
         .del-btn {
             position: absolute;
             top: 8px;
@@ -185,6 +272,8 @@
 
         @media (max-width: 480px) {
             .gallery-item img { height: 220px; }
+            .photo-slider { height: 220px; }
+            .slider-nav { width: 32px; height: 32px; font-size: 20px; }
         }
     </style>
 </head>
@@ -245,6 +334,10 @@
         var supabase = null;
         var isLoggedIn = false;
         var currentUserId = "";
+        var currentEmail = "";
+        var isAdmin = false;
+        // 管理员：可删除公共相册里任意照片
+        var ADMIN_EMAIL = "1878646255@qq.com";
 
         var grid = document.getElementById("grid");
         var statusEl = document.getElementById("status");
@@ -279,6 +372,8 @@
                 isLoggedIn = !!(res.data && res.data.session);
                 if (isLoggedIn && res.data.session.user) {
                     currentUserId = res.data.session.user.id;
+                    currentEmail = (res.data.session.user.email || "").toLowerCase();
+                    isAdmin = currentEmail === ADMIN_EMAIL;
                 }
                 var nest = document.getElementById("nest-link");
                 if (nest) {
@@ -336,51 +431,178 @@
                 });
         }
 
-        function renderGrid(items, totalCount) {
-            var html = "";
+        // ---- 多图帖子：按文件名里的 group 标识聚合 ----
+        var GROUP_RE = /(?:^|\/)p([a-z0-9]{4,})-(\d+)\./;
+
+        function groupKeyOf(row) {
+            var m = GROUP_RE.exec(row.path || "");
+            return m ? "g:" + m[1] : "s:" + row.id;
+        }
+
+        function groupIndex(row) {
+            var m = GROUP_RE.exec(row.path || "");
+            return m ? parseInt(m[2], 10) : 0;
+        }
+
+        function groupPosts(items) {
+            var map = {}, order = [];
             for (var i = 0; i < items.length; i++) {
-                var row = items[i].row;
-                var mine = isLoggedIn && row.user_id === currentUserId;
-                var delBtn = mine
-                    ? '<button class="del-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="删除这张照片">✕</button>'
-                    : "";
-                var author = row.author_name || "匿名鸟友";
-                var place = row.place || "未填写";
-                var date = row.taken_at || "未知日期";
-                var note = row.note || "";
-                var noteHtml = note ? '<div class="cap-note">📝 ' + esc(note) + '</div>' : "";
-                html += '<div class="gallery-item">' + delBtn +
-                    '<img src="' + esc(items[i].url) + '" alt="' + esc(author) + ' 拍摄" loading="lazy" ' +
-                    'onclick="window.open(\'' + esc(items[i].url) + '\',\'_blank\')">' +
-                    '<div class="caption">' +
-                        '<div class="cap-author">🐦 ' + esc(author) + '</div>' +
-                        '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) + '</div>' +
-                        noteHtml +
-                    '</div></div>';
+                var k = groupKeyOf(items[i].row);
+                if (!map[k]) {
+                    map[k] = { key: k, items: [] };
+                    order.push(k);
+                }
+                map[k].items.push(items[i]);
+            }
+            var posts = [];
+            for (var j = 0; j < order.length; j++) {
+                var p = map[order[j]];
+                p.items.sort(function (a, b) { return groupIndex(a.row) - groupIndex(b.row); });
+                posts.push(p);
+            }
+            return posts;
+        }
+
+        function slideStep(wrap, dir) {
+            var imgs = wrap.querySelectorAll(".slider-img");
+            if (imgs.length < 2) return;
+            var cur = 0;
+            for (var i = 0; i < imgs.length; i++) {
+                if (imgs[i].classList.contains("active")) { cur = i; break; }
+            }
+            var next = (cur + dir + imgs.length) % imgs.length;
+            imgs[cur].classList.remove("active");
+            imgs[next].classList.add("active");
+            var c = wrap.querySelector(".slider-count");
+            if (c) c.textContent = (next + 1) + " / " + imgs.length;
+            var dots = wrap.querySelectorAll(".slider-dot");
+            for (var d = 0; d < dots.length; d++) {
+                dots[d].classList.toggle("on", d === next);
+            }
+        }
+
+        function buildPost(post) {
+            var first = post.items[0].row;
+            var multi = post.items.length > 1;
+            var isOwner = isLoggedIn && first.user_id === currentUserId;
+            // 管理员可删除任何人的公共照片；其他人只能删自己的
+            var canDelete = isOwner || isAdmin;
+
+            var ids = [], paths = [];
+            for (var k = 0; k < post.items.length; k++) {
+                ids.push(post.items[k].row.id);
+                paths.push(post.items[k].row.path);
+            }
+
+            var delBtn = canDelete
+                ? '<button class="del-btn" data-ids="' + esc(JSON.stringify(ids)) +
+                  '" data-paths="' + esc(JSON.stringify(paths)) + '" title="删除这篇照片">✕</button>'
+                : "";
+
+            var author = first.author_name || "匿名鸟友";
+            var place = first.place || "未填写";
+            var date = first.taken_at || "未知日期";
+            var note = first.note || "";
+            var noteHtml = note ? '<div class="cap-note">📝 ' + esc(note) + '</div>' : "";
+
+            var imgs = "";
+            for (var j = 0; j < post.items.length; j++) {
+                var it = post.items[j];
+                imgs += '<img class="slider-img' + (j === 0 ? " active" : "") + '" src="' + esc(it.url) + '"' +
+                    ' data-url="' + esc(it.url) + '" data-path="' + esc(it.row.path) + '"' +
+                    ' data-id="' + it.row.id + '" alt="' + esc(author) + ' 拍摄" loading="lazy">';
+            }
+
+            var nav = "";
+            if (multi) {
+                var dots = "";
+                for (var d = 0; d < post.items.length; d++) {
+                    dots += '<i class="slider-dot' + (d === 0 ? " on" : "") + '"></i>';
+                }
+                nav = '<button class="slider-nav prev" type="button" aria-label="上一张">‹</button>' +
+                      '<button class="slider-nav next" type="button" aria-label="下一张">›</button>' +
+                      '<span class="slider-count">1 / ' + post.items.length + '</span>' +
+                      '<div class="slider-dots">' + dots + '</div>';
+            }
+
+            return '<div class="gallery-item">' + delBtn +
+                '<div class="photo-slider" data-total="' + post.items.length + '">' + imgs + nav + '</div>' +
+                '<div class="caption">' +
+                    '<div class="cap-author">🐦 ' + esc(author) + '</div>' +
+                    '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) +
+                        (multi ? ' · 🖼️ ' + post.items.length + ' 张' : '') + '</div>' +
+                    noteHtml +
+                '</div></div>';
+        }
+
+        function renderGrid(items, totalPhotos) {
+            var posts = groupPosts(items);
+            var html = "";
+            for (var i = 0; i < posts.length; i++) {
+                html += buildPost(posts[i]);
             }
             grid.innerHTML = html;
 
-            var total = typeof totalCount === "number" ? totalCount : items.length;
-            var limitText = total >= MAX_ITEMS ? "（仅显示最新 " + MAX_ITEMS + " 张）" : "";
-            setStatus("共 " + total + " 张照片" + limitText, false);
+            var photos = typeof totalPhotos === "number" ? totalPhotos : items.length;
+            var limitText = photos >= MAX_ITEMS ? "（仅显示最新 " + MAX_ITEMS + " 张）" : "";
+            setStatus("共 " + photos + " 张照片 · " + posts.length + " 篇" + limitText, false);
         }
 
-        // 删除自己的照片：两段式确认
+        // 删除（整篇）：两段式确认
         var pendingDelete = null;
+        var suppressClick = false;
+        var touchStartX = 0, touchStartY = 0;
+        var touchWrap = null;
+
+        grid.addEventListener("touchstart", function (e) {
+            if (e.touches.length !== 1) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchWrap = e.target.closest ? e.target.closest(".photo-slider") : null;
+        }, { passive: true });
+
+        grid.addEventListener("touchend", function (e) {
+            if (!touchWrap || e.changedTouches.length !== 1) return;
+            var dx = e.changedTouches[0].clientX - touchStartX;
+            var dy = e.changedTouches[0].clientY - touchStartY;
+            var wrap = touchWrap;
+            touchWrap = null;
+            if (+wrap.getAttribute("data-total") < 2) return;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+            slideStep(wrap, dx < 0 ? 1 : -1);
+            suppressClick = true;
+        }, { passive: true });
 
         grid.addEventListener("click", function (e) {
+            if (suppressClick) {
+                suppressClick = false;
+                return;
+            }
+
+            var navEl = e.target.closest ? e.target.closest(".slider-nav") : null;
+            if (navEl) {
+                slideStep(navEl.parentNode, navEl.classList.contains("next") ? 1 : -1);
+                return;
+            }
+
+            var imgEl = e.target.closest ? e.target.closest(".slider-img") : null;
+            if (imgEl) {
+                window.open(imgEl.getAttribute("data-url") || imgEl.src, "_blank");
+                return;
+            }
+
             var btn = e.target.closest ? e.target.closest(".del-btn") : null;
             if (!btn) return;
 
-            var id = btn.getAttribute("data-id");
+            var idsStr = btn.getAttribute("data-ids") || "";
 
-            if (pendingDelete !== id) {
+            if (pendingDelete !== idsStr) {
                 var prev = grid.querySelector('.del-btn[data-pending="1"]');
                 if (prev) {
                     prev.textContent = "✕";
                     prev.removeAttribute("data-pending");
                 }
-                pendingDelete = id;
+                pendingDelete = idsStr;
                 btn.textContent = "确认?";
                 btn.setAttribute("data-pending", "1");
                 return;
@@ -389,14 +611,38 @@
             pendingDelete = null;
             btn.textContent = "✕";
             btn.removeAttribute("data-pending");
+
+            var ids = [], paths = [];
+            try { ids = JSON.parse(idsStr); } catch (e1) {}
+            try { paths = JSON.parse(btn.getAttribute("data-paths") || "[]"); } catch (e2) {}
+            if (!ids.length) return;
+
             setStatus("正在删除……");
 
-            supabase.from("photos").delete().eq("id", id).then(function (res) {
+            supabase.from("photos").delete().in("id", ids).select().then(function (res) {
                 if (res.error) {
                     setStatus("删除记录失败：" + res.error.message, true);
                     return;
                 }
-                supabase.storage.from(BUCKET_PUBLIC).remove([btn.getAttribute("data-path")]).then(function (up) {
+                var deleted = res.data || [];
+                if (deleted.length === 0) {
+                    setStatus("没有权限删除：只有照片发布者或管理员可以删除", true);
+                    loadAllPhotos();
+                    return;
+                }
+                var goneIds = {};
+                for (var di = 0; di < deleted.length; di++) goneIds[deleted[di].id] = true;
+                var gonePaths = [];
+                for (var pi = 0; pi < ids.length; pi++) {
+                    if (goneIds[ids[pi]]) gonePaths.push(paths[pi]);
+                }
+                supabase.storage.from(BUCKET_PUBLIC).remove(gonePaths).then(function (up) {
+                    if (deleted.length < ids.length) {
+                        setStatus("已删除 " + deleted.length + " 张，另有 " +
+                            (ids.length - deleted.length) + " 张没有权限", true);
+                        loadAllPhotos();
+                        return;
+                    }
                     if (up.error) {
                         setStatus("已从相册列表移除，但文件删除失败：" + up.error.message, true);
                         return;

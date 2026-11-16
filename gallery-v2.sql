@@ -1,4 +1,4 @@
-﻿-- =============================================================
+-- =============================================================
 -- BirdCloud 观鸟相册 v2（最终生效版）：公共相册 + 私有相册 + 图片备注
 -- 前置：v1 的私有桶 bird-gallery 已存在（schema.sql 已执行）
 -- 执行方式：在 Supabase 控制台 -> SQL Editor 中执行（全部幂等，可重复执行）
@@ -52,7 +52,10 @@ drop policy if exists "public_own_delete" on storage.objects;
 create policy "public_own_delete" on storage.objects
     for delete using (
         bucket_id = 'bird-public'
-        and (storage.foldername(name))[1] = auth.uid()::text
+        and (
+            (storage.foldername(name))[1] = auth.uid()::text
+            or lower(coalesce(auth.jwt() ->> 'email', '')) = '1878646255@qq.com'
+        )
     );
 
 -- ---------- 3. 照片元数据表 photos ----------
@@ -100,6 +103,13 @@ create policy "photos_update" on public.photos
     for update using (auth.uid() = user_id)
     with check (auth.uid() = user_id);
 
+-- 删除：本人可删自己的记录；管理员可删公共相册里的任意记录
 drop policy if exists "photos_delete" on public.photos;
 create policy "photos_delete" on public.photos
-    for delete using (auth.uid() = user_id);
+    for delete using (
+        auth.uid() = user_id
+        or (
+            bucket = 'public'
+            and lower(coalesce(auth.jwt() ->> 'email', '')) = '1878646255@qq.com'
+        )
+    );
