@@ -53,12 +53,57 @@
             color: #8199a3;
             font-size: 14px;
         }
+
+        .thanks-group {
+            background: #fff;
+            border: 1px solid #dceef6;
+            border-radius: 12px;
+            padding: 28px 30px;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 12px rgba(173, 216, 230, 0.2);
+        }
+
+        .thanks-group h2 {
+            color: #4682b4;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+
+        .thanks-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .thanks-list li {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e4eff5;
+        }
+
+        .thanks-list li:last-child {
+            border-bottom: none;
+        }
+
+        .thanks-name {
+            color: #345;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .thanks-note {
+            color: #8199a3;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
         <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
         <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
         <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
@@ -87,10 +132,26 @@
             <p>感谢每一位支持 BirdCloud 的朋友，名单陆续补充中</p >
         </section>
 
-        <section class="thanks-card">
-            <div class="placeholder-icon">🐦</div>
-            <h2>名单整理中</h2>
-            <p>感谢名单内容正在整理，敬请期待</p >
+        <section class="thanks-group">
+            <h2>📕 小红书</h2>
+            <ul class="thanks-list">
+                <li>
+                    <span class="thanks-name">@上三休四何时轮到我</span>
+                    <span class="thanks-note">池鹭实拍照片 · 小红书号 2923088104</span>
+                </li>
+                <li>
+                    <span class="thanks-name">@鹤鹭晓芙</span>
+                    <span class="thanks-note">树麻雀、小鸊鷉、黑水鸡、蚁䴕、红喉姬鹟 实拍照片 · 小红书号 6730314087</span>
+                </li>
+                <li>
+                    <span class="thanks-name">@零</span>
+                    <span class="thanks-note">红尾水鸲（白色型）实拍照片 · 小红书号 255256758</span>
+                </li>
+                <li>
+                    <span class="thanks-name">@西米鹭</span>
+                    <span class="thanks-note">普通鳾、凤头鸊鷉、小鸊鷉（带雏）、普通鸬鹚 实拍照片 · 小红书号 95308122902</span>
+                </li>
+            </ul>
         </section>
     </main>
 
@@ -138,6 +199,6 @@
 })();
 </script>
 <script src="vendor/keepalive.js"></script>
-    <script src="bg-clouds.js"></script>
+    <script src="bg-clouds.js?v=2"></script>
 </body>
 </html>
