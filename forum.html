@@ -142,7 +142,7 @@
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
         <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
         <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
         <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
@@ -306,6 +306,8 @@
             ]},
             { prov: "广东", spots: [
                 { name: "流花湖公园", city: "广东·广州", feat: "市区公园，湖心岛鹭鸟群栖", best: "全年", tip: "夜鹭、白鹭、池鹭成群，傍晚归巢最壮观" },
+                { name: "深圳人才公园", city: "广东·深圳", feat: "后海中心区城市湖景公园，候鸟歇脚地", best: "10月-次年3月", tip: "黑水鸡、小鸊鷉、白鹭常在湖面活动，傍晚逆光剪影好看" },
+                { name: "福田红树林自然保护区", city: "广东·深圳", feat: "深圳湾北岸红树林，黑脸琵鹭越冬地", best: "10月-次年3月", tip: "全球濒危黑脸琵鹭在此越冬；核心区需预约，可沿红树林生态公园一侧观鸟" },
                 { name: "深圳湾", city: "广东·深圳", feat: "城市滨海湿地，鸻鹬与黑脸琵鹭", best: "10月-次年3月", tip: "黑脸琵鹭越冬，弹涂鱼与鸻鹬相映成趣" },
                 { name: "南沙湿地", city: "广东·广州", feat: "珠江口湿地公园", best: "11月-次年3月", tip: "黑脸琵鹭、白琵鹭越冬" },
                 { name: "海丰湿地", city: "广东·汕尾", feat: "浅海滩涂与鱼塘", best: "全年", tip: "紫水鸡、黑嘴鸥" },
@@ -322,7 +324,11 @@
             { prov: "海南", spots: [
                 { name: "东寨港红树林", city: "海南·海口", feat: "中国最大红树林", best: "10月-次年3月", tip: "黑脸琵鹭、白鹭、池鹭" },
                 { name: "尖峰岭", city: "海南·乐东", feat: "热带雨林，特有雉类", best: "2-5月", tip: "海南山鹧鸪、孔雀雉、白鹇" },
-                { name: "儋州湾", city: "海南·儋州", feat: "海湾滩涂湿地，珍稀水鸟", best: "10月-次年3月", tip: "黑脸琵鹭重要越冬地，红树林边观鸟" }
+                { name: "儋州湾", city: "海南·儋州", feat: "海湾滩涂湿地，珍稀水鸟", best: "10月-次年3月", tip: "黑脸琵鹭重要越冬地，红树林边观鸟" },
+                { name: "霸王岭国家级自然保护区", city: "海南·昌江", feat: "热带雨林，海南长臂猿栖息地", best: "11月-次年3月", tip: "海南山鹧鸪、白鹇、褐林鸮；清晨长臂猿二重唱，深入需向导" },
+                { name: "大田国家级自然保护区", city: "海南·东方", feat: "热带草原台地，海南坡鹿家园", best: "10月-次年3月", tip: "核心保护对象是海南坡鹿，林缘草地可见山斑鸠、棕背伯劳" },
+                { name: "铜鼓岭国家级自然保护区", city: "海南·文昌", feat: "滨海低山季雨林，猛禽迁徙通道", best: "9-11月、3-4月", tip: "秋季猛禽成群过境，林中有橙腹叶鹎、海南蓝仙鹟" },
+                { name: "吊罗山国家级自然保护区", city: "海南·陵水", feat: "热带雨林与瀑布，林鸟密集", best: "2-5月", tip: "海南孔雀雉、白鹇、银胸丝冠鸟，清晨沿栈道慢走" }
             ]},
             { prov: "四川", spots: [
                 { name: "青龙湖", city: "四川·成都", feat: "成都市区湿地，水鸟集中", best: "10月-次年3月", tip: "棉凫、白眉鸭、斑嘴鸭" },
@@ -463,6 +469,6 @@
         render();
     </script>
 <script src="vendor/keepalive.js"></script>
-    <script src="bg-clouds.js"></script>
+    <script src="bg-clouds.js?v=2"></script>
 </body>
 </html>
