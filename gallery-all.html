@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公共相册 · 全部图片 | BirdCloud</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 覆盖 style.css 的 .container 三列网格，改为整行流式布局并加宽 */
+        main.container {
+            width: 92%;
+            max-width: 1400px;
+            display: block;
+            margin-bottom: 60px;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            padding: 28px 24px 34px;
+        }
+
+        .page-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 12px;
+            margin: 0 0 4px;
+        }
+
+        .page-head h2 {
+            margin: 0;
+            font-size: 28px;
+            color: #345;
+        }
+
+        .page-head .crumb {
+            font-size: 13px;
+            color: #99a;
+        }
+
+        .page-sub {
+            margin: 8px 0 20px;
+            font-size: 14px;
+            color: #789;
+            line-height: 1.6;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 9px 18px;
+            border-radius: 10px;
+            background: #eef4f8;
+            color: #3a6b82;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-back:hover {
+            background: #e2eef5;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-grid { grid-template-columns: 1fr; }
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+            cursor: zoom-in;
+            background: #eef4f8;
+        }
+
+        .del-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(220, 53, 69, 0.88);
+            color: #fff;
+            font-size: 14px;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 2;
+        }
+
+        .gallery-item:hover .del-btn {
+            opacity: 1;
+        }
+
+        .del-btn:hover {
+            background: #c82333;
+        }
+
+        .del-btn[data-pending="1"] {
+            width: auto;
+            padding: 0 10px;
+            font-size: 13px;
+            background: #c82333;
+            opacity: 1;
+        }
+
+        .gallery-item .caption {
+            padding: 10px 12px;
+        }
+
+        .caption .cap-author {
+            font-size: 14px;
+            color: #345;
+            font-weight: 600;
+        }
+
+        .caption .cap-meta {
+            font-size: 12px;
+            color: #789;
+            margin-top: 3px;
+            line-height: 1.5;
+        }
+
+        .caption .cap-note {
+            font-size: 13px;
+            color: #567;
+            margin-top: 6px;
+            line-height: 1.5;
+            background: #f3f9fc;
+            border-left: 3px solid #72bcd4;
+            padding: 5px 8px;
+            border-radius: 0 6px 6px 0;
+            word-break: break-word;
+        }
+
+        .empty {
+            color: #99a;
+            padding: 60px 20px;
+            text-align: center;
+            font-size: 18px;
+            line-height: 2;
+            grid-column: 1 / -1;
+        }
+
+        #status {
+            min-height: 20px;
+            margin: 20px 0 0;
+            font-size: 15px;
+            color: #4c9ab5;
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            /* 无 hover：删除按钮常显 */
+            .del-btn { opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-item img { height: 220px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Weather switch -->
+    <div class="weather-switch" id="weatherSwitch">
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
+        <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
+        <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
+    </div>
+
+    <header>
+        <div class="logo">🐦 BirdCloud 观鸟笔记</div>
+        <nav>
+            <a href="index.html">首页</a>
+            <a href="records.html">观鸟记录本</a>
+            <a href="forum.html">观鸟地点</a>
+            <a href="gallery.html" class="active">观鸟相册</a>
+            <a href="tools.html">实用工具</a>
+            <a href="fun.html">随便玩玩</a>
+            <a href="login.html" id="nest-link">鸟窝入住</a>
+            <a href="thanks.html">感谢名单</a>
+            <a href="../birdcloud-library/index.html">鸟云图书馆</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="panel gallery-panel">
+            <a class="btn-back" href="gallery.html">← 返回观鸟相册</a>
+            <div class="page-head">
+                <h2>🌍 公共相册 · 全部图片</h2>
+                <span class="crumb">观鸟相册 / 公共相册</span>
+            </div>
+            <p class="page-sub">这里汇集所有鸟友发布的公共照片，按发布时间从新到旧排列。点击图片可查看原图。</p>
+
+            <div id="grid" class="gallery-grid">
+                <div class="empty">加载中……</div>
+            </div>
+            <div id="status"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>BirdCloud 观鸟笔记 © 2026</p>
+    </footer>
+
+    <script src="vendor/supabase.min.js"></script>
+    <script>
+    (function () {
+
+        var BUCKET_PUBLIC = "bird-public";
+        var SUPABASE_URL = "https://ljgnwfswcqrzbetshocz.supabase.co";
+        var SUPABASE_KEY = "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
+        // 单次最多加载的张数（避免一次拉取过多）
+        var MAX_ITEMS = 500;
+
+        var supabase = null;
+        var isLoggedIn = false;
+        var currentUserId = "";
+
+        var grid = document.getElementById("grid");
+        var statusEl = document.getElementById("status");
+
+        function setStatus(msg, isError) {
+            if (!statusEl) return;
+            statusEl.textContent = msg || "";
+            statusEl.style.color = isError ? "#d1493f" : "#4c9ab5";
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        window.addEventListener("error", function (e) {
+            setStatus("页面脚本错误：" + e.message, true);
+        });
+
+        try {
+            if (!window.supabase || typeof window.supabase.createClient !== "function") {
+                setStatus("错误：Supabase 库未加载", true);
+            } else {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (err) {
+            setStatus("初始化失败：" + err.message, true);
+        }
+
+        if (supabase) {
+            supabase.auth.getSession().then(function (res) {
+                isLoggedIn = !!(res.data && res.data.session);
+                if (isLoggedIn && res.data.session.user) {
+                    currentUserId = res.data.session.user.id;
+                }
+                var nest = document.getElementById("nest-link");
+                if (nest) {
+                    if (isLoggedIn) {
+                        nest.href = "profile.html";
+                        nest.textContent = "我的鸟窝";
+                    } else {
+                        nest.href = "login.html";
+                        nest.textContent = "鸟窝入住";
+                    }
+                }
+                loadAllPhotos();
+            });
+        }
+
+        // 加载公共相册的全部照片
+        function loadAllPhotos() {
+            if (!supabase) return;
+            setStatus("正在加载全部图片……");
+
+            supabase.from("photos")
+                .select("*")
+                .eq("bucket", "public")
+                .order("created_at", { ascending: false })
+                .limit(MAX_ITEMS)
+                .then(function (res) {
+                    if (res.error) {
+                        var msg = res.error.message || "";
+                        if (msg.indexOf("does not exist") > -1 || msg.indexOf("relation") > -1) {
+                            grid.innerHTML = '<div class="empty">📦 相册数据库尚未配置<br>' +
+                                '请在 Supabase 控制台执行 <b>gallery-v2.sql</b></div>';
+                        } else {
+                            grid.innerHTML = '<div class="empty">相册加载失败：' + esc(msg) + '</div>';
+                        }
+                        setStatus("", false);
+                        return;
+                    }
+
+                    var rows = res.data || [];
+                    if (rows.length === 0) {
+                        grid.innerHTML = '<div class="empty">🐦 公共相册还是空的<br>' +
+                            '<a href="gallery.html" style="color:#4c9ab5;">返回相册，登录后发布第一张照片</a></div>';
+                        setStatus("共 0 张照片", false);
+                        return;
+                    }
+
+                    var items = [];
+                    for (var i = 0; i < rows.length; i++) {
+                        items.push({
+                            row: rows[i],
+                            url: SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_PUBLIC + "/" + encodeURI(rows[i].path)
+                        });
+                    }
+                    renderGrid(items, rows.length);
+                });
+        }
+
+        function renderGrid(items, totalCount) {
+            var html = "";
+            for (var i = 0; i < items.length; i++) {
+                var row = items[i].row;
+                var mine = isLoggedIn && row.user_id === currentUserId;
+                var delBtn = mine
+                    ? '<button class="del-btn" data-id="' + row.id + '" data-path="' + esc(row.path) + '" title="删除这张照片">✕</button>'
+                    : "";
+                var author = row.author_name || "匿名鸟友";
+                var place = row.place || "未填写";
+                var date = row.taken_at || "未知日期";
+                var note = row.note || "";
+                var noteHtml = note ? '<div class="cap-note">📝 ' + esc(note) + '</div>' : "";
+                html += '<div class="gallery-item">' + delBtn +
+                    '<img src="' + esc(items[i].url) + '" alt="' + esc(author) + ' 拍摄" loading="lazy" ' +
+                    'onclick="window.open(\'' + esc(items[i].url) + '\',\'_blank\')">' +
+                    '<div class="caption">' +
+                        '<div class="cap-author">🐦 ' + esc(author) + '</div>' +
+                        '<div class="cap-meta">📍 ' + esc(place) + '<br>📅 ' + esc(date) + '</div>' +
+                        noteHtml +
+                    '</div></div>';
+            }
+            grid.innerHTML = html;
+
+            var total = typeof totalCount === "number" ? totalCount : items.length;
+            var limitText = total >= MAX_ITEMS ? "（仅显示最新 " + MAX_ITEMS + " 张）" : "";
+            setStatus("共 " + total + " 张照片" + limitText, false);
+        }
+
+        // 删除自己的照片：两段式确认
+        var pendingDelete = null;
+
+        grid.addEventListener("click", function (e) {
+            var btn = e.target.closest ? e.target.closest(".del-btn") : null;
+            if (!btn) return;
+
+            var id = btn.getAttribute("data-id");
+
+            if (pendingDelete !== id) {
+                var prev = grid.querySelector('.del-btn[data-pending="1"]');
+                if (prev) {
+                    prev.textContent = "✕";
+                    prev.removeAttribute("data-pending");
+                }
+                pendingDelete = id;
+                btn.textContent = "确认?";
+                btn.setAttribute("data-pending", "1");
+                return;
+            }
+
+            pendingDelete = null;
+            btn.textContent = "✕";
+            btn.removeAttribute("data-pending");
+            setStatus("正在删除……");
+
+            supabase.from("photos").delete().eq("id", id).then(function (res) {
+                if (res.error) {
+                    setStatus("删除记录失败：" + res.error.message, true);
+                    return;
+                }
+                supabase.storage.from(BUCKET_PUBLIC).remove([btn.getAttribute("data-path")]).then(function (up) {
+                    if (up.error) {
+                        setStatus("已从相册列表移除，但文件删除失败：" + up.error.message, true);
+                        return;
+                    }
+                    setStatus("已删除");
+                    loadAllPhotos();
+                });
+            });
+        });
+
+    })();
+    </script>
+</body>
+</html>
