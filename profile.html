@@ -1,4 +1,4 @@
-﻿﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>我的鸟窝 | BirdCloud</title>
+
+<link rel="stylesheet" href="style.css">
 
 <style>
 
@@ -35,48 +37,18 @@ body {
     color: #29404b;
 }
 
-/* 顶部 */
-
-.header {
-    height: 70px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 6%;
-
-    background: rgba(255,255,255,0.78);
-
-    backdrop-filter: blur(12px);
-
-    border-bottom: 1px solid rgba(100,150,170,0.12);
-}
-
-.logo {
-    font-size: 22px;
-    font-weight: 700;
-
-    color: #357d96;
-
-    text-decoration: none;
-}
-
-.back {
-    color: #5f8796;
-
-    text-decoration: none;
-
-    font-size: 14px;
-}
+/* 顶部导航与天气胶囊：全站统一，样式见 style.css */
 
 
 /* 页面 */
 
+/* 覆盖 style.css 的 .container 网格布局，鸟窝页为单列居中 */
 .container {
     width: min(92%, 760px);
 
     margin: 45px auto;
+
+    display: block;
 }
 
 
@@ -400,32 +372,19 @@ button {
 
 
 
-<header class="header">
-
-    <a
-        class="logo"
-        href="index.html">
-        🐦 BirdCloud
-    </a >
-
-    <a
-        class="back"
-        href="index.html">
-        返回首页
-    </a >
-
-    <a
-        class="back"
-        href="thanks.html">
-        感谢名单
-    </a >
-
-    <a
-        class="back"
-        href="../birdcloud-library/index.html">
-        鸟云图书馆
-    </a >
-
+<header>
+    <div class="logo">🐦 BirdCloud 观鸟笔记</div>
+    <nav>
+        <a href="index.html">首页</a>
+        <a href="records.html">观鸟记录本</a>
+        <a href="forum.html">观鸟地点</a>
+        <a href="gallery.html">观鸟相册</a>
+        <a href="tools.html">实用工具</a>
+        <a href="fun.html">随便玩玩</a>
+        <a href="profile.html" class="active">我的鸟窝</a>
+        <a href="thanks.html">感谢名单</a>
+        <a href="../birdcloud-library/index.html">鸟云图书馆</a>
+    </nav>
 </header>
 
 
