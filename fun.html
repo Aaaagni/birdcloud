@@ -531,9 +531,18 @@
         .site-tab.active:hover { background: #4682b4; }
 
         /* ---- 或许你想看：鸟友随手拍 ---- */
-        .spot-caption { font-size: 20px; font-weight: 700; color: #2c5f8a; text-align: center; margin: 4px 0 12px; }
+        .spot-caption { font-size: 18px; font-weight: 700; color: #2c5f8a; text-align: center; margin: 4px 0 12px; }
         .spot-carousel { position: relative; }
-        .spot-img { width: 100%; height: 320px; object-fit: contain; background: #eaf3f8; border-radius: 10px; display: block; }
+        .spot-img { width: 100%; height: auto; max-height: 260px; object-fit: contain; background: #eaf3f8; border-radius: 8px; display: block; cursor: zoom-in; }
+
+        /* 点击放大 */
+        .spot-lightbox { display: none; position: fixed; inset: 0; background: rgba(20,40,60,0.85); z-index: 999; align-items: center; justify-content: center; }
+        .spot-lightbox.show { display: flex; }
+        .spot-lightbox img { max-width: 92vw; max-height: 88vh; border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,0.4); cursor: zoom-out; }
+        .spot-lb-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); color: #4682b4; font-size: 26px; line-height: 1; cursor: pointer; }
+        .spot-lb-arrow:hover { background: #4682b4; color: #fff; }
+        #spotLbPrev { left: 18px; }
+        #spotLbNext { right: 18px; }
         .spot-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.92); color: #4682b4; font-size: 22px; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(70,130,180,0.3); }
         .spot-arrow:hover { background: #4682b4; color: #fff; }
         #spotPrev { left: 10px; }
@@ -604,24 +613,24 @@
                 <p class="tool-desc">16 道四选一，测测你的鸟格是哪一种</p>
                 <div id="typeTest"></div>
             </section>
-        </div>
 
-        <!-- 或许你想看：鸟友随手拍 -->
-        <section class="tool-card" id="spotlightCard">
-            <h2>🔀 或许你想看</h2>
-            <p class="tool-desc">鸟友们的随手拍，随机翻一页</p>
-            <div class="spot-caption" id="spotCaption"></div>
-            <div class="spot-carousel">
-                <button class="spot-arrow" id="spotPrev" type="button" aria-label="上一张">‹</button>
-                <img class="spot-img" id="spotImg" alt="鸟友随手拍">
-                <button class="spot-arrow" id="spotNext" type="button" aria-label="下一张">›</button>
-            </div>
-            <div class="spot-foot">
-                <span class="spot-count" id="spotCount"></span>
-                <div class="spot-dots" id="spotDots"></div>
-                <button class="btn" id="spotRandom" type="button">🎲 随机</button>
-            </div>
-        </section>
+            <!-- 或许你想看：鸟友随手拍 -->
+            <section class="tool-card" id="spotlightCard">
+                <h2>🔀 或许你想看</h2>
+                <p class="tool-desc">鸟友们的随手拍，随机翻一页</p>
+                <div class="spot-caption" id="spotCaption"></div>
+                <div class="spot-carousel">
+                    <button class="spot-arrow" id="spotPrev" type="button" aria-label="上一张">‹</button>
+                    <img class="spot-img" id="spotImg" alt="鸟友随手拍">
+                    <button class="spot-arrow" id="spotNext" type="button" aria-label="下一张">›</button>
+                </div>
+                <div class="spot-foot">
+                    <span class="spot-count" id="spotCount"></span>
+                    <div class="spot-dots" id="spotDots"></div>
+                    <button class="btn" id="spotRandom" type="button">🎲 随机</button>
+                </div>
+            </section>
+        </div>
 
         <!-- 免费鸟站推荐 -->
         <section class="tool-card">
@@ -701,6 +710,13 @@
             </div>
         </section>
     </main>
+
+    <!-- 或许你想看：点击放大 -->
+    <div class="spot-lightbox" id="spotLightbox">
+        <button class="spot-lb-arrow" id="spotLbPrev" type="button" aria-label="上一张">‹</button>
+        <img id="spotLbImg" alt="放大查看">
+        <button class="spot-lb-arrow" id="spotLbNext" type="button" aria-label="下一张">›</button>
+    </div>
 
     <footer>
         <p>BirdCloud 观鸟笔记 © 2026</p>
@@ -1301,6 +1317,8 @@
         var spotPhotoIdx = 0;
         var spotImg = document.getElementById("spotImg");
         var spotDotsEl = document.getElementById("spotDots");
+        var spotLb = document.getElementById("spotLightbox");
+        var spotLbImg = document.getElementById("spotLbImg");
 
         function spotRender() {
             var s = SPOTLIGHTS[spotIdx];
@@ -1312,17 +1330,43 @@
                 html += '<span class="spot-dot' + (i === spotPhotoIdx ? " on" : "") + '" data-i="' + i + '"></span>';
             }
             spotDotsEl.innerHTML = html;
+            if (spotLb.classList.contains("show")) {
+                spotLbImg.src = s.photos[spotPhotoIdx];
+            }
+        }
+
+        function spotGo(delta) {
+            var n = SPOTLIGHTS[spotIdx].photos.length;
+            spotPhotoIdx = (spotPhotoIdx + delta + n) % n;
+            spotRender();
         }
 
         document.getElementById("spotPrev").addEventListener("click", function () {
-            var n = SPOTLIGHTS[spotIdx].photos.length;
-            spotPhotoIdx = (spotPhotoIdx - 1 + n) % n;
-            spotRender();
+            spotGo(-1);
         });
         document.getElementById("spotNext").addEventListener("click", function () {
-            var n = SPOTLIGHTS[spotIdx].photos.length;
-            spotPhotoIdx = (spotPhotoIdx + 1) % n;
-            spotRender();
+            spotGo(1);
+        });
+
+        /* 点击图片放大，放大态也可左右切换；点空白处关闭 */
+        spotImg.addEventListener("click", function () {
+            spotLbImg.src = SPOTLIGHTS[spotIdx].photos[spotPhotoIdx];
+            spotLb.classList.add("show");
+        });
+        spotLb.addEventListener("click", function () {
+            spotLb.classList.remove("show");
+        });
+        document.getElementById("spotLbPrev").addEventListener("click", function (e) {
+            e.stopPropagation();
+            spotGo(-1);
+        });
+        document.getElementById("spotLbNext").addEventListener("click", function (e) {
+            e.stopPropagation();
+            spotGo(1);
+        });
+        spotLbImg.addEventListener("click", function (e) {
+            e.stopPropagation();
+            spotLb.classList.remove("show");
         });
         spotDotsEl.addEventListener("click", function (e) {
             var i = e.target.getAttribute("data-i");
