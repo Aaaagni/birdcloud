@@ -399,7 +399,7 @@ button {
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
         <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
         <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
         <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
@@ -524,7 +524,7 @@ button {
 
             <div class="prog-label">
                 <span>观鸟清单</span>
-                <span id="checkCount">0 / 46</span>
+                <span id="checkCount">0 / 57</span>
             </div>
 
             <div class="prog-bar-wrap">
@@ -685,15 +685,16 @@ async function loadProfile() {
 
 async function loadStats(user) {
 
-    const query = (table) =>
-        supabase.from(table)
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id);
-
-
+    /* 观鸟记录：records 表按账号统计；
+       我的照片：只数「我的相册」（私有桶），不含分享到公共相册的副本，与相册页口径一致 */
     const [rec, ph] = await Promise.all([
-        query("records"),
-        query("photos")
+        supabase.from("records")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id),
+        supabase.from("photos")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("bucket", "private")
     ]);
 
 
@@ -710,7 +711,7 @@ async function loadStats(user) {
 
 function loadLocalProgress() {
 
-    /* 观鸟清单：46 种（与 tools.html 图鉴同步） */
+    /* 观鸟清单：与 tools.html 图鉴实时同步（先按兜底总数渲染，再异步校准） */
     let check = {};
     try {
         check = JSON.parse(
@@ -719,23 +720,39 @@ function loadLocalProgress() {
     } catch (e) { }
 
 
-    const checkTotal = 46;
+    const renderChecklist = (checkTotal) => {
 
-    const checkDone =
-        Math.min(
-            Object.keys(check).length,
-            checkTotal
-        );
+        const checkDone =
+            Math.min(
+                Object.keys(check).length,
+                checkTotal
+            );
+
+        document.getElementById("statChecklist").textContent =
+            checkDone + " / " + checkTotal;
+
+        document.getElementById("checkCount").textContent =
+            checkDone + " / " + checkTotal;
+
+        document.getElementById("checkBar").style.width =
+            (checkDone * 100 / checkTotal) + "%";
+    };
 
 
-    document.getElementById("statChecklist").textContent =
-        checkDone + " / " + checkTotal;
+    /* 兜底总数：fetch 失败时也不至于空白 */
+    renderChecklist(57);
 
-    document.getElementById("checkCount").textContent =
-        checkDone + " / " + checkTotal;
-
-    document.getElementById("checkBar").style.width =
-        (checkDone * 100 / checkTotal) + "%";
+    /* 从实用工具页实时统计图鉴物种数，以后新增鸟种这里自动跟随 */
+    fetch("tools.html?v=" + Date.now())
+        .then((r) => r.text())
+        .then((t) => {
+            const m = t.match(/var BIRDS = \[([\s\S]*?)\];/);
+            if (!m) return;
+            const total =
+                (m[1].match(/name:\s*"/g) || []).length;
+            if (total > 0) renderChecklist(total);
+        })
+        .catch(() => { });
 
 
     /* 冷知识：30 条（与 fun.html 随便玩玩页同步，localStorage key 不变） */
@@ -856,7 +873,7 @@ loadProfile();
 
 
 <script src="vendor/keepalive.js"></script>
-    <script src="bg-clouds.js"></script>
+    <script src="bg-clouds.js?v=2"></script>
 </body>
 
 </html>
