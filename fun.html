@@ -624,7 +624,7 @@
                     <img class="spot-img" id="spotImg" alt="鸟友随手拍">
                     <button class="spot-arrow" id="spotNext" type="button" aria-label="下一张">›</button>
                 </div>
-                <div class="spot-foot">
+                <div class="spot-foot" id="spotFoot">
                     <span class="spot-count" id="spotCount"></span>
                     <div class="spot-dots" id="spotDots"></div>
                     <button class="btn" id="spotRandom" type="button">🎲 随机</button>
@@ -1302,7 +1302,7 @@
             });
         }
 
-        /* 或许你想看：鸟友随手拍轮播 */
+        /* 或许你想看：每张图一个页面，🎲 随机切换 */
         var SPOTLIGHTS = [
             {
                 caption: "@名字叫什么 拍摄的一家三口小鸫西",
@@ -1311,9 +1311,25 @@
                     "images/fun/blackbird-family-2.jpg?v=20261121",
                     "images/fun/blackbird-family-3.jpg?v=20261121"
                 ]
+            },
+            {
+                caption: "微笑蒜苗",
+                photos: ["images/fun/spot-cockatoo.jpg?v=20261121"]
+            },
+            {
+                caption: "（盯）",
+                photos: ["images/fun/spot-greyparrot.jpg?v=20261121"]
+            },
+            {
+                caption: "未成年肥鸡",
+                photos: ["images/fun/spot-fat-chick.jpg?v=20261121"]
+            },
+            {
+                caption: "神龙见尾不见首",
+                photos: ["images/fun/spot-budgie-tail.jpg?v=20261121"]
             }
         ];
-        var spotIdx = 0;
+        var spotIdx = Math.floor(Math.random() * SPOTLIGHTS.length);
         var spotPhotoIdx = 0;
         var spotImg = document.getElementById("spotImg");
         var spotDotsEl = document.getElementById("spotDots");
@@ -1322,6 +1338,7 @@
 
         function spotRender() {
             var s = SPOTLIGHTS[spotIdx];
+            var multi = s.photos.length > 1;
             document.getElementById("spotCaption").textContent = s.caption;
             spotImg.src = s.photos[spotPhotoIdx];
             document.getElementById("spotCount").textContent = (spotPhotoIdx + 1) + " / " + s.photos.length;
@@ -1330,6 +1347,14 @@
                 html += '<span class="spot-dot' + (i === spotPhotoIdx ? " on" : "") + '" data-i="' + i + '"></span>';
             }
             spotDotsEl.innerHTML = html;
+            /* 单图页面隐藏滑动控件，只留随机按钮 */
+            document.getElementById("spotPrev").style.display = multi ? "" : "none";
+            document.getElementById("spotNext").style.display = multi ? "" : "none";
+            document.getElementById("spotCount").style.display = multi ? "" : "none";
+            spotDotsEl.style.display = multi ? "" : "none";
+            document.getElementById("spotLbPrev").style.display = multi ? "" : "none";
+            document.getElementById("spotLbNext").style.display = multi ? "" : "none";
+            document.getElementById("spotFoot").style.justifyContent = multi ? "space-between" : "center";
             if (spotLb.classList.contains("show")) {
                 spotLbImg.src = s.photos[spotPhotoIdx];
             }
