@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -336,13 +336,6 @@ button {
     cursor: pointer;
 }
 
-.edit-btn {
-
-    background: #75bfd4;
-
-    color: white;
-}
-
 .logout-btn {
 
     background: #edf3f5;
@@ -582,12 +575,6 @@ button {
     <div class="actions">
 
         <button
-            class="edit-btn"
-            onclick="editProfile()">
-            编辑资料
-        </button>
-
-        <button
             class="logout-btn"
             onclick="logout()">
             退出登录
@@ -780,68 +767,6 @@ function loadLocalProgress() {
         (tipsDone * 100 / tipsTotal) + "%";
 
 }
-
-
-/* 编辑资料：保存简介到账号资料（无需建表） */
-
-async function editProfile() {
-
-    const bioEl =
-        document.getElementById("bio");
-
-    const current =
-        bioEl.dataset.bio || "";
-
-
-    const value =
-        prompt(
-            "更新你的鸟窝简介：",
-            current
-        );
-
-
-    if (value === null) return;
-
-
-    const bio =
-        value.trim();
-
-
-    const { error } =
-        await supabase.auth.updateUser({
-            data: { bio: bio }
-        });
-
-
-    if (error) {
-
-        alert(
-            "保存失败：" +
-            error.message
-        );
-
-        return;
-    }
-
-
-    if (bio) {
-
-        bioEl.textContent = bio;
-
-        bioEl.dataset.bio = bio;
-
-    } else {
-
-        bioEl.textContent = "欢迎来到我的鸟窝";
-
-        bioEl.dataset.bio = "";
-    }
-
-
-    alert("简介已保存 🐦");
-
-}
-
 
 /* 退出 */
 
