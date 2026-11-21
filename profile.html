@@ -561,7 +561,7 @@ const SUPABASE_KEY =
     "sb_publishable_wxkURA_31W9WNHZkj-RJzg_WaVoLszA";
 
 
-const supabase =
+const db =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_KEY
@@ -574,7 +574,7 @@ async function loadProfile() {
 
     const {
         data: { user }
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
 
 
     if (!user) {
@@ -634,10 +634,10 @@ async function loadStats(user) {
     /* 观鸟记录：records 表按账号统计；
        我的照片：只数「我的相册」（私有桶），不含分享到公共相册的副本，与相册页口径一致 */
     const [rec, ph] = await Promise.all([
-        supabase.from("records")
+        db.from("records")
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id),
-        supabase.from("photos")
+        db.from("photos")
             .select("id", { count: "exact", head: true })
             .eq("user_id", user.id)
             .eq("bucket", "private")
@@ -732,7 +732,7 @@ function loadLocalProgress() {
 async function logout() {
 
     const { error } =
-        await supabase.auth.signOut();
+        await db.auth.signOut();
 
 
     if (error) {
