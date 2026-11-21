@@ -550,8 +550,8 @@
         #spotPrev { left: 10px; }
         #spotNext { right: 10px; }
         .spot-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .spot-count { font-size: 13px; color: #8898a8; }
-        .spot-dots { display: flex; gap: 6px; flex: 1; justify-content: center; }
+        .spot-count { font-size: 13px; color: #8898a8; min-width: 46px; }
+        .spot-dots { display: flex; gap: 6px; flex: 1; justify-content: center; min-height: 8px; }
         .spot-dot { width: 8px; height: 8px; border-radius: 50%; background: #c4ddf3; cursor: pointer; }
         .spot-dot.on { background: #4682b4; }
     </style>
@@ -1354,7 +1354,10 @@
             {
                 caption: "@呱吱z 拍摄的神秘大鸡蛋",
                 photos: ["images/fun/spot-big-egg.jpg?v=20261121"]
-            }
+            },
+            { caption: "夜鹭：今天忘穿裤子了", photos: ["images/fun/spot-nightheron.jpg?v=20261121"] },
+            { caption: "珠颈斑鸠：这叫毛蓬，不叫胖", photos: ["images/fun/spot-fatdove.jpg?v=20261121"] },
+            { caption: "鸟界摇滚二重唱", photos: ["images/fun/spot-guitar-birds.jpg?v=20261121"] }
         ];
         var spotIdx = Math.floor(Math.random() * SPOTLIGHTS.length);
         var spotPhotoIdx = 0;
@@ -1368,20 +1371,19 @@
             var multi = s.photos.length > 1;
             document.getElementById("spotCaption").textContent = s.caption;
             spotImg.src = s.photos[spotPhotoIdx];
-            document.getElementById("spotCount").textContent = (spotPhotoIdx + 1) + " / " + s.photos.length;
+            document.getElementById("spotCount").textContent = multi ? (spotPhotoIdx + 1) + " / " + s.photos.length : "";
             var html = "";
             for (var i = 0; i < s.photos.length; i++) {
                 html += '<span class="spot-dot' + (i === spotPhotoIdx ? " on" : "") + '" data-i="' + i + '"></span>';
             }
             spotDotsEl.innerHTML = html;
-            /* 单图页面隐藏滑动控件，只留随机按钮 */
+            /* 单图页面只隐藏箭头与页码内容，底部栏占位不动，随机按钮始终固定在右侧 */
             document.getElementById("spotPrev").style.display = multi ? "" : "none";
             document.getElementById("spotNext").style.display = multi ? "" : "none";
-            document.getElementById("spotCount").style.display = multi ? "" : "none";
-            spotDotsEl.style.display = multi ? "" : "none";
+            document.getElementById("spotCount").style.visibility = multi ? "visible" : "hidden";
+            spotDotsEl.style.visibility = multi ? "visible" : "hidden";
             document.getElementById("spotLbPrev").style.display = multi ? "" : "none";
             document.getElementById("spotLbNext").style.display = multi ? "" : "none";
-            document.getElementById("spotFoot").style.justifyContent = multi ? "space-between" : "center";
             if (spotLb.classList.contains("show")) {
                 spotLbImg.src = s.photos[spotPhotoIdx];
             }
