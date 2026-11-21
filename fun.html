@@ -529,12 +529,26 @@
         .site-tab.active { background: #4682b4; border-color: #4682b4; color: #fff; }
         .site-tab:hover { background: #eef6ff; }
         .site-tab.active:hover { background: #4682b4; }
+
+        /* ---- 或许你想看：鸟友随手拍 ---- */
+        .spot-caption { font-size: 20px; font-weight: 700; color: #2c5f8a; text-align: center; margin: 4px 0 12px; }
+        .spot-carousel { position: relative; }
+        .spot-img { width: 100%; height: 320px; object-fit: contain; background: #eaf3f8; border-radius: 10px; display: block; }
+        .spot-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.92); color: #4682b4; font-size: 22px; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(70,130,180,0.3); }
+        .spot-arrow:hover { background: #4682b4; color: #fff; }
+        #spotPrev { left: 10px; }
+        #spotNext { right: 10px; }
+        .spot-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .spot-count { font-size: 13px; color: #8898a8; }
+        .spot-dots { display: flex; gap: 6px; flex: 1; justify-content: center; }
+        .spot-dot { width: 8px; height: 8px; border-radius: 50%; background: #c4ddf3; cursor: pointer; }
+        .spot-dot.on { background: #4682b4; }
     </style>
 </head>
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
         <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
         <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
         <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
@@ -591,6 +605,23 @@
                 <div id="typeTest"></div>
             </section>
         </div>
+
+        <!-- 或许你想看：鸟友随手拍 -->
+        <section class="tool-card" id="spotlightCard">
+            <h2>🔀 或许你想看</h2>
+            <p class="tool-desc">鸟友们的随手拍，随机翻一页</p>
+            <div class="spot-caption" id="spotCaption"></div>
+            <div class="spot-carousel">
+                <button class="spot-arrow" id="spotPrev" type="button" aria-label="上一张">‹</button>
+                <img class="spot-img" id="spotImg" alt="鸟友随手拍">
+                <button class="spot-arrow" id="spotNext" type="button" aria-label="下一张">›</button>
+            </div>
+            <div class="spot-foot">
+                <span class="spot-count" id="spotCount"></span>
+                <div class="spot-dots" id="spotDots"></div>
+                <button class="btn" id="spotRandom" type="button">🎲 随机</button>
+            </div>
+        </section>
 
         <!-- 免费鸟站推荐 -->
         <section class="tool-card">
@@ -1255,9 +1286,75 @@
             });
         }
 
+        /* 或许你想看：鸟友随手拍轮播 */
+        var SPOTLIGHTS = [
+            {
+                caption: "@名字叫什么 拍摄的一家三口小鸫西",
+                photos: [
+                    "images/fun/blackbird-family-1.jpg?v=20261121",
+                    "images/fun/blackbird-family-2.jpg?v=20261121",
+                    "images/fun/blackbird-family-3.jpg?v=20261121"
+                ]
+            }
+        ];
+        var spotIdx = 0;
+        var spotPhotoIdx = 0;
+        var spotImg = document.getElementById("spotImg");
+        var spotDotsEl = document.getElementById("spotDots");
+
+        function spotRender() {
+            var s = SPOTLIGHTS[spotIdx];
+            document.getElementById("spotCaption").textContent = s.caption;
+            spotImg.src = s.photos[spotPhotoIdx];
+            document.getElementById("spotCount").textContent = (spotPhotoIdx + 1) + " / " + s.photos.length;
+            var html = "";
+            for (var i = 0; i < s.photos.length; i++) {
+                html += '<span class="spot-dot' + (i === spotPhotoIdx ? " on" : "") + '" data-i="' + i + '"></span>';
+            }
+            spotDotsEl.innerHTML = html;
+        }
+
+        document.getElementById("spotPrev").addEventListener("click", function () {
+            var n = SPOTLIGHTS[spotIdx].photos.length;
+            spotPhotoIdx = (spotPhotoIdx - 1 + n) % n;
+            spotRender();
+        });
+        document.getElementById("spotNext").addEventListener("click", function () {
+            var n = SPOTLIGHTS[spotIdx].photos.length;
+            spotPhotoIdx = (spotPhotoIdx + 1) % n;
+            spotRender();
+        });
+        spotDotsEl.addEventListener("click", function (e) {
+            var i = e.target.getAttribute("data-i");
+            if (i !== null) {
+                spotPhotoIdx = parseInt(i, 10);
+                spotRender();
+            }
+        });
+        document.getElementById("spotRandom").addEventListener("click", function () {
+            if (SPOTLIGHTS.length > 1) {
+                var r = spotIdx;
+                while (r === spotIdx) {
+                    r = Math.floor(Math.random() * SPOTLIGHTS.length);
+                }
+                spotIdx = r;
+            }
+            var photos = SPOTLIGHTS[spotIdx].photos;
+            for (var i = photos.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = photos[i];
+                photos[i] = photos[j];
+                photos[j] = tmp;
+            }
+            spotPhotoIdx = 0;
+            spotRender();
+        });
+
+        spotRender();
+
     })();
     </script>
 <script src="vendor/keepalive.js"></script>
-    <script src="bg-clouds.js"></script>
+    <script src="bg-clouds.js?v=2"></script>
 </body>
 </html>
