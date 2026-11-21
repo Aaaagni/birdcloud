@@ -1,7 +1,7 @@
 /* BirdCloud 鸟云首页 天气互动背景（全站统一）
  * 四种模式：晴天（白云蓝天）/ 阴天（灰云）/ 雨天（雨滴+灰云）/ 夜晚（星光+月牙+薄云）
  * 切换时天空颜色在约 2 秒内平滑渐变，云/雨/星随之自然浮现
- * 选择会记住（localStorage）；鼠标移动如风般推动云朵
+ * 选择会记住（localStorage，按登录账号各自独立，互不影响）；鼠标移动如风般推动云朵
  * 纯 ES5，兼容旧浏览器；canvas 置于内容层之下，不拦截点击 */
 (function () {
     "use strict";
@@ -301,13 +301,33 @@
         requestAnimationFrame(frame);
     }
 
+    // ---------- 天气选择按账号独立存储 ----------
+    // 当前登录用户 id（Supabase 会话存于 localStorage）；未登录返回空串
+    function currentUid() {
+        try {
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && k.indexOf("sb-") === 0 && k.indexOf("-auth-token") > -1) {
+                    var s = JSON.parse(localStorage.getItem(k));
+                    if (s && s.user && s.user.id) return s.user.id;
+                }
+            }
+        } catch (e) { }
+        return "";
+    }
+    // 存储键：登录用户各用各的，匿名访客共用匿名键
+    function storeKey() {
+        var uid = currentUid();
+        return uid ? "birdcloudBgMode:" + uid : "birdcloudBgMode";
+    }
+
     // 切换天气：点击后约 1 秒多自然渐变完成（同模式点击也重建，保证有反馈）
     function setWeather(mode) {
         fromSky = { top: hex2rgb(MODES[current].skyTop), bottom: hex2rgb(MODES[current].skyBottom) };
         current = mode;
         buildSky();
         fade = 0;
-        try { localStorage.setItem("birdcloudBgMode", mode); } catch (e) { }
+        try { localStorage.setItem(storeKey(), mode); } catch (e) { }
         var el = document.getElementById("weatherSwitch");
         if (el) {
             var btns = el.querySelectorAll("button");
@@ -325,7 +345,11 @@
         if (!el) return;
         var btns = el.querySelectorAll("button");
         var stored = null;
-        try { stored = localStorage.getItem("birdcloudBgMode"); } catch (e) { }
+        try {
+            stored = localStorage.getItem(storeKey());
+            // 老用户升级：本账号还没有记录时，沿用旧的公用选择作为初始值
+            if (!stored && currentUid()) stored = localStorage.getItem("birdcloudBgMode");
+        } catch (e) { }
         if (stored && MODES[stored]) {
             current = stored;
             buildSky();   // 同步重建粒子，避免与存储模式不匹配
@@ -333,6 +357,7 @@
         for (var i = 0; i < btns.length; i++) {
             (function (btn) {
                 if (btn.getAttribute("data-mode") === current) btn.className = "on";
+                else btn.className = "";   // 清除 HTML 写死的 .on，避免晴天按钮恒亮
                 btn.addEventListener("click", function () {
                     setWeather(btn.getAttribute("data-mode"));
                 });
