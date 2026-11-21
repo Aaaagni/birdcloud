@@ -119,6 +119,61 @@ button:hover {
     opacity: 0.9;
 }
 
+/* 天气切换栏（与全站统一的右下角胶囊样式一致） */
+.weather-switch {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(135, 206, 235, 0.5);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: 0 4px 14px rgba(70, 130, 180, 0.25);
+}
+
+.weather-switch button {
+    width: auto;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: #4a6b86;
+    font-size: 13.5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.25s, color 0.25s;
+}
+
+.weather-switch button:hover {
+    background: rgba(135, 206, 235, 0.2);
+    opacity: 1;
+}
+
+.weather-switch button.on {
+    background: linear-gradient(135deg, #4682b4, #5ba8d9);
+    color: #fff;
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .weather-switch {
+        right: 10px;
+        bottom: 10px;
+        padding: 3px;
+    }
+
+    .weather-switch button {
+        padding: 5px 11px;
+        font-size: 12.5px;
+    }
+}
+
 #message {
     min-height: 24px;
     margin-top: 18px;
@@ -131,7 +186,7 @@ button:hover {
 <body>
     <!-- Weather switch -->
     <div class="weather-switch" id="weatherSwitch">
-        <button data-mode="sunny" class="on" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
+        <button data-mode="sunny" onclick="window.setWeather&&window.setWeather('sunny')">☀️ 晴天</button>
         <button data-mode="cloudy" onclick="window.setWeather&&window.setWeather('cloudy')">☁️ 阴天</button>
         <button data-mode="rainy" onclick="window.setWeather&&window.setWeather('rainy')">🌧️ 雨天</button>
         <button data-mode="night" onclick="window.setWeather&&window.setWeather('night')">🌙 夜晚</button>
@@ -265,6 +320,6 @@ button:hover {
 </script>
 
 <script src="vendor/keepalive.js"></script>
-    <script src="bg-clouds.js"></script>
+    <script src="bg-clouds.js?v=2"></script>
 </body>
 </html>
